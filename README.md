@@ -5,6 +5,8 @@
 
 **Сайт:** https://soul1n-max.github.io/sinergia-planner/
 
+**Демо без регистрации:** https://soul1n-max.github.io/sinergia-planner/?demo
+
 ## Возможности
 
 - Задачи с типом (Проект, Контакт, Напомнить, Срочно, Личное), датой, временем, проектом и повтором
