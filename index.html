@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Синергия Планнер</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%230e0b1e'/%3E%3Ccircle cx='32' cy='32' r='28' fill='%231e1838'/%3E%3Ccircle cx='44' cy='20' r='10' fill='%236C58E8'/%3E%3Cline x1='44' y1='20' x2='44' y2='14' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='44' y1='20' x2='48' y2='20' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='22' y='28' width='20' height='4' rx='2' fill='%236C58E8' opacity='.7'/%3E%3Ccircle cx='16' cy='30' r='4' fill='%236C58E8'/%3E%3Cpath d='M14.5 30 l1.5 2 l3-3' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Crect x='22' y='37' width='20' height='4' rx='2' fill='%236C58E8' opacity='.7'/%3E%3Ccircle cx='16' cy='39' r='4' fill='%236C58E8'/%3E%3Cpath d='M14.5 39 l1.5 2 l3-3' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Crect x='22' y='46' width='14' height='4' rx='2' fill='%23C4B8FF' opacity='.3'/%3E%3Ccircle cx='16' cy='48' r='4' fill='%23C4B8FF' opacity='.3'/%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
 
@@ -779,10 +780,17 @@ function saveProjects() {
 
 // ═══ TASKS (Supabase) ═══
 async function loadTasks() {
+  if (!telegramId) {
+    tasks = [];
+    setSyncStatus('ok');
+    document.getElementById('tasks-list').innerHTML =
+      '<div class="tasks-empty"><div class="empty-title">Telegram ID не привязан</div><p>Укажи свой Telegram ID при регистрации или в настройках аккаунта Supabase, чтобы задачи от бота синхронизировались.</p></div>';
+    return;
+  }
   setSyncStatus('loading');
   try {
     let q = sb.from('tasks').select('*').order('created_at', { ascending: false });
-    if (telegramId) q = q.eq('user_id', telegramId);
+    q = q.eq('user_id', telegramId);
     const { data, error } = await q;
     if (error) {
       console.error('Supabase error:', error);
@@ -1491,10 +1499,6 @@ async function init() {
     '<div class="tasks-empty"><p>Загрузка задач из базы данных…</p></div>';
 
   await loadTasks();
-
-  if (tasks.length === 0 && projects.length === 0) {
-    await seedDemo();
-  }
 
   renderAll();
   subscribeRealtime();
