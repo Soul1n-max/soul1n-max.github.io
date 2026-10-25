@@ -1559,12 +1559,13 @@ function subscribeRealtime() {
   }, 30000);
 }
 
-init();
+// В демо-режиме вход и загрузка из базы не запускаются: страницу поднимает блок ниже
+if (!new URLSearchParams(location.search).has('demo')) init();
 </script>
 <script>
 // ═══ ДЕМО-РЕЖИМ (?demo) ═══
 // Открывает планнер без входа на примерных данных — для портфолио и показа клиентам.
-// Ничего не пишет ни в Supabase, ни в localStorage.
+// Ничего не читает и не пишет ни в Supabase, ни в localStorage.
 if (new URLSearchParams(location.search).has('demo')) {
   const off = n => { const d = new Date(); d.setDate(d.getDate() + n); return dateKey(d); };
   const demoProjects = [
@@ -1608,6 +1609,9 @@ if (new URLSearchParams(location.search).has('demo')) {
   saveNote   = async (id, note) => { const t = tasks.find(t => t.id === id); if (t) t.note = note; };
 
   hideAuthOverlay();
+  initTheme();
+  updateHeader();
+  setInterval(updateHeader, 60000);
   loadProjects();
   tasks = demoTasks();
   initColorPicker();
