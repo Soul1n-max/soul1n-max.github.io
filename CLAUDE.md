@@ -8,6 +8,15 @@
 Бэкенд — Supabase (таблица `tasks`, Auth, Realtime). Задачи также добавляет Telegram-бот.
 Проекты хранятся в localStorage (`spm2_projects`), тема — в `spm2_theme`.
 
+- Сайт: https://soul1n-max.github.io/sinergia-planner/ (репозиторий `Soul1n-max/sinergia-planner`,
+  GitHub Pages из ветки `main`, корень). Git на компьютере пользователя не установлен —
+  изменения выкладываются через сайт GitHub (Upload files / редактор).
+- Бот: приватный репозиторий `Soul1n-max/synergia-planner`, Render-сервис `synergia-planner-1`
+  (`gunicorn bot_webhook:flask_app`, webhook-режим). Ключи берёт из переменных Render
+  `SUPABASE_KEY` (секретный `sb_secret_…`) и `BOT_TOKEN`.
+- Сайт грузит задачи только при привязанном Telegram ID (`user_metadata.telegram_id`);
+  демо-задачи при первом входе не создаются (`seedDemo()` не вызывается).
+
 ## Таблица `tasks` (Supabase)
 
 `id` (uuid), `text`, `cat` (project | contact | remind | urgent | personal), `note`, `done`,
@@ -37,4 +46,8 @@
 ## Правила
 
 - Сохраняй всю логику Supabase и авторизации при изменении дизайна.
-- Публичный ключ Supabase во фронтенде допустим; безопасность — через RLS на таблице `tasks`.
+- Публичный ключ Supabase во фронтенде допустим; безопасность — через RLS на таблице `tasks`:
+  политика `own tasks` (authenticated) пускает только к строкам, где
+  `user_id::text = auth.jwt() -> 'user_metadata' ->> 'telegram_id'`. Legacy-ключи (anon/service_role)
+  и старый HS256-секрет JWT отключены.
+- Никогда не вписывай секретный ключ или токен бота в код и не выводи их в логи.
