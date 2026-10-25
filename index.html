@@ -295,6 +295,9 @@ svg{flex-shrink:0}
 .proj-empty{font-size:14px;color:var(--fg-muted);padding:8px;text-align:center}
 .btn-proj-del{width:40px;height:40px;border:0;border-radius:12px;background:transparent;color:var(--fg-muted);display:grid;place-items:center;transition:color .12s,background .12s}
 .btn-proj-del:hover{color:var(--c-urgent);background:var(--b-urgent)}
+.btn-proj-edit{width:40px;height:40px;border:0;border-radius:12px;background:transparent;color:var(--fg-muted);display:grid;place-items:center;transition:color .12s,background .12s}
+.btn-proj-edit:hover{color:var(--accent-ink);background:var(--accent-soft)}
+.proj-name-edit{flex:1;min-width:0;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--accent);background:var(--surface);font-size:15px;font-weight:600;outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
 .proj-unassigned{margin-top:16px;display:flex;flex-direction:column;gap:8px}
 .proj-section-label{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted);padding:4px 0}
 
@@ -863,6 +866,12 @@ function addProject(name, color) {
   projects.push({ id: uid(), name, color, created: Date.now() });
   saveProjects();
 }
+function renameProject(id, name) {
+  const p = getProject(id);
+  if (!p) return;
+  p.name = name;
+  saveProjects();
+}
 function deleteProject(id) {
   projects = projects.filter(p => p.id !== id);
   tasks.forEach(t => { if (t.projectId === id) t.projectId = null; });
@@ -1183,6 +1192,7 @@ function renderProjects() {
         <div class="proj-dot" style="background:${proj.color}"></div>
         <div class="proj-name">${escHtml(proj.name)}</div>
         <span class="proj-count">${projTasks.length} активных</span>
+        <button class="btn-proj-edit" data-editproj="${proj.id}" aria-label="Переименовать проект" title="Переименовать">${ICON.note}</button>
         <button class="btn-proj-del" data-delproj="${proj.id}" aria-label="Удалить проект">${ICON.close}</button>
         <span class="proj-chevron">${ICON.chev}</span>
       </div>
@@ -1195,8 +1205,34 @@ function renderProjects() {
       if (card.classList.contains('open')) renderProjBody(proj.id);
     };
     header.addEventListener('click', e => {
-      if (e.target.closest('[data-delproj]')) return;
+      if (e.target.closest('[data-delproj], [data-editproj], .proj-name-edit')) return;
       toggle();
+    });
+    card.querySelector('[data-editproj]').addEventListener('click', e => {
+      e.stopPropagation();
+      const nameEl = card.querySelector('.proj-name');
+      if (!nameEl) return; // уже редактируется
+      const input = document.createElement('input');
+      input.className = 'proj-name-edit';
+      input.value = proj.name;
+      input.maxLength = 60;
+      input.setAttribute('aria-label', 'Новое название проекта');
+      nameEl.replaceWith(input);
+      input.focus();
+      input.select();
+      let finished = false;
+      const finish = save => {
+        if (finished) return;
+        finished = true;
+        const name = input.value.trim();
+        if (save && name && name !== proj.name) renameProject(proj.id, name);
+        renderAll();
+      };
+      input.addEventListener('keydown', ev => {
+        if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+        if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+      });
+      input.addEventListener('blur', () => finish(true));
     });
     header.addEventListener('keydown', e => {
       if (e.target !== header) return;
