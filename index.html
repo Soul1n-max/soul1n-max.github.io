@@ -817,6 +817,8 @@ async function loadProjects() {
     // Таблицы ещё нет или нет связи — показываем проекты из этого браузера
     console.error('Projects load:', error);
     projects = localProjects();
+    setSyncStatus('err');
+    document.getElementById('sync-label').textContent = 'Проекты: ' + (error.message || 'ошибка');
     return;
   }
   projects = (data || []).map(projFromDB);
@@ -913,15 +915,16 @@ async function renameProject(id, name) {
   const p = getProject(id);
   if (!p) return;
   const { error } = await sb.from('projects').update({ name }).eq('id', id);
-  if (error) { console.error('Project rename:', error); return; }
+  if (error) { console.error('Project rename:', error); alert('Не удалось переименовать проект: ' + error.message); return; }
   p.name = name;
 }
 async function deleteProject(id) {
   // Задачи остаются, но без проекта
   const { error: tErr } = await sb.from('tasks').update({ project_id: null }).eq('project_id', id);
-  if (tErr) { console.error('Project unlink tasks:', tErr); return; }
-  const { error } = await sb.from('projects').delete().eq('id', id);
-  if (error) { console.error('Project delete:', error); return; }
+  if (tErr) { console.error('Project unlink tasks:', tErr); alert('Не удалось удалить проект: ' + tErr.message); return; }
+  const { data, error } = await sb.from('projects').delete().eq('id', id).select('id');
+  if (error) { console.error('Project delete:', error); alert('Не удалось удалить проект: ' + error.message); return; }
+  if (!data || !data.length) { alert('Не удалось удалить проект: в базе его нет или нет доступа'); return; }
   projects = projects.filter(p => p.id !== id);
   tasks.forEach(t => { if (t.projectId === id) t.projectId = null; });
 }
