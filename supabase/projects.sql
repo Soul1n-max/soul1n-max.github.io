@@ -11,6 +11,10 @@ create table if not exists public.projects (
 
 create index if not exists projects_user_id_idx on public.projects (user_id);
 
+-- Новые таблицы Supabase не всегда открыты для Data API: без этого сайт получает
+-- «permission denied». Какие строки видны, по-прежнему решает RLS ниже.
+grant select, insert, update, delete on public.projects to authenticated;
+
 -- Доступ только к своим проектам — то же правило, что у политики `own tasks` на tasks.
 -- Если tasks уже переведена на app_metadata (supabase/02_rls_app_metadata.sql), берём его же:
 -- user_metadata пользователь может менять сам, поэтому повторный запуск не должен откатывать политику.
