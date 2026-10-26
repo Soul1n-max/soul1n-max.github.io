@@ -15,14 +15,15 @@
 - Бот: приватный репозиторий `Soul1n-max/synergia-planner`, Render-сервис `synergia-planner-1`
   (`gunicorn bot_webhook:flask_app`, webhook-режим). Ключи берёт из переменных Render
   `SUPABASE_KEY` (секретный `sb_secret_…`) и `BOT_TOKEN`.
-- Сайт грузит задачи только при привязанном Telegram ID (`user_metadata.telegram_id`);
+- Сайт грузит задачи только при привязанном Telegram ID (`app_metadata.telegram_id`, ставит
+  функция `link_telegram` по коду из команды бота `/link`, см. `supabase/README.md`);
   демо-задачи при первом входе не создаются.
 
 ## Таблица `tasks` (Supabase)
 
 `id` (uuid), `text`, `cat` (project | contact | remind | urgent | personal), `note`, `done`,
 `created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `project_id`,
-`recur` (daily | weekly | monthly), `done_at`, `user_id` (Telegram ID из `user_metadata.telegram_id`).
+`recur` (daily | weekly | monthly), `done_at`, `user_id` (Telegram ID из `app_metadata.telegram_id`).
 
 ## Таблица `projects` (Supabase)
 
@@ -55,6 +56,8 @@
 - Сохраняй всю логику Supabase и авторизации при изменении дизайна.
 - Публичный ключ Supabase во фронтенде допустим; безопасность — через RLS на таблице `tasks`:
   политика `own tasks` (authenticated) пускает только к строкам, где
-  `user_id::text = auth.jwt() -> 'user_metadata' ->> 'telegram_id'`. Legacy-ключи (anon/service_role)
+  `user_id::text = auth.jwt() -> 'app_metadata' ->> 'telegram_id'` (после `supabase/02_rls_app_metadata.sql`;
+  до него — старая проверка по `user_metadata`, которую пользователь может подделать).
+  Никогда не доверяй `user_metadata` в RLS и в коде. Legacy-ключи (anon/service_role)
   и старый HS256-секрет JWT отключены.
 - Никогда не вписывай секретный ключ или токен бота в код и не выводи их в логи.

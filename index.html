@@ -164,6 +164,11 @@ svg{flex-shrink:0}
 .tasks-empty{text-align:center;padding:48px 16px;color:var(--fg-muted);background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius)}
 .tasks-empty .empty-title{font-family:'Unbounded','Onest',sans-serif;font-size:18px;font-weight:600;color:var(--fg);margin-bottom:6px}
 .tasks-empty p{font-size:14px}
+.link-card{text-align:left;max-width:520px;margin:0 auto}
+.link-card .auth-error{margin-top:12px}
+.link-row{display:flex;gap:10px;margin-top:14px}
+.link-row .auth-input{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.12em;font-weight:600}
+.link-row .auth-btn{width:auto;flex:none;padding:0 22px;margin-top:0;height:52px}
 
 /* ─── TASK ITEM ─── */
 .task-item{display:flex;gap:6px;align-items:flex-start;padding:8px 8px 14px 4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);transition:border-color .15s,opacity .2s;margin-bottom:0}
@@ -582,10 +587,6 @@ svg{flex-shrink:0}
         <div class="auth-error" id="auth-error-register" role="alert"></div>
         <div class="auth-field"><label class="auth-label" for="reg-email">Email</label><input class="auth-input" id="reg-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
         <div class="auth-field"><label class="auth-label" for="reg-password">Пароль</label><input class="auth-input" id="reg-password" type="password" placeholder="Минимум 6 символов" autocomplete="new-password"></div>
-        <div class="auth-field">
-          <label class="auth-label" for="reg-tgid">Telegram ID <small>— напишите /id боту, чтобы узнать</small></label>
-          <input class="auth-input" id="reg-tgid" type="number" placeholder="Например: 1215619365">
-        </div>
         <button class="auth-btn" id="btn-register">Создать аккаунт</button>
         <div class="auth-switch">Уже есть аккаунт? <button id="switch-to-login">Войти</button></div>
       </div>
@@ -621,12 +622,18 @@ const ICON = {
 let currentUser = null;
 let telegramId = null;
 
+// Привязка хранится в app_metadata: её ставит только функция link_telegram в базе
+// по коду от бота. user_metadata пользователь может менять сам, поэтому ему не верим.
+function tgIdOf(user) {
+  const id = user?.app_metadata?.telegram_id;
+  return id ? parseInt(id) : null;
+}
+
 async function initAuth() {
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
     currentUser = session.user;
-    telegramId = currentUser.user_metadata?.telegram_id
-      ? parseInt(currentUser.user_metadata.telegram_id) : null;
+    telegramId = tgIdOf(currentUser);
     document.getElementById('btn-logout').style.display = '';
     hideAuthOverlay();
   } else {
@@ -635,8 +642,7 @@ async function initAuth() {
   sb.auth.onAuthStateChange(async (_event, session) => {
     const wasLoggedIn = !!currentUser;
     currentUser = session?.user || null;
-    telegramId = currentUser?.user_metadata?.telegram_id
-      ? parseInt(currentUser.user_metadata.telegram_id) : null;
+    telegramId = tgIdOf(currentUser);
     if (currentUser) {
       document.getElementById('btn-logout').style.display = '';
       hideAuthOverlay();
@@ -829,8 +835,6 @@ async function loadTasks() {
   if (!telegramId) {
     tasks = [];
     setSyncStatus('ok');
-    document.getElementById('tasks-list').innerHTML =
-      '<div class="tasks-empty"><div class="empty-title">Telegram ID не привязан</div><p>Укажи свой Telegram ID при регистрации или в настройках аккаунта Supabase, чтобы задачи от бота синхронизировались.</p></div>';
     return;
   }
   setSyncStatus('loading');
@@ -1036,6 +1040,8 @@ function renderSideProjects() {
 function renderTasks() {
   const list  = document.getElementById('tasks-list');
   const dlist = document.getElementById('done-list');
+  // Не перерисовываем форму привязки, пока в неё вводят код (realtime и таймер зовут renderAll)
+  if (currentUser && !telegramId && document.getElementById('link-card')) return;
   list.innerHTML = ''; dlist.innerHTML = '';
 
   const today     = todayKey();
@@ -1052,7 +1058,19 @@ function renderTasks() {
   });
   document.getElementById('done-count').textContent = allDone.length;
 
-  if (active.length === 0 && total === 0) {
+  if (currentUser && !telegramId) {
+    list.innerHTML = `<div class="tasks-empty link-card" id="link-card">
+      <div class="empty-title">Привяжите Telegram</div>
+      <p>Отправьте боту команду /link — он пришлёт код из 8 символов. Введите его здесь, и задачи из бота появятся на сайте.</p>
+      <div class="auth-error" id="link-error" role="alert"></div>
+      <div class="link-row">
+        <input class="auth-input" id="link-code" type="text" maxlength="8" placeholder="Код из бота" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" aria-label="Код из бота">
+        <button class="auth-btn" id="btn-link">Привязать</button>
+      </div>
+    </div>`;
+    document.getElementById('btn-link').addEventListener('click', linkTelegram);
+    document.getElementById('link-code').addEventListener('keydown', e => { if (e.key==='Enter') linkTelegram(); });
+  } else if (active.length === 0 && total === 0) {
     list.innerHTML = `<div class="tasks-empty"><div class="empty-title">Задач пока нет</div><p>Добавьте первую — поле сверху</p></div>`;
   } else if (active.length === 0) {
     list.innerHTML = `<div class="tasks-empty"><p>Нет активных задач в этой категории</p></div>`;
@@ -1520,20 +1538,37 @@ document.getElementById('btn-login').addEventListener('click', async () => {
 document.getElementById('btn-register').addEventListener('click', async () => {
   const email = document.getElementById('reg-email').value.trim();
   const pass  = document.getElementById('reg-password').value;
-  const tgid  = document.getElementById('reg-tgid').value.trim();
   clearAuthError('auth-error-register');
   if (!email || !pass) { showAuthError('auth-error-register','Заполните email и пароль'); return; }
   if (pass.length < 6) { showAuthError('auth-error-register','Пароль минимум 6 символов'); return; }
   const btn = document.getElementById('btn-register');
   btn.disabled = true; btn.textContent = 'Создание…';
-  const { error } = await sb.auth.signUp({
-    email, password: pass,
-    options: { data: { telegram_id: tgid || null } }
-  });
+  const { error } = await sb.auth.signUp({ email, password: pass });
   btn.disabled = false; btn.textContent = 'Создать аккаунт';
   if (error) { showAuthError('auth-error-register', error.message); return; }
   switchAuthForm('confirm');
 });
+
+async function linkTelegram() {
+  const input = document.getElementById('link-code');
+  const btn   = document.getElementById('btn-link');
+  const code  = input.value.trim().toUpperCase();
+  clearAuthError('link-error');
+  if (code.length !== 8) { showAuthError('link-error', 'Код состоит из 8 символов'); return; }
+  btn.disabled = true; btn.textContent = 'Проверяем…';
+  const { error } = await sb.rpc('link_telegram', { p_code: code });
+  if (error) {
+    btn.disabled = false; btn.textContent = 'Привязать';
+    showAuthError('link-error', error.message);
+    return;
+  }
+  // Новый токен несёт app_metadata.telegram_id, по нему RLS отдаёт задачи
+  const { data } = await sb.auth.refreshSession();
+  currentUser = data?.user || currentUser;
+  telegramId  = tgIdOf(currentUser);
+  await loadProjects(); updateProjectSelect();
+  await loadTasks(); renderAll();
+}
 
 document.getElementById('btn-logout').addEventListener('click', async () => {
   await sb.auth.signOut();
@@ -1542,7 +1577,7 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 
 // Enter key on login fields
 document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btn-login').click(); });
-document.getElementById('reg-tgid').addEventListener('keydown',       e => { if(e.key==='Enter') document.getElementById('btn-register').click(); });
+document.getElementById('reg-password').addEventListener('keydown',   e => { if(e.key==='Enter') document.getElementById('btn-register').click(); });
 
 // ═══ INIT ═══
 async function init() {
