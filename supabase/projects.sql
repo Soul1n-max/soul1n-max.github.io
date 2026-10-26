@@ -11,14 +11,28 @@ create table if not exists public.projects (
 
 create index if not exists projects_user_id_idx on public.projects (user_id);
 
--- Доступ только к своим проектам — то же правило, что у политики `own tasks` на tasks
+-- Доступ только к своим проектам — то же правило, что у политики `own tasks` на tasks.
+-- Если tasks уже переведена на app_metadata (supabase/02_rls_app_metadata.sql), берём его же:
+-- user_metadata пользователь может менять сам, поэтому повторный запуск не должен откатывать политику.
 alter table public.projects enable row level security;
 
-drop policy if exists "own projects" on public.projects;
-create policy "own projects" on public.projects
-  for all to authenticated
-  using      (user_id::text = auth.jwt() -> 'user_metadata' ->> 'telegram_id')
-  with check (user_id::text = auth.jwt() -> 'user_metadata' ->> 'telegram_id');
+do $$
+declare
+  meta text := 'user_metadata';
+begin
+  if exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'tasks' and qual ilike '%app_metadata%'
+  ) then
+    meta := 'app_metadata';
+  end if;
+  execute 'drop policy if exists "own projects" on public.projects';
+  execute format(
+    'create policy "own projects" on public.projects for all to authenticated
+       using      (user_id::text = (select auth.jwt() -> %1$L ->> ''telegram_id''))
+       with check (user_id::text = (select auth.jwt() -> %1$L ->> ''telegram_id''))',
+    meta);
+end $$;
 
 -- Realtime: изменения проектов сразу приходят на другие устройства
 do $$
