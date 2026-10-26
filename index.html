@@ -666,6 +666,12 @@ function showAuthOverlay() {
 }
 function hideAuthOverlay() {
   document.getElementById('auth-overlay').style.display = 'none';
+  clearAuthInputs();
+}
+// Пароль, оставшийся в скрытой форме входа, браузер принимал за вход при добавлении
+// задачи и предлагал «сохранить пароль» с текстом задачи вместо почты.
+function clearAuthInputs() {
+  document.querySelectorAll('#auth-overlay input').forEach(i => { i.value = ''; });
 }
 function showAuthError(id, msg) {
   const el = document.getElementById(id);
@@ -1434,6 +1440,7 @@ document.getElementById('btn-theme').addEventListener('click', () => {
 
 // ═══ QUICK ADD ═══
 async function doAddTask() {
+  clearAuthInputs(); // браузер мог снова подставить сохранённый пароль в скрытую форму
   const input = document.getElementById('task-input');
   const text  = input.value.trim();
   if (!text) { input.focus(); return; }
