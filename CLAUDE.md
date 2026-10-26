@@ -16,7 +16,7 @@
   (`gunicorn bot_webhook:flask_app`, webhook-режим). Ключи берёт из переменных Render
   `SUPABASE_KEY` (секретный `sb_secret_…`) и `BOT_TOKEN`.
 - Сайт грузит задачи только при привязанном Telegram ID (`user_metadata.telegram_id`);
-  демо-задачи при первом входе не создаются (`seedDemo()` не вызывается).
+  демо-задачи при первом входе не создаются.
 
 ## Таблица `tasks` (Supabase)
 

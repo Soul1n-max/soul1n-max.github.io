@@ -1496,31 +1496,6 @@ document.getElementById('proj-name-input').addEventListener('keydown', e => {
   if (e.key==='Enter') document.getElementById('btn-proj-add').click();
 });
 
-// ═══ SEED DEMO ═══
-async function seedDemo() {
-  const td  = todayKey();
-  const off = n => { const d = new Date(); d.setDate(d.getDate()+n); return dateKey(d); };
-
-  await addProject('Кружка ФЭМ',       '#8b78f0');
-  await addProject('Баннер кафедры',    '#5ba8f0');
-  await addProject('Навигация кампуса', '#5fcea0');
-
-  const [p0, p1, p2] = projects;
-  const rows = [
-    { id:uid(), text:'Обсудить ТЗ с заказчиком (кружка ФЭМ)',    cat:'project',  note:'Уточнить цвет, объём и тираж', done:false, due_date:td,     due_time:'11:00:00', project_id:p0.id, recur:null },
-    { id:uid(), text:'Позвонить Алексею из типографии',            cat:'contact',  note:'',                            done:false, due_date:td,     due_time:'14:30:00', project_id:p0.id, recur:null },
-    { id:uid(), text:'Напомнить Кате отправить файлы заказчику',   cat:'remind',   note:'',                            done:false, due_date:off(1), due_time:null,       project_id:null,  recur:null },
-    { id:uid(), text:'Поставить задачу дизайнеру: баннер кафедры', cat:'project',  note:'',                            done:false, due_date:off(2), due_time:null,       project_id:p1.id, recur:null },
-    { id:uid(), text:'Срочно: утвердить макет навигации',          cat:'urgent',   note:'',                            done:false, due_date:td,     due_time:'10:00:00', project_id:p2.id, recur:null },
-    { id:uid(), text:'Проверить входящие заявки заказчиков',       cat:'remind',   note:'Каждый день утром',           done:false, due_date:td,     due_time:'09:00:00', project_id:null,  recur:'daily' },
-    { id:uid(), text:'Еженедельный статус с дизайнерами',          cat:'project',  note:'',                            done:false, due_date:off(4), due_time:'15:00:00', project_id:null,  recur:'weekly' },
-    { id:uid(), text:'Записаться к врачу',                         cat:'personal', note:'',                            done:false, due_date:off(3), due_time:null,       project_id:null,  recur:null },
-    { id:uid(), text:'Собрать референсы для нового проекта',       cat:'project',  note:'',                            done:true,  due_date:off(-1),due_time:null,       project_id:p2.id, recur:null, done_at:new Date().toISOString() },
-  ].map(r => ({ ...r, user_id: telegramId || null }));
-  const { data } = await sb.from('tasks').insert(rows).select();
-  if (data) tasks = data.map(fromDB);
-}
-
 // ═══ AUTH EVENT LISTENERS ═══
 document.getElementById('switch-to-register').addEventListener('click', () => { clearAuthError('auth-error-login'); switchAuthForm('register'); });
 document.getElementById('switch-to-login').addEventListener('click',    () => { clearAuthError('auth-error-register'); switchAuthForm('login'); });
@@ -1590,29 +1565,45 @@ async function init() {
 }
 
 let rtStarted = false;
+let rtConnected = false;
+let rtWasConnected = false;
 function subscribeRealtime() {
   if (rtStarted) return;
   rtStarted = true;
-  // Real-time subscription — обновляет планнер когда бот добавляет задачи
-  sb.channel('tasks-rt')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, async () => {
-      await loadTasks();
-      renderAll();
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => {
-      await loadProjects();
-      updateProjectSelect();
-      renderAll();
-    })
-    .subscribe();
-
-  // Резервное обновление каждые 30 секунд
-  setInterval(async () => {
+  const refresh = async () => {
+    if (!currentUser) return;
     await loadProjects();
     updateProjectSelect();
     await loadTasks();
     renderAll();
-  }, 30000);
+  };
+  const refreshProjects = async () => {
+    if (!currentUser) return;
+    await loadProjects();
+    updateProjectSelect();
+    renderAll();
+  };
+  // Real-time subscription — обновляет планнер когда бот добавляет задачи или проекты меняются на другом устройстве
+  sb.channel('tasks-rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, refresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, refreshProjects)
+    .subscribe(status => {
+      const reconnected = status === 'SUBSCRIBED' && !rtConnected && rtWasConnected;
+      rtConnected = status === 'SUBSCRIBED';
+      if (rtConnected) rtWasConnected = true;
+      // После переподключения догружаем то, что могло прийти, пока канал был закрыт
+      if (reconnected) refresh();
+    });
+
+  // Резервное обновление раз в минуту — только если Realtime отвалился и вкладка открыта
+  setInterval(() => {
+    if (!rtConnected && !document.hidden) refresh();
+  }, 60000);
+
+  // Вернулись на вкладку — обновляем: пока она была скрыта, события могли потеряться
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refresh();
+  });
 }
 
 // В демо-режиме вход и загрузка из базы не запускаются: страницу поднимает блок ниже
