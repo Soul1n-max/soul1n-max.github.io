@@ -5,8 +5,9 @@
 ## Что это
 
 Планнер задач в одном файле `index.html`: HTML + CSS + ванильный JS, без сборки и фреймворков.
-Бэкенд — Supabase (таблица `tasks`, Auth, Realtime). Задачи также добавляет Telegram-бот.
-Проекты хранятся в localStorage (`spm2_projects`), тема — в `spm2_theme`.
+Бэкенд — Supabase (таблицы `tasks` и `projects`, Auth, Realtime). Задачи также добавляет Telegram-бот.
+Тема хранится в localStorage (`spm2_theme`). Старые проекты из localStorage (`spm2_projects`) при входе
+один раз переносятся в таблицу `projects` с теми же id, копия остаётся в `spm2_projects_backup`.
 
 - Сайт: https://soul1n-max.github.io/sinergia-planner/ (репозиторий `Soul1n-max/sinergia-planner`,
   GitHub Pages из ветки `main`, корень). Git на компьютере пользователя не установлен —
@@ -16,13 +17,19 @@
   `SUPABASE_KEY` (секретный `sb_secret_…`) и `BOT_TOKEN`.
 - Сайт грузит задачи только при привязанном Telegram ID (`app_metadata.telegram_id`, ставит
   функция `link_telegram` по коду из команды бота `/link`, см. `supabase/README.md`);
-  демо-задачи при первом входе не создаются (`seedDemo()` не вызывается).
+  демо-задачи при первом входе не создаются.
 
 ## Таблица `tasks` (Supabase)
 
 `id` (uuid), `text`, `cat` (project | contact | remind | urgent | personal), `note`, `done`,
 `created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `project_id`,
 `recur` (daily | weekly | monthly), `done_at`, `user_id` (Telegram ID из `app_metadata.telegram_id`).
+
+## Таблица `projects` (Supabase)
+
+`id` (uuid), `user_id` (Telegram ID), `name`, `color`, `created_at`. Схема и RLS-политика `own projects`
+(то же правило, что у `tasks`) — в `supabase/projects.sql`. При удалении проекта сайт сам обнуляет
+`project_id` у его задач.
 
 ## Структура `index.html`
 
