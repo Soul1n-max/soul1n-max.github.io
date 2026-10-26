@@ -22,7 +22,7 @@
 
 `id` (uuid), `text`, `cat` (project | contact | remind | urgent | personal), `note`, `done`,
 `created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `project_id`,
-`recur` (daily | weekly | monthly), `done_at`, `user_id` (Telegram ID из `user_metadata.telegram_id`).
+`recur` (daily | weekly | monthly), `done_at`, `user_id` (Telegram ID из `app_metadata.telegram_id`).
 
 ## Структура `index.html`
 
