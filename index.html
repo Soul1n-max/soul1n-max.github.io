@@ -644,7 +644,8 @@ async function initAuth() {
         // Пользователь только что вошёл — загружаем задачи
         document.getElementById('tasks-list').innerHTML =
           '<div class="tasks-empty"><p>Загрузка задач…</p></div>';
-        loadProjects(); initColorPicker(); updateProjectSelect();
+        initColorPicker();
+        await loadProjects(); updateProjectSelect();
         await loadTasks(); renderAll();
         subscribeRealtime();
       }
@@ -773,12 +774,52 @@ function setSyncStatus(state) {
   document.getElementById('sync-indicator').title = lbl.textContent;
 }
 
-// ═══ PROJECTS (localStorage) ═══
-function loadProjects() {
-  try { projects = JSON.parse(localStorage.getItem('spm2_projects') || '[]'); } catch { projects = []; }
+// ═══ PROJECTS (Supabase) ═══
+function projFromDB(row) {
+  return {
+    id:      row.id,
+    name:    row.name,
+    color:   row.color,
+    created: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+  };
 }
-function saveProjects() {
-  try { localStorage.setItem('spm2_projects', JSON.stringify(projects)); } catch {}
+function localProjects() {
+  try { return JSON.parse(localStorage.getItem('spm2_projects') || '[]'); } catch { return []; }
+}
+// Проекты, созданные до переноса в базу, лежат в localStorage этого браузера.
+// Переносим их один раз с теми же id, чтобы задачи не потеряли свой проект.
+// Старый список остаётся в spm2_projects_backup на всякий случай.
+async function migrateLocalProjects() {
+  const local = localProjects().filter(p => p && p.id && p.name);
+  if (!local.length) return true;
+  const isUuid = id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  const rows = local.map(p => ({
+    id:         isUuid(p.id) ? p.id : uid(),
+    user_id:    telegramId,
+    name:       String(p.name).slice(0, 60),
+    color:      p.color || PROJ_COLORS[0],
+    created_at: new Date(p.created || Date.now()).toISOString(),
+  }));
+  const { error } = await sb.from('projects').upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
+  if (error) { console.error('Projects migrate:', error); return false; }
+  try {
+    localStorage.setItem('spm2_projects_backup', localStorage.getItem('spm2_projects'));
+    localStorage.removeItem('spm2_projects');
+  } catch {}
+  return true;
+}
+async function loadProjects() {
+  if (!telegramId) { projects = []; return; }
+  await migrateLocalProjects();
+  const { data, error } = await sb.from('projects').select('*')
+    .eq('user_id', telegramId).order('created_at', { ascending: true });
+  if (error) {
+    // Таблицы ещё нет или нет связи — показываем проекты из этого браузера
+    console.error('Projects load:', error);
+    projects = localProjects();
+    return;
+  }
+  projects = (data || []).map(projFromDB);
 }
 
 // ═══ TASKS (Supabase) ═══
@@ -862,20 +903,27 @@ async function saveNote(id, note) {
 }
 
 // ═══ PROJECT OPS ═══
-function addProject(name, color) {
-  projects.push({ id: uid(), name, color, created: Date.now() });
-  saveProjects();
+async function addProject(name, color) {
+  const row = { id: uid(), user_id: telegramId, name, color };
+  const { data, error } = await sb.from('projects').insert([row]).select().single();
+  if (error) { console.error('Project insert:', error); alert('Не удалось создать проект: ' + error.message); return; }
+  projects.push(projFromDB(data));
 }
-function renameProject(id, name) {
+async function renameProject(id, name) {
   const p = getProject(id);
   if (!p) return;
+  const { error } = await sb.from('projects').update({ name }).eq('id', id);
+  if (error) { console.error('Project rename:', error); return; }
   p.name = name;
-  saveProjects();
 }
-function deleteProject(id) {
+async function deleteProject(id) {
+  // Задачи остаются, но без проекта
+  const { error: tErr } = await sb.from('tasks').update({ project_id: null }).eq('project_id', id);
+  if (tErr) { console.error('Project unlink tasks:', tErr); return; }
+  const { error } = await sb.from('projects').delete().eq('id', id);
+  if (error) { console.error('Project delete:', error); return; }
   projects = projects.filter(p => p.id !== id);
   tasks.forEach(t => { if (t.projectId === id) t.projectId = null; });
-  saveProjects();
 }
 
 // ═══ TASK ELEMENT ═══
@@ -1225,7 +1273,7 @@ function renderProjects() {
         if (finished) return;
         finished = true;
         const name = input.value.trim();
-        if (save && name && name !== proj.name) renameProject(proj.id, name);
+        if (save && name && name !== proj.name) renameProject(proj.id, name).then(() => { renderAll(); updateProjectSelect(); });
         renderAll();
       };
       input.addEventListener('keydown', ev => {
@@ -1241,7 +1289,7 @@ function renderProjects() {
     card.querySelector('[data-delproj]').addEventListener('click', e => {
       e.stopPropagation();
       if (!confirm(`Удалить проект "${proj.name}"? Задачи останутся, но без проекта.`)) return;
-      deleteProject(proj.id); renderAll();
+      deleteProject(proj.id).then(() => { renderAll(); updateProjectSelect(); });
     });
     list.appendChild(card);
   });
@@ -1433,10 +1481,13 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
 
-document.getElementById('btn-proj-add').addEventListener('click', () => {
+document.getElementById('btn-proj-add').addEventListener('click', async () => {
   const n = document.getElementById('proj-name-input').value.trim();
   if (!n) return;
-  addProject(n, pickedColor);
+  const btn = document.getElementById('btn-proj-add');
+  btn.disabled = true;
+  await addProject(n, pickedColor);
+  btn.disabled = false;
   document.getElementById('proj-name-input').value = '';
   renderAll();
   updateProjectSelect();
@@ -1450,12 +1501,9 @@ async function seedDemo() {
   const td  = todayKey();
   const off = n => { const d = new Date(); d.setDate(d.getDate()+n); return dateKey(d); };
 
-  projects = [
-    { id: uid(), name: 'Кружка ФЭМ',        color: '#8b78f0', created: Date.now() },
-    { id: uid(), name: 'Баннер кафедры',     color: '#5ba8f0', created: Date.now() },
-    { id: uid(), name: 'Навигация кампуса',  color: '#5fcea0', created: Date.now() },
-  ];
-  saveProjects();
+  await addProject('Кружка ФЭМ',       '#8b78f0');
+  await addProject('Баннер кафедры',    '#5ba8f0');
+  await addProject('Навигация кампуса', '#5fcea0');
 
   const [p0, p1, p2] = projects;
   const rows = [
@@ -1511,7 +1559,7 @@ document.getElementById('btn-register').addEventListener('click', async () => {
 
 document.getElementById('btn-logout').addEventListener('click', async () => {
   await sb.auth.signOut();
-  tasks = []; renderAll();
+  tasks = []; projects = []; updateProjectSelect(); renderAll();
 });
 
 // Enter key on login fields
@@ -1523,7 +1571,6 @@ async function init() {
   initTheme();
   updateHeader();
   setInterval(updateHeader, 60000);
-  loadProjects();
   initColorPicker();
   updateProjectSelect();
   renderMeta();
@@ -1534,6 +1581,8 @@ async function init() {
   document.getElementById('tasks-list').innerHTML =
     '<div class="tasks-empty"><p>Загрузка задач из базы данных…</p></div>';
 
+  await loadProjects();
+  updateProjectSelect();
   await loadTasks();
 
   renderAll();
@@ -1550,10 +1599,17 @@ function subscribeRealtime() {
       await loadTasks();
       renderAll();
     })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => {
+      await loadProjects();
+      updateProjectSelect();
+      renderAll();
+    })
     .subscribe();
 
   // Резервное обновление каждые 30 секунд
   setInterval(async () => {
+    await loadProjects();
+    updateProjectSelect();
     await loadTasks();
     renderAll();
   }, 30000);
@@ -1592,8 +1648,13 @@ if (new URLSearchParams(location.search).has('demo')) {
   // Вход и база не нужны: все операции работают только в памяти страницы
   showAuthOverlay   = () => {};
   subscribeRealtime = () => {};
-  saveProjects      = () => {};
-  loadProjects      = () => { projects = demoProjects.map(p => ({ ...p })); };
+  loadProjects      = async () => { projects = demoProjects.map(p => ({ ...p })); };
+  addProject        = async (name, color) => { projects.push({ id: uid(), name, color, created: Date.now() }); };
+  renameProject     = async (id, name) => { const p = getProject(id); if (p) p.name = name; };
+  deleteProject     = async id => {
+    projects = projects.filter(p => p.id !== id);
+    tasks.forEach(t => { if (t.projectId === id) t.projectId = null; });
+  };
   loadTasks = async () => {
     setSyncStatus('ok');
     document.getElementById('sync-label').textContent = 'Демо-режим';
@@ -1612,7 +1673,7 @@ if (new URLSearchParams(location.search).has('demo')) {
   initTheme();
   updateHeader();
   setInterval(updateHeader, 60000);
-  loadProjects();
+  projects = demoProjects.map(p => ({ ...p }));
   tasks = demoTasks();
   initColorPicker();
   updateProjectSelect();
