@@ -871,8 +871,9 @@ async function addTask(text, cat, due, dueTime, projId, recur) {
     user_id:    telegramId || null,
   };
   const { data, error } = await sb.from('tasks').insert([row]).select().single();
-  if (error) { console.error('Insert:', error); return; }
+  if (error) { console.error('Insert:', error); alert('Не удалось добавить задачу: ' + error.message); return false; }
   tasks.unshift(fromDB(data));
+  return true;
 }
 
 async function toggleDone(id) {
@@ -881,7 +882,7 @@ async function toggleDone(id) {
   const newDone = !t.done;
   const doneAt = newDone ? new Date().toISOString() : null;
   const { error } = await sb.from('tasks').update({ done: newDone, done_at: doneAt }).eq('id', id);
-  if (error) { console.error('Update:', error); return; }
+  if (error) { console.error('Update:', error); alert('Не удалось сохранить: ' + error.message); return; }
   t.done = newDone;
   t.doneAt = newDone ? Date.now() : null;
   if (newDone && t.recur) {
@@ -898,12 +899,14 @@ async function toggleDone(id) {
 }
 
 async function deleteTask(id) {
-  await sb.from('tasks').delete().eq('id', id);
+  const { error } = await sb.from('tasks').delete().eq('id', id);
+  if (error) { console.error('Delete:', error); alert('Не удалось удалить задачу: ' + error.message); return; }
   tasks = tasks.filter(t => t.id !== id);
 }
 
 async function saveNote(id, note) {
-  await sb.from('tasks').update({ note }).eq('id', id);
+  const { error } = await sb.from('tasks').update({ note }).eq('id', id);
+  if (error) { console.error('Note:', error); alert('Не удалось сохранить заметку: ' + error.message); return; }
   const t = tasks.find(t => t.id === id);
   if (t) t.note = note;
 }
@@ -1441,9 +1444,10 @@ async function doAddTask() {
   const btn     = document.getElementById('btn-add');
   btn.disabled = true;
   btn.textContent = '…';
-  await addTask(text, selectedCat, due, dueTime, proj, recur);
+  const ok = await addTask(text, selectedCat, due, dueTime, proj, recur);
   btn.disabled = false;
   btn.textContent = 'Добавить';
+  if (!ok) return; // текст остаётся в поле, чтобы не набирать заново
   input.value = '';
   document.getElementById('task-time').value = '';
   document.querySelectorAll('.tag-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
@@ -1690,6 +1694,7 @@ if (new URLSearchParams(location.search).has('demo')) {
   };
   addTask = async (text, cat, due, dueTime, projId, recur) => {
     tasks.unshift(T(text, cat || null, due || null, dueTime ? dueTime + ':00' : null, projId || null, { recur: recur || null }));
+    return true;
   };
   toggleDone = async id => {
     const t = tasks.find(t => t.id === id);
