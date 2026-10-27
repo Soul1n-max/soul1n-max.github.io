@@ -1025,16 +1025,18 @@ function makeTaskEl(task) {
       <button class="btn-delete" aria-label="Удалить" title="Удалить" data-del="${task.id}">${ICON.trash}</button>
     </div>`;
 
+  // Одна задача бывает в DOM дважды (скрытая вкладка и открытая), поэтому ищем поля только в своей карточке
+  const own = id => div.querySelector('#' + CSS.escape(id));
   div.querySelector('.task-check').addEventListener('click', async () => { await toggleDone(task.id); renderAll(); });
   div.querySelector('[data-note]').addEventListener('click', () => {
-    const row = document.getElementById('nr-'+task.id);
+    const row = own('nr-'+task.id);
     row.classList.toggle('open');
-    if (row.classList.contains('open')) document.getElementById('et-'+task.id).focus();
+    if (row.classList.contains('open')) own('et-'+task.id).focus();
   });
   div.querySelector('[data-save]').addEventListener('click', async () => {
-    const v = id => document.getElementById(id + '-' + task.id).value;
+    const v = id => own(id + '-' + task.id).value;
     const text = v('et').trim();
-    if (!text) { document.getElementById('et-'+task.id).focus(); return; }
+    if (!text) { own('et-'+task.id).focus(); return; }
     const time = v('eh');
     await saveTask(task.id, {
       text,
@@ -1051,7 +1053,7 @@ function makeTaskEl(task) {
     if (e.key === 'Enter') { e.preventDefault(); div.querySelector('[data-save]').click(); }
   });
   div.querySelector('[data-close]').addEventListener('click', () => {
-    document.getElementById('nr-'+task.id).classList.remove('open');
+    own('nr-'+task.id).classList.remove('open');
   });
   // Удаление в два нажатия: первое просит подтвердить, через 3 секунды кнопка возвращается
   const delBtn = div.querySelector('[data-del]');
