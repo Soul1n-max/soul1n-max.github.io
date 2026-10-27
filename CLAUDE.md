@@ -18,6 +18,9 @@
 - Сайт грузит задачи только при привязанном Telegram ID (`app_metadata.telegram_id`, ставит
   функция `link_telegram` по коду из команды бота `/link`, см. `supabase/README.md`);
   демо-задачи при первом входе не создаются.
+- Вход через Telegram: окно `oauth.telegram.org` (бот @synergyplanerbot, домен задан в BotFather
+  `/setdomain`), подпись проверяет бот на `/site-login` и выдаёт одноразовый токен входа,
+  см. `supabase/README.md`. Почта с паролем — запасной вход.
 
 ## Таблица `tasks` (Supabase)
 
