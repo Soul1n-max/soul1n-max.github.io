@@ -27,7 +27,11 @@
 
 `id` (uuid), `text`, `cat` (project | contact | remind | urgent | personal), `note`, `done`,
 `created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `project_id`,
-`recur` (daily | weekly | monthly), `done_at`, `user_id` (Telegram ID из `app_metadata.telegram_id`).
+`recur` (daily | weekly | monthly), `done_at`, `user_id` (Telegram ID из `app_metadata.telegram_id`),
+`reminded_for` (момент, о котором бот уже напомнил).
+
+Напоминания по времени шлёт сама база: `pg_cron` раз в минуту вызывает `send_task_reminders()`
+(`supabase/04_reminders.sql`), токен бота — в Supabase Vault (`telegram_bot_token`), время задач московское.
 
 ## Таблица `projects` (Supabase)
 
