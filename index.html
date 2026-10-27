@@ -6,7 +6,6 @@
 <title>Синергия Планнер</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%230e0b1e'/%3E%3Ccircle cx='32' cy='32' r='28' fill='%231e1838'/%3E%3Ccircle cx='44' cy='20' r='10' fill='%236C58E8'/%3E%3Cline x1='44' y1='20' x2='44' y2='14' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='44' y1='20' x2='48' y2='20' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='22' y='28' width='20' height='4' rx='2' fill='%236C58E8' opacity='.7'/%3E%3Ccircle cx='16' cy='30' r='4' fill='%236C58E8'/%3E%3Cpath d='M14.5 30 l1.5 2 l3-3' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Crect x='22' y='37' width='20' height='4' rx='2' fill='%236C58E8' opacity='.7'/%3E%3Ccircle cx='16' cy='39' r='4' fill='%236C58E8'/%3E%3Cpath d='M14.5 39 l1.5 2 l3-3' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Crect x='22' y='46' width='14' height='4' rx='2' fill='%23C4B8FF' opacity='.3'/%3E%3Ccircle cx='16' cy='48' r='4' fill='%23C4B8FF' opacity='.3'/%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://telegram.org/js/telegram-widget.js?22" async></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
 
 <style>
@@ -1697,14 +1696,44 @@ async function prefetchTgBotId() {
 }
 function tgLoginClick(errorId) {
   clearAuthError(errorId);
-  if (!window.Telegram?.Login) { showAuthError(errorId, 'Не загрузился скрипт Telegram. Обновите страницу.'); return; }
   if (!tgBotId) {
     showAuthError(errorId, 'Сервер входа просыпается, нажмите ещё раз через 10–20 секунд.');
     prefetchTgBotId(); return;
   }
-  Telegram.Login.auth({ bot_id: tgBotId, request_access: 'write', lang: 'ru' }, user => {
-    if (user) finishTelegramLogin(user, errorId);
-  });
+  openTelegramAuth(tgBotId, user => finishTelegramLogin(user, errorId), errorId);
+}
+// То же, что Telegram.Login.auth из telegram-widget.js, но без загрузки скрипта с telegram.org:
+// его режут блокировщики рекламы. Окно oauth.telegram.org присылает результат через postMessage;
+// если окно закрылось без сообщения, спрашиваем результат у oauth.telegram.org сами.
+const TG_OAUTH = 'https://oauth.telegram.org';
+function openTelegramAuth(botId, onUser, errorId) {
+  const url = `${TG_OAUTH}/auth?bot_id=${botId}&origin=${encodeURIComponent(location.origin)}`
+    + `&request_access=write&lang=ru&return_to=${encodeURIComponent(location.href)}`;
+  const w = 550, h = 470;
+  const popup = window.open(url, 'telegram_oauth_bot' + botId,
+    `width=${w},height=${h},left=${Math.max(0, (screen.width - w) / 2)},top=${Math.max(0, (screen.height - h) / 2)},status=0,location=0,menubar=0,toolbar=0`);
+  if (!popup) { showAuthError(errorId, 'Браузер заблокировал окно Telegram. Разрешите всплывающие окна для сайта.'); return; }
+  let done = false;
+  const finish = user => {
+    if (done) return;
+    done = true; clearInterval(timer); window.removeEventListener('message', onMessage);
+    if (user) onUser(user);
+  };
+  const onMessage = e => {
+    if (e.origin !== TG_OAUTH || e.source !== popup) return;
+    let data = {}; try { data = JSON.parse(e.data); } catch (_) {}
+    if (data.event === 'auth_result') finish(data.result);
+  };
+  window.addEventListener('message', onMessage);
+  const timer = setInterval(async () => {
+    if (!popup.closed || done) return;
+    clearInterval(timer);
+    try {
+      const r = await fetch(`${TG_OAUTH}/auth/get`, { method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'bot_id=' + botId });
+      finish((await r.json()).user || null);
+    } catch (_) { finish(null); }
+  }, 300);
 }
 async function finishTelegramLogin(user, errorId) {
   const btns = document.querySelectorAll('.auth-tg');
