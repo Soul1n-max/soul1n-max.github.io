@@ -187,7 +187,11 @@ svg{flex-shrink:0}
 .task-check{grid-column:1;grid-row:1}
 .task-text{grid-column:2;grid-row:1;padding-top:11px;font-size:15px;font-weight:500;line-height:1.4;word-break:break-word}
 .task-actions{grid-column:3;grid-row:1}
-.task-note-preview,.task-footer,.note-row{grid-column:2 / 4;margin-right:4px}
+.task-note-preview,.task-footer,.note-row,.done-confirm{grid-column:2 / 4;margin-right:4px}
+.done-confirm{display:none;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);font-size:13px;font-weight:600;color:var(--accent-ink)}
+.done-confirm span{flex:1 1 auto;min-width:0}
+.task-item.confirming .done-confirm{display:flex}
+.task-item.confirming .task-check .box{border-color:var(--accent)}
 .task-note-preview{font-size:13px;line-height:1.45;color:var(--fg-muted);word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .task-note-preview.expanded{display:block}
 .task-footer{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -996,6 +1000,11 @@ function makeTaskEl(task) {
       <div class="task-text">${escHtml(task.text)}</div>
       ${task.note ? `<div class="task-note-preview">${escHtml(task.note)}</div>` : ''}
       <div class="task-footer">${catTag}${dueTag}${recurTag}${projTag}</div>
+      <div class="done-confirm" role="group" aria-label="Подтверждение">
+        <span>Отметить выполненной?</span>
+        <button type="button" class="btn-sm" data-done-no>Нет</button>
+        <button type="button" class="btn-sm primary" data-done-yes>Да, выполнена</button>
+      </div>
       <form class="note-row" id="nr-${task.id}" autocomplete="off" onsubmit="return false">
         <label class="sr-only" for="et-${task.id}">Название</label>
         <input class="edit-text" id="et-${task.id}" type="text" maxlength="300" autocomplete="off" value="${escHtml(task.text)}">
@@ -1027,7 +1036,13 @@ function makeTaskEl(task) {
 
   // Одна задача бывает в DOM дважды (скрытая вкладка и открытая), поэтому ищем поля только в своей карточке
   const own = id => div.querySelector('#' + CSS.escape(id));
-  div.querySelector('.task-check').addEventListener('click', async () => { await toggleDone(task.id); renderAll(); });
+  // Выполнение подтверждается, чтобы случайный клик не закрыл задачу; вернуть в работу можно сразу
+  div.querySelector('.task-check').addEventListener('click', async () => {
+    if (!task.done) { div.classList.toggle('confirming'); return; }
+    await toggleDone(task.id); renderAll();
+  });
+  div.querySelector('[data-done-no]').addEventListener('click', () => div.classList.remove('confirming'));
+  div.querySelector('[data-done-yes]').addEventListener('click', async () => { await toggleDone(task.id); renderAll(); });
   div.querySelector('[data-note]').addEventListener('click', () => {
     const row = own('nr-'+task.id);
     row.classList.toggle('open');
