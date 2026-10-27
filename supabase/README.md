@@ -44,7 +44,7 @@ application.add_handler(CommandHandler("link", link_cmd))
 # Вход через Telegram
 
 Кнопка «Войти через Telegram» открывает окно входа Telegram (`oauth.telegram.org`, как
-Telegram Login Widget) через `Telegram.Login.auth` из `telegram-widget.js`. Окно возвращает
+Telegram Login Widget; окно открывает сам сайт, без скрипта `telegram-widget.js`). Окно возвращает
 данные пользователя, подписанные токеном бота. Сайт отправляет их на `/site-login` бота
 (Render). Бот проверяет подпись (HMAC-SHA256 с ключом sha256(токен бота), не старше часа),
 находит аккаунт с этим Telegram ID в `app_metadata` функцией `telegram_login_email`
