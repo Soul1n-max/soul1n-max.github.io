@@ -620,10 +620,12 @@ svg{flex-shrink:0}
       <!-- CONFIRM EMAIL -->
       <form id="auth-form-confirm" onsubmit="return false" style="display:none">
         <h2 class="auth-title">Подтвердите email</h2>
-        <p class="auth-sub">Мы отправили письмо на <b id="confirm-email"></b>. Введите код из письма или нажмите ссылку в нём.</p>
+        <p class="auth-sub">Мы отправили письмо на <b id="confirm-email"></b>. Откройте его и нажмите «Confirm email address»: сайт откроется и сразу войдёт. Письмо может попасть в «Спам».</p>
         <div class="auth-error" id="auth-error-confirm" role="alert"></div>
-        <div class="auth-field"><label class="auth-label" for="confirm-code">Код из письма</label><input class="auth-input" id="confirm-code" type="text" inputmode="numeric" maxlength="10" placeholder="123456" autocomplete="one-time-code" spellcheck="false"></div>
-        <button type="button" class="auth-btn" id="btn-confirm-code">Подтвердить</button>
+        <!-- Код из письма скрыт: без своего SMTP Supabase шлёт стандартное письмо только со ссылкой.
+             После подключения SMTP и {{ .Token }} в шаблоне «Confirm signup» убрать display:none. -->
+        <div class="auth-field" style="display:none"><label class="auth-label" for="confirm-code">Код из письма</label><input class="auth-input" id="confirm-code" type="text" inputmode="numeric" maxlength="10" placeholder="123456" autocomplete="one-time-code" spellcheck="false"></div>
+        <button type="button" class="auth-btn" id="btn-confirm-code" style="display:none">Подтвердить</button>
         <div class="auth-switch">Уже подтвердили по ссылке? <button type="button" id="btn-to-login-after-reg">Войти</button></div>
       </form>
     </div>
@@ -1666,7 +1668,6 @@ document.getElementById('btn-register').addEventListener('click', async () => {
   document.getElementById('confirm-email').textContent = email;
   document.getElementById('login-email').value = email;
   switchAuthForm('confirm');
-  document.getElementById('confirm-code').focus();
 });
 
 document.getElementById('btn-confirm-code').addEventListener('click', async () => {
