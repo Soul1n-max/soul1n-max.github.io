@@ -20,7 +20,8 @@
   демо-задачи при первом входе не создаются.
 - Вход через Telegram: окно `oauth.telegram.org` (бот @synergyplanerbot, домен задан в BotFather
   `/setdomain`), подпись проверяет бот на `/site-login` и выдаёт одноразовый токен входа,
-  см. `supabase/README.md`. Почта с паролем — запасной вход.
+  см. `supabase/README.md`. Почта с паролем — запасной вход. Аккаунт, вошедший по почте, привязывает
+  Telegram тем же окном: бот на `/site-link` выдаёт код как по `/link`, сайт применяет его через `link_telegram`.
 
 ## Таблица `tasks` (Supabase)
 
