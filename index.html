@@ -187,7 +187,11 @@ svg{flex-shrink:0}
 .task-check{grid-column:1;grid-row:1}
 .task-text{grid-column:2;grid-row:1;padding-top:11px;font-size:15px;font-weight:500;line-height:1.4;word-break:break-word}
 .task-actions{grid-column:3;grid-row:1}
-.task-note-preview,.task-footer,.note-row{grid-column:2 / 4;margin-right:4px}
+.task-note-preview,.task-footer,.note-row,.done-confirm{grid-column:2 / 4;margin-right:4px}
+.done-confirm{display:none;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);font-size:13px;font-weight:600;color:var(--accent-ink)}
+.done-confirm span{flex:1 1 auto;min-width:0}
+.task-item.confirming .done-confirm{display:flex}
+.task-item.confirming .task-check .box{border-color:var(--accent)}
 .task-note-preview{font-size:13px;line-height:1.45;color:var(--fg-muted);word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .task-note-preview.expanded{display:block}
 .task-footer{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -584,34 +588,34 @@ svg{flex-shrink:0}
         <div class="brand-name" style="color:var(--fg)">Синергия<span style="color:var(--accent-ink)">PM</span></div>
       </div>
       <!-- LOGIN -->
-      <div id="auth-form-login">
+      <form id="auth-form-login" onsubmit="return false">
         <h2 class="auth-title">С возвращением</h2>
         <p class="auth-sub">Войдите, чтобы увидеть свои задачи</p>
         <div class="auth-error" id="auth-error-login" role="alert"></div>
         <div class="auth-field"><label class="auth-label" for="login-email">Email</label><input class="auth-input" id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
         <div class="auth-field"><label class="auth-label" for="login-password">Пароль</label><input class="auth-input" id="login-password" type="password" placeholder="••••••" autocomplete="current-password"></div>
-        <button class="auth-btn" id="btn-login">Войти</button>
-        <div class="auth-switch">Нет аккаунта? <button id="switch-to-register">Зарегистрироваться</button></div>
-      </div>
+        <button type="button" class="auth-btn" id="btn-login">Войти</button>
+        <div class="auth-switch">Нет аккаунта? <button type="button" id="switch-to-register">Зарегистрироваться</button></div>
+      </form>
       <!-- REGISTER -->
-      <div id="auth-form-register" style="display:none">
+      <form id="auth-form-register" onsubmit="return false" style="display:none">
         <h2 class="auth-title">Регистрация</h2>
         <p class="auth-sub">Создайте аккаунт для доступа к планнеру</p>
         <div class="auth-error" id="auth-error-register" role="alert"></div>
         <div class="auth-field"><label class="auth-label" for="reg-email">Email</label><input class="auth-input" id="reg-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
         <div class="auth-field"><label class="auth-label" for="reg-password">Пароль</label><input class="auth-input" id="reg-password" type="password" placeholder="Минимум 6 символов" autocomplete="new-password"></div>
-        <button class="auth-btn" id="btn-register">Создать аккаунт</button>
-        <div class="auth-switch">Уже есть аккаунт? <button id="switch-to-login">Войти</button></div>
-      </div>
+        <button type="button" class="auth-btn" id="btn-register">Создать аккаунт</button>
+        <div class="auth-switch">Уже есть аккаунт? <button type="button" id="switch-to-login">Войти</button></div>
+      </form>
       <!-- CONFIRM EMAIL -->
-      <div id="auth-form-confirm" style="display:none">
+      <form id="auth-form-confirm" onsubmit="return false" style="display:none">
         <h2 class="auth-title">Подтвердите email</h2>
         <p class="auth-sub">Мы отправили письмо на <b id="confirm-email"></b>. Введите код из письма или нажмите ссылку в нём.</p>
         <div class="auth-error" id="auth-error-confirm" role="alert"></div>
         <div class="auth-field"><label class="auth-label" for="confirm-code">Код из письма</label><input class="auth-input" id="confirm-code" type="text" inputmode="numeric" maxlength="10" placeholder="123456" autocomplete="one-time-code" spellcheck="false"></div>
-        <button class="auth-btn" id="btn-confirm-code">Подтвердить</button>
-        <div class="auth-switch">Уже подтвердили по ссылке? <button id="btn-to-login-after-reg">Войти</button></div>
-      </div>
+        <button type="button" class="auth-btn" id="btn-confirm-code">Подтвердить</button>
+        <div class="auth-switch">Уже подтвердили по ссылке? <button type="button" id="btn-to-login-after-reg">Войти</button></div>
+      </form>
     </div>
   </section>
 </div>
@@ -686,6 +690,8 @@ function hideAuthOverlay() {
 }
 // Пароль, оставшийся в скрытой форме входа, браузер принимал за вход при добавлении
 // задачи и предлагал «сохранить пароль» с текстом задачи вместо почты.
+// Формы входа обёрнуты в <form>: без них Chrome считал поле задачи полем логина
+// и подставлял туда сохранённый email.
 function clearAuthInputs() {
   document.querySelectorAll('#auth-overlay input').forEach(i => { i.value = ''; });
 }
@@ -994,6 +1000,11 @@ function makeTaskEl(task) {
       <div class="task-text">${escHtml(task.text)}</div>
       ${task.note ? `<div class="task-note-preview">${escHtml(task.note)}</div>` : ''}
       <div class="task-footer">${catTag}${dueTag}${recurTag}${projTag}</div>
+      <div class="done-confirm" role="group" aria-label="Подтверждение">
+        <span>Отметить выполненной?</span>
+        <button type="button" class="btn-sm" data-done-no>Нет</button>
+        <button type="button" class="btn-sm primary" data-done-yes>Да, выполнена</button>
+      </div>
       <form class="note-row" id="nr-${task.id}" autocomplete="off" onsubmit="return false">
         <label class="sr-only" for="et-${task.id}">Название</label>
         <input class="edit-text" id="et-${task.id}" type="text" maxlength="300" autocomplete="off" value="${escHtml(task.text)}">
@@ -1023,16 +1034,24 @@ function makeTaskEl(task) {
       <button class="btn-delete" aria-label="Удалить" title="Удалить" data-del="${task.id}">${ICON.trash}</button>
     </div>`;
 
-  div.querySelector('.task-check').addEventListener('click', async () => { await toggleDone(task.id); renderAll(); });
+  // Одна задача бывает в DOM дважды (скрытая вкладка и открытая), поэтому ищем поля только в своей карточке
+  const own = id => div.querySelector('#' + CSS.escape(id));
+  // Выполнение подтверждается, чтобы случайный клик не закрыл задачу; вернуть в работу можно сразу
+  div.querySelector('.task-check').addEventListener('click', async () => {
+    if (!task.done) { div.classList.toggle('confirming'); return; }
+    await toggleDone(task.id); renderAll();
+  });
+  div.querySelector('[data-done-no]').addEventListener('click', () => div.classList.remove('confirming'));
+  div.querySelector('[data-done-yes]').addEventListener('click', async () => { await toggleDone(task.id); renderAll(); });
   div.querySelector('[data-note]').addEventListener('click', () => {
-    const row = document.getElementById('nr-'+task.id);
+    const row = own('nr-'+task.id);
     row.classList.toggle('open');
-    if (row.classList.contains('open')) document.getElementById('et-'+task.id).focus();
+    if (row.classList.contains('open')) own('et-'+task.id).focus();
   });
   div.querySelector('[data-save]').addEventListener('click', async () => {
-    const v = id => document.getElementById(id + '-' + task.id).value;
+    const v = id => own(id + '-' + task.id).value;
     const text = v('et').trim();
-    if (!text) { document.getElementById('et-'+task.id).focus(); return; }
+    if (!text) { own('et-'+task.id).focus(); return; }
     const time = v('eh');
     await saveTask(task.id, {
       text,
@@ -1049,7 +1068,7 @@ function makeTaskEl(task) {
     if (e.key === 'Enter') { e.preventDefault(); div.querySelector('[data-save]').click(); }
   });
   div.querySelector('[data-close]').addEventListener('click', () => {
-    document.getElementById('nr-'+task.id).classList.remove('open');
+    own('nr-'+task.id).classList.remove('open');
   });
   // Удаление в два нажатия: первое просит подтвердить, через 3 секунды кнопка возвращается
   const delBtn = div.querySelector('[data-del]');
