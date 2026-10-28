@@ -75,7 +75,7 @@ async function doAddTask() {
   renderAll();
 }
 document.getElementById('btn-add').addEventListener('click', doAddTask);
-document.getElementById('task-input').addEventListener('keydown', e => { if (e.key==='Enter') doAddTask(); });
+singleLine(document.getElementById('task-input'), doAddTask);
 
 document.querySelectorAll('.tag-btn').forEach(btn => {
   btn.setAttribute('aria-pressed', 'false');
@@ -136,7 +136,5 @@ document.getElementById('btn-proj-add').addEventListener('click', async () => {
   renderAll();
   updateProjectSelect();
 });
-document.getElementById('proj-name-input').addEventListener('keydown', e => {
-  if (e.key==='Enter') document.getElementById('btn-proj-add').click();
-});
+singleLine(document.getElementById('proj-name-input'), () => document.getElementById('btn-proj-add').click());
 
