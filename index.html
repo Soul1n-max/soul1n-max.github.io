@@ -143,8 +143,83 @@ svg{flex-shrink:0}
 .tag-btn.active{background:var(--tag-bg);border-color:var(--tag-color);color:var(--tag-color)}
 .extra-row{display:flex;flex-wrap:wrap;gap:8px}
 .field-pill{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:12px;background:var(--surface-2);font-size:13px;color:var(--fg-muted)}
-.compact-select,.compact-date{border:0;background:transparent;font-size:13px;font-weight:600;color:var(--fg);outline:none;max-width:150px;color-scheme:inherit;font-variant-numeric:tabular-nums}
-.compact-select option{background:var(--surface);color:var(--fg)}
+
+/* ─── СВОИ ПОЛЯ ВЫБОРА (вместо системных select / date / time) ─── */
+.ui-native{display:none!important}
+.ui-pill{border:0;max-width:100%;min-width:0;transition:background .15s,box-shadow .15s}
+.ui-pill:hover{background:color-mix(in srgb,var(--accent) 10%,var(--surface-2))}
+.ui-pill[aria-expanded="true"]{box-shadow:inset 0 0 0 2px var(--accent)}
+.ui-pill .pill-v{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:150px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}
+.ui-pill .pill-v span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ui-pill.empty .pill-v{color:var(--fg-dim);font-weight:500}
+.ui-pill .pill-chev{display:inline-grid;color:var(--fg-dim);transform:rotate(90deg);transition:transform .15s}
+.ui-pill[aria-expanded="true"] .pill-chev{transform:rotate(-90deg)}
+.opt-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.ui-backdrop{position:fixed;inset:0;z-index:199;background:rgba(16,13,30,.35)}
+.ui-pop{position:fixed;z-index:200;background:var(--surface);color:var(--fg);border:1px solid var(--border);border-radius:18px;box-shadow:0 18px 50px rgba(16,13,30,.2);padding:8px;overflow:auto;overscroll-behavior:contain}
+.ui-pop.sheet{left:0!important;right:0;bottom:0;top:auto!important;width:auto!important;max-height:80vh!important;border-radius:22px 22px 0 0;padding:12px 12px calc(16px + env(safe-area-inset-bottom,0px))}
+.ui-pop-title{display:none;padding:4px 8px 10px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted)}
+.ui-pop.sheet .ui-pop-title{display:block}
+.ui-list{display:flex;flex-direction:column;gap:2px}
+.ui-opt{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 12px;border:0;border-radius:12px;background:transparent;color:var(--fg);font-size:14px;font-weight:500;text-align:left}
+.ui-opt .opt-text{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ui-opt .opt-check{display:none;color:var(--accent-ink)}
+.ui-opt:hover,.ui-opt:focus-visible{background:var(--surface-2);outline:none}
+.ui-opt[aria-selected="true"]{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ui-opt[aria-selected="true"] .opt-check{display:inline-grid}
+/* Время: быстрые варианты и две колонки, часы и минуты */
+.tp-quick{display:flex;flex-wrap:wrap;gap:6px;padding:4px 4px 10px}
+.tp-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 4px}
+.tp-col{display:flex;flex-direction:column;gap:2px;max-height:220px;overflow-y:auto;padding:2px;scrollbar-width:thin}
+.tp-col-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-dim);padding:0 6px 4px}
+.tp-col .ui-opt{justify-content:center;min-height:40px;font-variant-numeric:tabular-nums}
+.pop-foot{display:flex;flex-wrap:wrap;gap:6px;padding:10px 4px 2px;border-top:1px solid var(--border);margin-top:8px}
+.pop-chip{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;transition:background .13s,border-color .13s}
+.pop-chip:hover,.pop-chip:focus-visible{background:var(--surface-2);border-color:var(--accent)}
+.pop-chip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.pop-chip.clear{color:var(--c-urgent);margin-left:auto}
+.pop-chip.done{margin-left:auto;background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.pop-chip.clear + .pop-chip.done{margin-left:0}
+
+/* ─── МЕСЯЦ (общая сетка: календарь на главной и выбор даты) ─── */
+.mc-head{display:flex;align-items:center;gap:6px}
+.mc-title{flex:1;min-width:0;font-size:15px;font-weight:600}
+.mc-title span{color:var(--fg-dim);font-weight:500}
+.mc-nav{width:40px;height:40px;border-radius:12px;border:0;background:transparent;color:var(--fg);display:grid;place-items:center;transition:background .15s}
+.mc-nav:hover{background:var(--surface-2)}
+.mc-nav.prev svg{transform:rotate(180deg)}
+.mc-dows,.mc-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.mc-dows span{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-dim);text-align:center;padding:6px 0 4px}
+.mc-weeks{display:flex;flex-direction:column;gap:2px}
+.mc-day{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:44px;min-width:0;border:0;border-radius:12px;background:transparent;color:var(--fg);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;transition:background .12s,box-shadow .12s}
+.mc-day:hover{background:var(--surface-2)}
+.mc-day.other{color:var(--fg-dim);font-weight:500}
+.mc-day.weekend:not(.other){color:var(--fg-muted)}
+.mc-day.today{background:var(--lav);color:#17142B}
+.mc-day.sel{background:var(--accent);color:var(--on-accent)}
+.mc-dots{display:flex;gap:2px;height:5px}
+.mc-dots i{width:5px;height:5px;border-radius:50%;background:var(--dot,var(--accent))}
+.mc-day.sel .mc-dots i{background:var(--on-accent)}
+.mc-day.drop-over{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
+.month-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px}
+.month-card .mc-title{padding-left:6px}
+.mc-toggle{display:none;height:40px;padding:0 12px;border-radius:12px;border:0;background:var(--surface-2);color:var(--fg-muted);font-size:13px;font-weight:600}
+.mc-hint{font-size:12px;color:var(--fg-dim);padding:2px 6px 0}
+.dp{width:100%}
+.dp .mc-head{padding:2px 0 4px}
+.dp .mc-title{padding-left:8px}
+/* Фильтр списка по выбранному дню */
+.day-filter{display:flex;align-items:center;gap:12px;padding:12px 8px 12px 16px;border-radius:var(--radius);background:var(--accent-soft);color:var(--accent-ink)}
+.day-filter .df-text{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.day-filter .df-text small{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.day-filter .df-text b{font-size:17px;font-weight:700;color:var(--fg)}
+.day-filter .btn-sm{height:40px}
+/* Перетаскивание задачи на день календаря */
+.task-item[draggable="true"]{cursor:grab}
+.task-item.dragging{opacity:.45}
+body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2px var(--accent)}
+.week-day.drop-over,.week-day[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--lav)}
+.cal-day.drop-over{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
 
 /* ─── FILTERS ─── */
 .filter-row{display:flex;flex-wrap:wrap;gap:6px}
@@ -397,6 +472,14 @@ svg{flex-shrink:0}
   .filter-row{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px}
   .filter-chip{flex-shrink:0}
   .task-actions{opacity:1}
+  /* На телефоне месяц стоит над списком и по умолчанию свёрнут до одной недели */
+  .tasks-layout{gap:20px}
+  .tasks-aside{display:contents}
+  .month-card{order:-1;flex:1 1 100%;min-width:0}
+  .mc-toggle{display:inline-flex;align-items:center;gap:6px}
+  .month-card:not(.expanded) .mc-week:not(.cur){display:none}
+  .mc-hint{display:none}
+  .week-card{flex:1 1 100%;min-width:0}
   .cal-day{min-height:52px;align-items:center;padding:6px 2px}
   .cal-ev,.cal-more{display:none}
   .cal-dots{display:flex}
@@ -488,19 +571,15 @@ svg{flex-shrink:0}
                 <button class="tag-btn cat-personal" data-cat="personal">Личное</button>
               </div>
               <div class="extra-row">
-                <label class="field-pill">Дата <input type="date" class="compact-date" id="task-due"></label>
-                <label class="field-pill">Время <input type="time" class="compact-date" id="task-time"></label>
-                <label class="field-pill">Проект
-                  <select class="compact-select" id="task-project"><option value="">Без проекта</option></select>
-                </label>
-                <label class="field-pill">Повтор
-                  <select class="compact-select" id="task-recur">
-                    <option value="">Нет</option>
-                    <option value="daily">Ежедневно</option>
-                    <option value="weekly">Еженедельно</option>
-                    <option value="monthly">Ежемесячно</option>
-                  </select>
-                </label>
+                <input type="date" class="ui-field" data-label="Дата" id="task-due">
+                <input type="time" class="ui-field" data-label="Время" id="task-time">
+                <select class="ui-field" data-label="Проект" id="task-project"><option value="">Без проекта</option></select>
+                <select class="ui-field" data-label="Повтор" id="task-recur">
+                  <option value="">Нет</option>
+                  <option value="daily">Ежедневно</option>
+                  <option value="weekly">Еженедельно</option>
+                  <option value="monthly">Ежемесячно</option>
+                </select>
               </div>
             </div>
           </section>
@@ -526,6 +605,16 @@ svg{flex-shrink:0}
               </div>
             </div>
             <aside class="tasks-aside">
+              <section class="month-card" id="month-card" aria-label="Календарь месяца">
+                <div class="mc-head">
+                  <h2 class="mc-title" id="mc-title">—</h2>
+                  <button class="mc-toggle" id="mc-toggle" aria-expanded="false">Месяц</button>
+                  <button class="mc-nav prev" id="mc-prev" aria-label="Назад"></button>
+                  <button class="mc-nav" id="mc-next" aria-label="Вперёд"></button>
+                </div>
+                <div id="mc-grid"></div>
+                <div class="mc-hint">Нажмите на день, чтобы увидеть его задачи. Задачу можно перетащить на другой день.</div>
+              </section>
               <section class="week-card">
                 <div class="card-head">
                   <h2>Ближайшие 7 дней</h2>
@@ -753,6 +842,10 @@ let activeTab = 'tasks';
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 let calSelected = null;
+let dayFilter = null;     // день, выбранный в календаре на главной: список задач показывает только его
+let miniAnchor = todayKey(); // какой месяц (и на телефоне — какую неделю) показывает календарь на главной
+let miniExpanded = false;
+const CAN_DRAG = window.matchMedia && matchMedia('(pointer: fine)').matches;
 let pickedColor = PROJ_COLORS[0];
 
 // ═══ UTILS ═══
@@ -958,6 +1051,14 @@ async function saveTask(id, fields) {
   if (i >= 0) tasks[i] = fromDB(data);
 }
 
+// Перенос задачи на другой день (перетаскиванием на календарь)
+async function moveTask(id, dueDate) {
+  const { data, error } = await sb.from('tasks').update({ due_date: dueDate }).eq('id', id).select().single();
+  if (error) { console.error('Task move:', error); alert('Не удалось перенести задачу: ' + error.message); return; }
+  const i = tasks.findIndex(t => t.id === id);
+  if (i >= 0) tasks[i] = fromDB(data);
+}
+
 // ═══ PROJECT OPS ═══
 async function addProject(name, color) {
   const row = { id: uid(), user_id: telegramId, name, color };
@@ -1006,9 +1107,9 @@ function makeTaskEl(task) {
   const dueTag   = due  ? `<span class="chip task-due-tag ${due.cls}">${due.label}</span>` : '';
   const recurTag = task.recur ? `<span class="chip task-recur-tag">↻ ${RECUR_LABELS[task.recur]}</span>` : '';
   const projTag  = proj ? `<span class="chip task-proj-tag"><span class="dot" style="background:${proj.color}"></span>${escHtml(proj.name)}</span>` : '';
-  const opt = (v, label, cur) => `<option value="${v}"${v === cur ? ' selected' : ''}>${escHtml(label)}</option>`;
-  const catOptions   = Object.entries(CATS).map(([k, c]) => opt(k, c.label, task.cat)).join('');
-  const projOptions  = projects.map(p => opt(p.id, p.name, task.projectId)).join('');
+  const opt = (v, label, cur, dot) => `<option value="${v}"${v === cur ? ' selected' : ''}${dot ? ` data-dot="${escHtml(dot)}"` : ''}>${escHtml(label)}</option>`;
+  const catOptions   = Object.entries(CATS).map(([k, c]) => opt(k, c.label, task.cat, `var(--c-${k})`)).join('');
+  const projOptions  = projects.map(p => opt(p.id, p.name, task.projectId, p.color)).join('');
   const recurOptions = Object.entries(RECUR_LABELS).map(([k, l]) => opt(k, l, task.recur)).join('');
 
   div.innerHTML = `
@@ -1028,17 +1129,11 @@ function makeTaskEl(task) {
         <label class="sr-only" for="et-${task.id}">Название</label>
         <input class="edit-text" id="et-${task.id}" type="text" maxlength="300" autocomplete="off" value="${escHtml(task.text)}">
         <div class="extra-row edit-fields">
-          <label class="field-pill">Тип
-            <select class="compact-select" id="ec-${task.id}"><option value="">Без типа</option>${catOptions}</select>
-          </label>
-          <label class="field-pill">Дата <input type="date" class="compact-date" id="ed-${task.id}" value="${task.dueDate || ''}"></label>
-          <label class="field-pill">Время <input type="time" class="compact-date" id="eh-${task.id}" value="${fmtTime(task.dueTime)}"></label>
-          <label class="field-pill">Проект
-            <select class="compact-select" id="ep-${task.id}"><option value="">Без проекта</option>${projOptions}</select>
-          </label>
-          <label class="field-pill">Повтор
-            <select class="compact-select" id="er-${task.id}"><option value="">Нет</option>${recurOptions}</select>
-          </label>
+          <select class="ui-field" data-label="Тип" id="ec-${task.id}"><option value="">Без типа</option>${catOptions}</select>
+          <input type="date" class="ui-field" data-label="Дата" id="ed-${task.id}" value="${task.dueDate || ''}">
+          <input type="time" class="ui-field" data-label="Время" id="eh-${task.id}" value="${fmtTime(task.dueTime)}">
+          <select class="ui-field" data-label="Проект" id="ep-${task.id}"><option value="">Без проекта</option>${projOptions}</select>
+          <select class="ui-field" data-label="Повтор" id="er-${task.id}"><option value="">Нет</option>${recurOptions}</select>
         </div>
         <label class="sr-only" for="ni-${task.id}">Заметка</label>
         <textarea class="note-input" id="ni-${task.id}" rows="3" placeholder="Заметка…" autocomplete="off">${escHtml(task.note||'')}</textarea>
@@ -1055,6 +1150,10 @@ function makeTaskEl(task) {
 
   // Одна задача бывает в DOM дважды (скрытая вкладка и открытая), поэтому ищем поля только в своей карточке
   const own = id => div.querySelector('#' + CSS.escape(id));
+  div.querySelectorAll('.ui-field').forEach(uiField);
+  // Мышью активную задачу можно перетащить на день календаря; пока открыта форма, тянуть нельзя (мешает выделять текст)
+  const canDrag = !task.done && CAN_DRAG;
+  if (canDrag) div.draggable = true;
   // Выполнение подтверждается, чтобы случайный клик не закрыл задачу; вернуть в работу можно сразу
   div.querySelector('.task-check').addEventListener('click', async () => {
     if (!task.done) { div.classList.toggle('confirming'); return; }
@@ -1065,6 +1164,7 @@ function makeTaskEl(task) {
   div.querySelector('[data-note]').addEventListener('click', () => {
     const row = own('nr-'+task.id);
     row.classList.toggle('open');
+    if (canDrag) div.draggable = !row.classList.contains('open');
     if (row.classList.contains('open')) own('et-'+task.id).focus();
   });
   div.querySelector('[data-save]').addEventListener('click', async () => {
@@ -1088,6 +1188,7 @@ function makeTaskEl(task) {
   });
   div.querySelector('[data-close]').addEventListener('click', () => {
     own('nr-'+task.id).classList.remove('open');
+    if (canDrag) div.draggable = true;
   });
   // Удаление в два нажатия: первое просит подтвердить, через 3 секунды кнопка возвращается
   const delBtn = div.querySelector('[data-del]');
@@ -1159,8 +1260,9 @@ function renderTasks() {
   list.innerHTML = ''; dlist.innerHTML = '';
 
   const today     = todayKey();
-  const active    = tasks.filter(t => !t.done && (activeFilter==='all' || t.cat===activeFilter)).sort(byDue);
-  const done      = tasks.filter(t =>  t.done && (activeFilter==='all' || t.cat===activeFilter));
+  const shown     = t => (activeFilter==='all' || t.cat===activeFilter) && (!dayFilter || t.dueDate===dayFilter);
+  const active    = tasks.filter(t => !t.done && shown(t)).sort(byDue);
+  const done      = tasks.filter(t =>  t.done && shown(t));
   const allActive = tasks.filter(t => !t.done);
   const allDone   = tasks.filter(t =>  t.done);
   const total     = allActive.length + allDone.length;
@@ -1191,6 +1293,22 @@ function renderTasks() {
     document.getElementById('btn-link-tg').addEventListener('click', tgLinkClick);
     document.getElementById('btn-link').addEventListener('click', linkTelegram);
     document.getElementById('link-code').addEventListener('keydown', e => { if (e.key==='Enter') linkTelegram(); });
+  } else if (dayFilter) {
+    const d = parseDate(dayFilter);
+    const bar = document.createElement('div');
+    bar.className = 'day-filter';
+    bar.innerHTML = `<div class="df-text"><small>${dayFilter === today ? 'Сегодня' : RU_WEEKDAYS[d.getDay()]}</small><b>${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}</b></div>
+      <button class="btn-sm" type="button">Все задачи</button>`;
+    bar.querySelector('button').addEventListener('click', () => setDayFilter(null));
+    list.appendChild(bar);
+    if (active.length) active.forEach(t => list.appendChild(makeTaskEl(t)));
+    else {
+      const empty = document.createElement('div');
+      empty.className = 'tasks-empty';
+      empty.innerHTML = done.length ? '<p>Все задачи этого дня выполнены</p>'
+        : '<div class="empty-title">Свободный день</div><p>Новая задача из поля сверху попадёт на этот день</p>';
+      list.appendChild(empty);
+    }
   } else if (active.length === 0 && total === 0) {
     list.innerHTML = `<div class="tasks-empty"><div class="empty-title">Задач пока нет</div><p>Добавьте первую — поле сверху</p></div>`;
   } else if (active.length === 0) {
@@ -1213,6 +1331,8 @@ function renderTasks() {
     }
   }
   if (showDone) done.forEach(t => dlist.appendChild(makeTaskEl(t)));
+  if (dayFilter) document.getElementById('done-count').textContent = done.length;
+  renderMonthCard();
   renderWeek();
   updateProjectSelect();
 }
@@ -1233,12 +1353,11 @@ function renderWeek() {
                    : '<span class="wd-empty">Свободно</span>';
     const b = document.createElement('button');
     b.className = 'week-day' + (k === today ? ' today' : '') + (n ? ' has' : '');
+    b.dataset.drop = k;
+    if (k === dayFilter) b.setAttribute('aria-pressed', 'true');
     b.setAttribute('aria-label', `${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}, задач: ${n}`);
     b.innerHTML = `<span class="wd-date"><span class="dow">${RU_WD_SHORT[d.getDay()]}</span><span class="num">${d.getDate()}</span></span><span class="wd-list">${list}</span>`;
-    b.addEventListener('click', () => {
-      calYear = d.getFullYear(); calMonth = d.getMonth(); calSelected = k;
-      switchTab('calendar');
-    });
+    b.addEventListener('click', () => setDayFilter(dayFilter === k ? null : k));
     strip.appendChild(b);
   }
 }
@@ -1293,6 +1412,7 @@ function makeDayCell(dayNum, key, dayTasks, otherMonth) {
   if (key === today)       cls += ' today';
   if (key === calSelected) cls += ' selected';
   el.className = cls;
+  el.dataset.drop = key;
   const d = parseDate(key);
   el.setAttribute('aria-label', `${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}${dayTasks.length ? ', задач: ' + dayTasks.length : ''}`);
 
@@ -1361,8 +1481,9 @@ function renderCalDay() {
   addBtn.className = 'btn-add-for-day';
   addBtn.innerHTML = `${ICON.plus} Задача на этот день`;
   addBtn.addEventListener('click', () => {
-    switchTab('tasks');
+    dayFilter = key; miniAnchor = key;
     document.getElementById('task-due').value = key;
+    switchTab('tasks');
     document.getElementById('task-input').focus();
   });
   panel.appendChild(addBtn);
@@ -1469,6 +1590,372 @@ function renderProjBody(projId) {
   }
 }
 
+// ═══ СЕТКА МЕСЯЦА ═══
+// Общая для календаря на главной и для выбора даты. Точки под числом — активные задачи дня
+// цветом их типа, просроченные — красным.
+function activeByDate() {
+  const map = {};
+  tasks.forEach(t => { if (!t.done && t.dueDate) (map[t.dueDate] = map[t.dueDate] || []).push(t); });
+  Object.values(map).forEach(arr => arr.sort(byDue));
+  return map;
+}
+function addDays(key, n) { const d = parseDate(key); d.setDate(d.getDate() + n); return dateKey(d); }
+function sameMonth(key, y, m) { const d = key && parseDate(key); return !!d && d.getFullYear() === y && d.getMonth() === m; }
+function monthTitle(y, m) { const n = RU_MONTHS[m]; return `${n.charAt(0).toUpperCase() + n.slice(1)} <span>${y}</span>`; }
+function monthGridHTML(y, m, { selected, focusKey, curKey, marks, drop }) {
+  const today = todayKey();
+  const lead = (new Date(y, m, 1).getDay() + 6) % 7;
+  const weeks = Math.ceil((lead + new Date(y, m + 1, 0).getDate()) / 7);
+  let html = '<div class="mc-dows" aria-hidden="true">' + ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d => `<span>${d}</span>`).join('') + '</div><div class="mc-weeks">';
+  for (let w = 0; w < weeks; w++) {
+    let row = '', cur = false;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(y, m, 1 - lead + w * 7 + i);
+      const k = dateKey(d);
+      if (k === curKey) cur = true;
+      const list = (marks && marks[k]) || [];
+      let cls = 'mc-day';
+      if (d.getMonth() !== m) cls += ' other';
+      if (i >= 5)             cls += ' weekend';
+      if (k === today)        cls += ' today';
+      if (k === selected)     cls += ' sel';
+      const dots = list.slice(0, 3).map(t =>
+        `<i style="--dot:${k < today ? 'var(--c-urgent)' : t.cat ? `var(--c-${t.cat})` : 'var(--accent)'}"></i>`).join('');
+      const label = `${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}${k === today ? ', сегодня' : ''}${list.length ? ', задач: ' + list.length : ''}`;
+      row += `<button type="button" class="${cls}" data-key="${k}"${drop ? ` data-drop="${k}"` : ''} tabindex="${k === focusKey ? 0 : -1}" aria-label="${label}"${k === selected ? ' aria-pressed="true"' : ''}>${d.getDate()}<span class="mc-dots">${dots}</span></button>`;
+    }
+    html += `<div class="mc-week${cur ? ' cur' : ''}">${row}</div>`;
+  }
+  return html + '</div>';
+}
+// Клавиши в сетке: стрелки — день/неделя, Home/End — начало/конец недели, PageUp/PageDown — месяц
+function gridKey(e, key) {
+  const d = parseDate(key), dow = (d.getDay() + 6) % 7;
+  switch (e.key) {
+    case 'ArrowLeft':  return addDays(key, -1);
+    case 'ArrowRight': return addDays(key, 1);
+    case 'ArrowUp':    return addDays(key, -7);
+    case 'ArrowDown':  return addDays(key, 7);
+    case 'Home':       return addDays(key, -dow);
+    case 'End':        return addDays(key, 6 - dow);
+    case 'PageUp':     d.setMonth(d.getMonth() - 1); return dateKey(d);
+    case 'PageDown':   d.setMonth(d.getMonth() + 1); return dateKey(d);
+  }
+  return null;
+}
+
+// ═══ КАЛЕНДАРЬ НА ГЛАВНОЙ ═══
+// Нажатие на день оставляет в списке только его задачи, и новая задача из поля сверху ставится на этот день
+function setDayFilter(key) {
+  const due = document.getElementById('task-due');
+  if (key) due.value = key;
+  else if (due.value === dayFilter) due.value = '';
+  dayFilter = key;
+  if (key) miniAnchor = key;
+  renderTasks();
+}
+let mcFocus = null;
+function renderMonthCard() {
+  const a = parseDate(miniAnchor), y = a.getFullYear(), m = a.getMonth();
+  document.getElementById('mc-title').innerHTML = monthTitle(y, m);
+  const focusKey = [mcFocus, dayFilter, todayKey(), miniAnchor].find(k => sameMonth(k, y, m));
+  document.getElementById('mc-grid').innerHTML =
+    monthGridHTML(y, m, { selected: dayFilter, focusKey, curKey: miniAnchor, marks: activeByDate(), drop: true });
+}
+function shiftMini(dir) {
+  // На телефоне в свёрнутом виде видна одна неделя — стрелки листают недели, иначе месяцы
+  if (matchMedia('(max-width: 860px)').matches && !miniExpanded) miniAnchor = addDays(miniAnchor, 7 * dir);
+  else { const a = parseDate(miniAnchor); miniAnchor = dateKey(new Date(a.getFullYear(), a.getMonth() + dir, 1)); }
+  mcFocus = null;
+  renderMonthCard();
+}
+document.getElementById('mc-prev').innerHTML = ICON.chev;
+document.getElementById('mc-next').innerHTML = ICON.chev;
+document.getElementById('mc-prev').addEventListener('click', () => shiftMini(-1));
+document.getElementById('mc-next').addEventListener('click', () => shiftMini(1));
+document.getElementById('mc-toggle').addEventListener('click', e => {
+  miniExpanded = !miniExpanded;
+  document.getElementById('month-card').classList.toggle('expanded', miniExpanded);
+  e.currentTarget.textContent = miniExpanded ? 'Неделя' : 'Месяц';
+  e.currentTarget.setAttribute('aria-expanded', miniExpanded);
+});
+document.getElementById('mc-grid').addEventListener('click', e => {
+  const b = e.target.closest('.mc-day');
+  if (b) setDayFilter(dayFilter === b.dataset.key ? null : b.dataset.key);
+});
+document.getElementById('mc-grid').addEventListener('keydown', e => {
+  const b = e.target.closest('.mc-day');
+  const next = b && gridKey(e, b.dataset.key);
+  if (!next) return;
+  e.preventDefault();
+  mcFocus = next; miniAnchor = next;
+  renderMonthCard();
+  document.querySelector(`#mc-grid [data-key="${next}"]`).focus();
+});
+
+// ═══ ПЕРЕТАСКИВАНИЕ ЗАДАЧ НА ДЕНЬ ═══
+// Цели — любые элементы с data-drop: дни календаря на главной, «Ближайшие 7 дней», дни большого календаря
+let dragId = null;
+document.addEventListener('dragstart', e => {
+  const item = e.target.closest && e.target.closest('.task-item[draggable="true"]');
+  if (!item) return;
+  dragId = item.dataset.id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', item.querySelector('.task-text').textContent);
+  item.classList.add('dragging');
+  document.body.classList.add('dragging-task');
+});
+document.addEventListener('dragover', e => {
+  if (!dragId) return;
+  const t = e.target.closest && e.target.closest('[data-drop]');
+  document.querySelectorAll('.drop-over').forEach(el => { if (el !== t) el.classList.remove('drop-over'); });
+  if (!t) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  t.classList.add('drop-over');
+});
+// Перерисовка после переноса удаляет перетаскиваемую карточку, и dragend до документа не доходит — убираем подсветку сами
+function endDrag() {
+  dragId = null;
+  document.querySelectorAll('.dragging, .drop-over').forEach(el => el.classList.remove('dragging', 'drop-over'));
+  document.body.classList.remove('dragging-task');
+}
+document.addEventListener('dragend', endDrag);
+document.addEventListener('drop', async e => {
+  const t = e.target.closest && e.target.closest('[data-drop]');
+  if (!dragId || !t) return;
+  e.preventDefault();
+  const task = tasks.find(x => x.id === dragId);
+  endDrag();
+  if (!task || task.dueDate === t.dataset.drop) return;
+  await moveTask(task.id, t.dataset.drop);
+  renderAll();
+});
+
+// ═══ СВОИ ПОЛЯ ВЫБОРА ═══
+// Системные <select> и поля даты/времени остаются в разметке скрытыми и хранят значение (его читает
+// остальной код), а вместо них показывается своя кнопка-«пилюля» со своим всплывающим окном.
+// На узком экране окно выезжает снизу.
+function uiField(el) {
+  if (el.uiPill) return;
+  const pill = document.createElement('button');
+  pill.type = 'button';
+  pill.className = 'field-pill ui-pill';
+  pill.setAttribute('aria-haspopup', el.tagName === 'SELECT' ? 'listbox' : 'dialog');
+  pill.setAttribute('aria-expanded', 'false');
+  pill.innerHTML = `<span class="pill-k">${escHtml(el.dataset.label)}</span><span class="pill-v"></span><span class="pill-chev">${ICON.chev}</span>`;
+  el.uiPill = pill;
+  el.uiKind = el.tagName === 'SELECT' ? 'select' : el.type; // select | date | time
+  el.classList.add('ui-native');
+  el.tabIndex = -1;
+  el.before(pill);
+  // Значение меняет и остальной код (el.value = …), поэтому перехватываем запись — кнопка не отстаёт
+  const desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value');
+  Object.defineProperty(el, 'value', {
+    configurable: true,
+    get() { return desc.get.call(this); },
+    set(v) { desc.set.call(this, v); paintPill(this); },
+  });
+  pill.addEventListener('click', () => uiPop.el === el ? closePop(true) : openPop(el));
+  pill.addEventListener('keydown', e => {
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && uiPop.el !== el) { e.preventDefault(); openPop(el); }
+  });
+  paintPill(el);
+}
+function dateLabel(v) {
+  if (v === todayKey()) return 'Сегодня';
+  if (v === addDays(todayKey(), 1)) return 'Завтра';
+  const d = parseDate(v);
+  return `${d.getDate()} ${RU_MONTHS_G[d.getMonth()].slice(0, 3)}` + (d.getFullYear() !== new Date().getFullYear() ? ` ${d.getFullYear()}` : '');
+}
+function paintPill(el) {
+  const v = el.value;
+  let text, dot = '';
+  if (el.uiKind === 'select') {
+    const o = el.selectedOptions[0];
+    text = o ? o.textContent : '';
+    if (o && o.value) dot = o.dataset.dot || '';
+  } else if (el.uiKind === 'date') text = v ? dateLabel(v) : 'Без даты';
+  else text = v ? v.slice(0, 5) : 'Нет';
+  el.uiPill.classList.toggle('empty', !v);
+  el.uiPill.querySelector('.pill-v').innerHTML =
+    (dot ? `<i class="opt-dot" style="background:${escHtml(dot)}"></i>` : '') + `<span>${escHtml(text)}</span>`;
+  el.uiPill.setAttribute('aria-label', `${el.dataset.label}: ${text}`);
+}
+function setFieldValue(el, v) {
+  el.value = v;
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+const uiPop = { el: null, box: null, back: null, y: 0, m: 0, focus: null };
+const TIME_PRESETS = ['09:00', '12:00', '15:00', '18:00', '20:00'];
+const isSheet = () => matchMedia('(max-width: 600px)').matches;
+
+function openPop(el) {
+  closePop(false);
+  uiPop.el = el;
+  const sheet = isSheet();
+  if (sheet) {
+    uiPop.back = document.createElement('div');
+    uiPop.back.className = 'ui-backdrop';
+    uiPop.back.addEventListener('click', () => closePop(true));
+    document.body.appendChild(uiPop.back);
+  }
+  const box = document.createElement('div');
+  box.className = 'ui-pop' + (sheet ? ' sheet' : '');
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-label', el.dataset.label);
+  box.addEventListener('keydown', popKeydown);
+  box.addEventListener('click', popClick);
+  box.addEventListener('focusout', e => {
+    // Фокус ушёл из окна (Tab) — закрываем; null бывает при перерисовке содержимого, его пропускаем
+    if (e.relatedTarget && !box.contains(e.relatedTarget) && e.relatedTarget !== el.uiPill) closePop(false);
+  });
+  uiPop.box = box;
+  document.body.appendChild(box);
+  el.uiPill.setAttribute('aria-expanded', 'true');
+  if (el.uiKind === 'date') {
+    uiPop.focus = el.value || todayKey();
+    const d = parseDate(uiPop.focus); uiPop.y = d.getFullYear(); uiPop.m = d.getMonth();
+  }
+  renderPop();
+  placePop();
+  const first = box.querySelector('[aria-selected="true"], .mc-day[tabindex="0"], .ui-opt, .pop-chip');
+  if (first) first.focus({ preventScroll: true });
+}
+function closePop(returnFocus) {
+  if (!uiPop.el) return;
+  const el = uiPop.el;
+  uiPop.box.remove();
+  if (uiPop.back) uiPop.back.remove();
+  el.uiPill.setAttribute('aria-expanded', 'false');
+  uiPop.el = uiPop.box = uiPop.back = null;
+  if (returnFocus && el.uiPill.isConnected) el.uiPill.focus();
+}
+function renderPop() {
+  const el = uiPop.el, box = uiPop.box;
+  const title = `<div class="ui-pop-title">${escHtml(el.dataset.label)}</div>`;
+  const opt = (v, text, on, dot) => `<button type="button" class="ui-opt" role="option" data-v="${escHtml(v)}" aria-selected="${on}">` +
+    (dot ? `<i class="opt-dot" style="background:${escHtml(dot)}"></i>` : '') +
+    `<span class="opt-text">${escHtml(text)}</span><span class="opt-check">${ICON.check}</span></button>`;
+
+  if (el.uiKind === 'select') {
+    box.style.width = '';
+    box.innerHTML = title + `<div class="ui-list" role="listbox" aria-label="${escHtml(el.dataset.label)}">` +
+      [...el.options].map(o => opt(o.value, o.textContent, o.selected, o.value ? o.dataset.dot : '')).join('') + '</div>';
+  } else if (el.uiKind === 'date') {
+    const v = el.value, today = todayKey();
+    const focusKey = [uiPop.focus, v, today].find(k => sameMonth(k, uiPop.y, uiPop.m)) || dateKey(new Date(uiPop.y, uiPop.m, 1));
+    const chip = (k, text) => `<button type="button" class="pop-chip${v === k ? ' on' : ''}" data-v="${k}">${text}</button>`;
+    box.innerHTML = title + `<div class="dp">
+      <div class="mc-head"><div class="mc-title">${monthTitle(uiPop.y, uiPop.m)}</div>
+        <button type="button" class="mc-nav prev" data-nav="-1" aria-label="Предыдущий месяц">${ICON.chev}</button>
+        <button type="button" class="mc-nav" data-nav="1" aria-label="Следующий месяц">${ICON.chev}</button></div>
+      <div class="dp-grid">${monthGridHTML(uiPop.y, uiPop.m, { selected: v, focusKey, marks: activeByDate() })}</div></div>
+      <div class="pop-foot">${chip(today, 'Сегодня')}${chip(addDays(today, 1), 'Завтра')}${chip(addDays(today, 7), 'Через неделю')}` +
+      (v ? '<button type="button" class="pop-chip clear" data-v="">Убрать</button>' : '') + '</div>';
+  } else {
+    const v = el.value ? el.value.slice(0, 5) : '';
+    const [hh, mm] = v ? v.split(':') : ['', ''];
+    const mins = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+    if (mm && !mins.includes(mm)) { mins.push(mm); mins.sort(); }
+    const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+    box.innerHTML = title +
+      `<div class="tp-quick">${TIME_PRESETS.map(t => `<button type="button" class="pop-chip${t === v ? ' on' : ''}" data-v="${t}">${t}</button>`).join('')}</div>
+      <div class="tp-cols">
+        <div><div class="tp-col-h">Часы</div><div class="tp-col" role="listbox" aria-label="Часы" data-part="h">${hours.map(h => opt(h, h, h === hh)).join('')}</div></div>
+        <div><div class="tp-col-h">Минуты</div><div class="tp-col" role="listbox" aria-label="Минуты" data-part="m">${mins.map(m => opt(m, m, m === mm)).join('')}</div></div>
+      </div>
+      <div class="pop-foot">${v ? '<button type="button" class="pop-chip clear" data-v="">Убрать</button>' : ''}<button type="button" class="pop-chip done" data-done>Готово</button></div>`;
+    box.querySelectorAll('.tp-col').forEach(col => {
+      const s = col.querySelector('[aria-selected="true"]') || (col.dataset.part === 'h' && col.children[9]);
+      if (s) col.scrollTop = s.offsetTop - col.offsetTop - col.clientHeight / 2 + s.offsetHeight / 2;
+    });
+  }
+}
+function placePop() {
+  const { el, box } = uiPop;
+  if (!el || box.classList.contains('sheet')) return;
+  if (!el.uiPill.isConnected) { closePop(false); return; }
+  const r = el.uiPill.getBoundingClientRect();
+  const w = el.uiKind === 'select' ? Math.min(Math.max(r.width, 220), 300) : el.uiKind === 'date' ? 320 : 280;
+  box.style.width = w + 'px';
+  box.style.maxHeight = '';
+  const h = box.offsetHeight;
+  const below = innerHeight - r.bottom - 14, above = r.top - 14;
+  box.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+  if (h <= below || below >= above) {
+    box.style.top = (r.bottom + 6) + 'px';
+    box.style.maxHeight = below + 'px';
+  } else {
+    box.style.top = Math.max(8, r.top - 6 - Math.min(h, above)) + 'px';
+    box.style.maxHeight = above + 'px';
+  }
+}
+function popClick(e) {
+  const el = uiPop.el;
+  const nav = e.target.closest('[data-nav]');
+  if (nav) {
+    uiPop.m += +nav.dataset.nav;
+    if (uiPop.m < 0) { uiPop.m = 11; uiPop.y--; }
+    if (uiPop.m > 11) { uiPop.m = 0; uiPop.y++; }
+    uiPop.focus = null;
+    renderPop();
+    uiPop.box.querySelector(`[data-nav="${nav.dataset.nav}"]`).focus();
+    return;
+  }
+  if (e.target.closest('[data-done]')) { closePop(true); return; }
+  const day = e.target.closest('.mc-day');
+  if (day) { setFieldValue(el, day.dataset.key); closePop(true); return; }
+  const b = e.target.closest('[data-v]');
+  if (!b) return;
+  const part = b.closest('.tp-col') && b.closest('.tp-col').dataset.part;
+  if (part) {
+    // Час выбран — окно остаётся открытым для минут; минуты выбраны — время готово
+    const cur = el.value ? el.value.slice(0, 5).split(':') : null;
+    const nextHour = String((new Date().getHours() + 1) % 24).padStart(2, '0');
+    const val = part === 'h' ? `${b.dataset.v}:${cur ? cur[1] : '00'}` : `${cur ? cur[0] : nextHour}:${b.dataset.v}`;
+    setFieldValue(el, val);
+    if (part === 'm') { closePop(true); return; }
+    b.parentElement.querySelectorAll('.ui-opt').forEach(o => o.setAttribute('aria-selected', o === b));
+    const mm = val.slice(3);
+    uiPop.box.querySelectorAll('[data-part="m"] .ui-opt').forEach(o => o.setAttribute('aria-selected', o.dataset.v === mm));
+    uiPop.box.querySelectorAll('.tp-quick .pop-chip').forEach(o => o.classList.toggle('on', o.dataset.v === val));
+    (uiPop.box.querySelector('[data-part="m"] [aria-selected="true"]') || b).focus();
+    return;
+  }
+  setFieldValue(el, b.dataset.v);
+  closePop(true);
+}
+function popKeydown(e) {
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePop(true); return; }
+  const day = e.target.closest('.mc-day');
+  if (day) {
+    const next = gridKey(e, day.dataset.key);
+    if (!next) return;
+    e.preventDefault();
+    const d = parseDate(next);
+    uiPop.focus = next; uiPop.y = d.getFullYear(); uiPop.m = d.getMonth();
+    renderPop();
+    uiPop.box.querySelector(`.mc-day[data-key="${next}"]`).focus();
+    return;
+  }
+  const o = e.target.closest('.ui-opt');
+  if (!o) return;
+  const items = [...o.parentElement.querySelectorAll('.ui-opt')];
+  const i = items.indexOf(o);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: items.length - 1 }[e.key];
+  if (to === undefined) return;
+  e.preventDefault();
+  items[Math.max(0, Math.min(items.length - 1, to))].focus();
+}
+document.addEventListener('pointerdown', e => {
+  if (uiPop.el && !uiPop.box.contains(e.target) && !uiPop.el.uiPill.contains(e.target) && !(uiPop.back && uiPop.back === e.target)) closePop(false);
+}, true);
+window.addEventListener('scroll', e => { if (uiPop.el && !uiPop.box.contains(e.target)) placePop(); }, true);
+window.addEventListener('resize', () => closePop(false));
+document.querySelectorAll('#tab-tasks .quick-add .ui-field').forEach(uiField);
+
 // ═══ PROJECT SELECT ═══
 function updateProjectSelect() {
   const sel = document.getElementById('task-project');
@@ -1476,7 +1963,7 @@ function updateProjectSelect() {
   sel.innerHTML = '<option value="">Без проекта</option>';
   projects.forEach(p => {
     const opt = document.createElement('option');
-    opt.value = p.id; opt.textContent = p.name;
+    opt.value = p.id; opt.textContent = p.name; opt.dataset.dot = p.color;
     sel.appendChild(opt);
   });
   sel.value = projects.find(p => p.id===cur) ? cur : '';
@@ -1947,6 +2434,7 @@ if (new URLSearchParams(location.search).has('demo')) {
     if (t) Object.assign(t, { text: f.text, cat: f.cat, note: f.note, dueDate: f.due_date,
       dueTime: f.due_time, projectId: f.project_id, recur: f.recur });
   };
+  moveTask   = async (id, due) => { const t = tasks.find(t => t.id === id); if (t) t.dueDate = due; };
 
   hideAuthOverlay();
   initTheme();
