@@ -1,0 +1,201 @@
+// Основа: подключение к Supabase, иконки, константы, состояние, общие функции
+
+// ═══ SUPABASE ═══
+const SUPABASE_URL = 'https://goaccwjzmraditwfaeni.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_BCqoxTR0oUH_wX-Xt_SSCA_WzLkk4tU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Сервер Telegram-бота на Render: проверяет вход через Telegram и выдаёт токен входа
+const TG_LOGIN_URL = 'https://synergia-planner-1.onrender.com/site-login';
+const TG_LINK_URL  = 'https://synergia-planner-1.onrender.com/site-link';
+const TG_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 4.5L2.5 11.8l6 2.2M21.5 4.5l-3 15-7-5.3M21.5 4.5L8.5 14l3 5.5 2-5.3"/></svg>';
+
+// ═══ ICONS ═══
+const ICON = {
+  check: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+  note:  '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+  trash: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  close: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  chev:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+  sun:   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  moon:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
+  plus:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+};
+
+// ═══ AUTH STATE ═══
+let currentUser = null;
+let telegramId = null;
+
+// Привязка хранится в app_metadata: её ставит только функция link_telegram в базе
+// по коду от бота. user_metadata пользователь может менять сам, поэтому ему не верим.
+function tgIdOf(user) {
+  const id = user?.app_metadata?.telegram_id;
+  return id ? parseInt(id) : null;
+}
+
+async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    telegramId = tgIdOf(currentUser);
+    document.getElementById('btn-logout').style.display = '';
+    hideAuthOverlay();
+  } else {
+    showAuthOverlay();
+  }
+  sb.auth.onAuthStateChange(async (_event, session) => {
+    const wasLoggedIn = !!currentUser;
+    currentUser = session?.user || null;
+    telegramId = tgIdOf(currentUser);
+    if (currentUser) {
+      document.getElementById('btn-logout').style.display = '';
+      hideAuthOverlay();
+      if (!wasLoggedIn) {
+        // Пользователь только что вошёл — загружаем задачи
+        document.getElementById('tasks-list').innerHTML =
+          '<div class="tasks-empty"><p>Загрузка задач…</p></div>';
+        initColorPicker();
+        await loadProjects(); updateProjectSelect();
+        await loadTasks(); renderAll();
+        subscribeRealtime();
+      }
+    } else {
+      document.getElementById('btn-logout').style.display = 'none';
+      showAuthOverlay();
+    }
+  });
+}
+function showAuthOverlay() {
+  document.getElementById('auth-overlay').style.display = 'flex';
+  prefetchTgBotId();
+}
+function hideAuthOverlay() {
+  document.getElementById('auth-overlay').style.display = 'none';
+  clearAuthInputs();
+}
+// Пароль, оставшийся в скрытой форме входа, браузер принимал за вход при добавлении
+// задачи и предлагал «сохранить пароль» с текстом задачи вместо почты.
+// Формы входа обёрнуты в <form>: без них Chrome считал поле задачи полем логина
+// и подставлял туда сохранённый email.
+// Ни одна форма на странице никуда не отправляется: всё делают кнопки через JS.
+// Вместо onsubmit="return false" в разметке — встроенные обработчики запрещены CSP.
+document.addEventListener('submit', e => e.preventDefault());
+function clearAuthInputs() {
+  document.querySelectorAll('#auth-overlay input').forEach(i => { i.value = ''; });
+}
+function showAuthError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.classList.add('visible');
+}
+function clearAuthError(id) {
+  const el = document.getElementById(id);
+  el.textContent = ''; el.classList.remove('visible');
+}
+function switchAuthForm(show) {
+  document.getElementById('auth-form-login').style.display    = show==='login'    ? '' : 'none';
+  document.getElementById('auth-form-register').style.display = show==='register' ? '' : 'none';
+  document.getElementById('auth-form-confirm').style.display  = show==='confirm'  ? '' : 'none';
+}
+
+// ═══ CONSTANTS ═══
+const CATS = {
+  project:  {label:'Проект',    cls:'cat-project'},
+  contact:  {label:'Контакт',   cls:'cat-contact'},
+  remind:   {label:'Напомнить', cls:'cat-remind'},
+  urgent:   {label:'Срочно',    cls:'cat-urgent'},
+  personal: {label:'Личное',    cls:'cat-personal'},
+};
+const PROJ_COLORS = ['#8b78f0','#5ba8f0','#5fcea0','#f0976a','#e06a72','#f5c842','#c45bde','#42d4d4'];
+const RECUR_LABELS = {daily:'Ежедневно',weekly:'Еженедельно',monthly:'Ежемесячно'};
+const RU_MONTHS = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const RU_MONTHS_G = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const RU_WEEKDAYS = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const RU_WD_SHORT = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+// ═══ STATE ═══
+let tasks = [];
+let projects = [];
+let selectedCat = null;
+let activeFilter = 'all';
+let showDone = false;
+let activeTab = 'tasks';
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calSelected = null;
+let dayFilter = null;     // день, выбранный в календаре на главной: список задач показывает только его
+let miniAnchor = todayKey(); // какой месяц (и на телефоне — какую неделю) показывает календарь на главной
+let miniExpanded = false;
+const CAN_DRAG = window.matchMedia && matchMedia('(pointer: fine)').matches;
+let pickedColor = PROJ_COLORS[0];
+
+// ═══ UTILS ═══
+function uid() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function dateKey(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function todayKey() { return dateKey(new Date()); }
+function parseDate(s) { return s ? new Date(s + 'T12:00:00') : null; }
+function fmtTime(t) { return t ? t.slice(0,5) : ''; }
+// Сортировка: по дате, затем по времени; задачи без времени — в конце дня
+function byDue(a, b) {
+  const da = a.dueDate || '9999', db = b.dueDate || '9999';
+  if (da !== db) return da < db ? -1 : 1;
+  const ta = a.dueTime || '99', tb = b.dueTime || '99';
+  return ta < tb ? -1 : ta > tb ? 1 : 0;
+}
+
+function formatDue(s) {
+  if (!s) return null;
+  const today = todayKey();
+  const tom = dateKey(new Date(Date.now()+86400000));
+  if (s === today) return {label:'Сегодня', cls:'today'};
+  if (s === tom)   return {label:'Завтра', cls:'future'};
+  if (s < today)   return {label:fmtShort(s), cls:'overdue'};
+  return {label:fmtShort(s), cls:'future'};
+}
+function fmtShort(s) {
+  const d = parseDate(s);
+  return `${d.getDate()} ${RU_MONTHS_G[d.getMonth()].slice(0,3)}`;
+}
+function nextDue(dueDate, recur) {
+  const d = parseDate(dueDate) || new Date();
+  if (recur === 'daily')        d.setDate(d.getDate()+1);
+  else if (recur === 'weekly')  d.setDate(d.getDate()+7);
+  else if (recur === 'monthly') d.setMonth(d.getMonth()+1);
+  return dateKey(d);
+}
+function getProject(id) { return projects.find(p => p.id === id) || null; }
+
+// ═══ DB MAPPING ═══
+function fromDB(row) {
+  return {
+    id:        row.id,
+    text:      row.text,
+    cat:       row.cat || null,
+    note:      row.note || '',
+    done:      row.done || false,
+    created:   row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+    dueDate:   row.due_date || null,
+    dueTime:   row.due_time || null,
+    projectId: row.project_id || null,
+    recur:     row.recur || null,
+    doneAt:    row.done_at ? new Date(row.done_at).getTime() : null,
+  };
+}
+
+// ═══ SYNC STATUS ═══
+function setSyncStatus(state) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  if (!dot || !lbl) return;
+  dot.className = 'sync-dot ' + state;
+  if (state === 'ok')      lbl.textContent = 'Синхронизировано';
+  if (state === 'loading') lbl.textContent = 'Синхронизация…';
+  if (state === 'err')     lbl.textContent = 'Ошибка связи';
+  document.getElementById('sync-indicator').title = lbl.textContent;
+}
+
