@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Синергия Планнер</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%230e0b1e'/%3E%3Ccircle cx='32' cy='32' r='28' fill='%231e1838'/%3E%3Ccircle cx='44' cy='20' r='10' fill='%236C58E8'/%3E%3Cline x1='44' y1='20' x2='44' y2='14' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='44' y1='20' x2='48' y2='20' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='22' y='28' width='20' height='4' rx='2' fill='%236C58E8' opacity='.7'/%3E%3Ccircle cx='16' cy='30' r='4' fill='%236C58E8'/%3E%3Cpath d='M14.5 30 l1.5 2 l3-3' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Crect x='22' y='37' width='20' height='4' rx='2' fill='%236C58E8' opacity='.7'/%3E%3Ccircle cx='16' cy='39' r='4' fill='%236C58E8'/%3E%3Cpath d='M14.5 39 l1.5 2 l3-3' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Crect x='22' y='46' width='14' height='4' rx='2' fill='%23C4B8FF' opacity='.3'/%3E%3Ccircle cx='16' cy='48' r='4' fill='%23C4B8FF' opacity='.3'/%3E%3C/svg%3E">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Политика безопасности: скрипты, шрифты и запросы только с перечисленных адресов.
+     Добавляете новый сервис (CDN, API) — впишите его адрес сюда, иначе браузер его заблокирует. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://goaccwjzmraditwfaeni.supabase.co wss://goaccwjzmraditwfaeni.supabase.co https://synergia-planner-1.onrender.com https://oauth.telegram.org; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<!-- Точная версия и хеш файла (integrity): если файл на CDN подменят, браузер его не запустит.
+     Обновлять версию — вместе с новым хешем. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
 
 <style>
@@ -921,11 +927,13 @@ function setSyncStatus(state) {
 }
 
 // ═══ PROJECTS (Supabase) ═══
+// Цвет проекта попадает в style="…", поэтому пропускаем только вид #RRGGBB
+function safeColor(c) { return /^#[0-9a-f]{6}$/i.test(c || '') ? c : PROJ_COLORS[0]; }
 function projFromDB(row) {
   return {
     id:      row.id,
     name:    row.name,
-    color:   row.color,
+    color:   safeColor(row.color),
     created: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
   };
 }
@@ -943,7 +951,7 @@ async function migrateLocalProjects() {
     id:         isUuid(p.id) ? p.id : uid(),
     user_id:    telegramId,
     name:       String(p.name).slice(0, 60),
-    color:      p.color || PROJ_COLORS[0],
+    color:      safeColor(p.color),
     created_at: new Date(p.created || Date.now()).toISOString(),
   }));
   const { error } = await sb.from('projects').upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
