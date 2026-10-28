@@ -43,7 +43,7 @@ function makeTaskEl(task) {
       </div>
       <form class="note-row" id="nr-${task.id}" autocomplete="off">
         <label class="sr-only" for="et-${task.id}">Название</label>
-        <input class="edit-text" id="et-${task.id}" type="text" maxlength="300" autocomplete="off" value="${escHtml(task.text)}">
+        <textarea class="edit-text one-line" id="et-${task.id}" rows="1" wrap="off" maxlength="300" autocomplete="off">${escHtml(task.text)}</textarea>
         <div class="extra-row edit-fields">
           <select class="ui-field" data-label="Тип" id="ec-${task.id}"><option value="">Без типа</option>${catOptions}</select>
           <input type="date" class="ui-field" data-label="Дата" id="ed-${task.id}" value="${task.dueDate || ''}">
@@ -99,9 +99,7 @@ function makeTaskEl(task) {
     });
     renderAll();
   });
-  div.querySelector('#et-'+task.id).addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); div.querySelector('[data-save]').click(); }
-  });
+  singleLine(own('et-'+task.id), () => div.querySelector('[data-save]').click());
   div.querySelector('[data-close]').addEventListener('click', () => {
     own('nr-'+task.id).classList.remove('open');
     if (canDrag) div.draggable = true;
@@ -444,8 +442,11 @@ function renderProjects() {
       e.stopPropagation();
       const nameEl = card.querySelector('.proj-name');
       if (!nameEl) return; // уже редактируется
-      const input = document.createElement('input');
-      input.className = 'proj-name-edit';
+      const input = document.createElement('textarea');
+      input.className = 'proj-name-edit one-line';
+      input.rows = 1;
+      input.wrap = 'off';
+      input.autocomplete = 'off';
       input.value = proj.name;
       input.maxLength = 60;
       input.setAttribute('aria-label', 'Новое название проекта');
@@ -460,8 +461,8 @@ function renderProjects() {
         if (save && name && name !== proj.name) renameProject(proj.id, name).then(() => { renderAll(); updateProjectSelect(); });
         renderAll();
       };
+      singleLine(input, () => finish(true));
       input.addEventListener('keydown', ev => {
-        if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
         if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
       });
       input.addEventListener('blur', () => finish(true));

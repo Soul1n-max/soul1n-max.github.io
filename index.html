@@ -84,7 +84,7 @@
           <section class="quick-add" aria-label="Новая задача">
             <div class="quick-add-row">
               <label for="task-input" class="sr-only">Новая задача</label>
-              <input class="quick-input" id="task-input" placeholder="Что нужно сделать?" maxlength="300" autocomplete="off">
+              <textarea class="quick-input one-line" id="task-input" rows="1" wrap="off" placeholder="Что нужно сделать?" maxlength="300" autocomplete="off" spellcheck="true"></textarea>
               <button class="btn-add" id="btn-add">Добавить</button>
             </div>
             <div class="add-options">
@@ -176,7 +176,7 @@
           <div class="proj-form-title">Новый проект</div>
           <div class="proj-form-row">
             <label for="proj-name-input" class="sr-only">Название проекта</label>
-            <input class="proj-name-input" id="proj-name-input" placeholder="Название проекта…" maxlength="60">
+            <textarea class="proj-name-input one-line" id="proj-name-input" rows="1" wrap="off" placeholder="Название проекта…" maxlength="60" autocomplete="off"></textarea>
             <div class="color-picker" id="color-picker" role="group" aria-label="Цвет проекта"></div>
             <button class="btn-proj-add" id="btn-proj-add">Создать</button>
           </div>

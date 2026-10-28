@@ -79,6 +79,20 @@ function hideAuthOverlay() {
 // Ни одна форма на странице никуда не отправляется: всё делают кнопки через JS.
 // Вместо onsubmit="return false" в разметке — встроенные обработчики запрещены CSP.
 document.addEventListener('submit', e => e.preventDefault());
+// Название задачи и проекта вводятся в <textarea> в одну строку, а не в <input>:
+// менеджеры паролей (Chrome, Яндекс, Edge) подставляют сохранённые почту и пароль
+// только в <input> и не слушают autocomplete="off". Enter не переносит строку,
+// а вызывает onEnter; переносы из вставленного текста заменяются пробелами.
+function singleLine(el, onEnter) {
+  el.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();
+    if (onEnter) onEnter();
+  });
+  el.addEventListener('input', () => {
+    if (/[\r\n]/.test(el.value)) el.value = el.value.replace(/[\r\n]+/g, ' ');
+  });
+}
 function clearAuthInputs() {
   document.querySelectorAll('#auth-overlay input').forEach(i => { i.value = ''; });
 }

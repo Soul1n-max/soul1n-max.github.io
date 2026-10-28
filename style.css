@@ -46,6 +46,7 @@ html,body{min-height:100%}
 html{scrollbar-gutter:stable}
 body{background:var(--bg);color:var(--fg);font-family:'Onest',system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
+textarea.one-line{display:block;resize:none;overflow:hidden;white-space:pre;overflow-wrap:normal}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -117,7 +118,7 @@ svg{flex-shrink:0}
 .quick-add{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:8px 8px 16px;display:flex;flex-direction:column;gap:14px;transition:border-color .2s,box-shadow .2s}
 .quick-add:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
 .quick-add-row{display:flex;gap:8px;align-items:center}
-.quick-input{flex:1;min-width:0;height:56px;padding:0 16px;border:0;outline:none;background:transparent;font-size:18px;font-weight:500}
+.quick-input{flex:1;min-width:0;height:56px;padding:16px;line-height:24px;border:0;outline:none;background:transparent;font-size:18px;font-weight:500}
 .quick-input::placeholder{color:var(--fg-dim)}
 .btn-add{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s,transform .1s}
 .btn-add::before{content:"+";font-size:20px;font-weight:500;line-height:1}
@@ -280,7 +281,7 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .task-actions .btn-delete.confirm{width:auto;padding:0 12px;font-size:13px;font-weight:600;color:var(--c-urgent);background:var(--b-urgent)}
 .note-row{display:none;padding-top:10px;border-top:1px solid var(--border);margin-top:2px}
 .note-row.open{display:flex;flex-direction:column;gap:10px}
-.edit-text{width:100%;height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);font-size:15px;font-weight:500;outline:none;transition:border-color .15s}
+.edit-text{width:100%;height:44px;padding:11px 12px;line-height:20px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);font-size:15px;font-weight:500;outline:none;transition:border-color .15s}
 .edit-text:focus{border-color:var(--accent)}
 .note-input{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:14px;resize:vertical;outline:none;line-height:1.5;min-height:72px;transition:border-color .15s}
 .note-input::placeholder{color:var(--fg-dim)}
@@ -361,7 +362,7 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .proj-add-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px}
 .proj-form-title{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted);margin-bottom:14px}
 .proj-form-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.proj-name-input{flex:1;min-width:180px;height:48px;padding:0 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface-2);font-size:15px;outline:none;transition:border-color .15s}
+.proj-name-input{flex:1;min-width:180px;height:48px;padding:13px 14px;line-height:20px;border-radius:14px;border:1px solid var(--border);background:var(--surface-2);font-size:15px;outline:none;transition:border-color .15s}
 .proj-name-input::placeholder{color:var(--fg-dim)}
 .proj-name-input:focus{border-color:var(--accent)}
 .btn-proj-add{height:48px;padding:0 20px;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s}
@@ -386,7 +387,7 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .btn-proj-del:hover{color:var(--c-urgent);background:var(--b-urgent)}
 .btn-proj-edit{width:40px;height:40px;border:0;border-radius:12px;background:transparent;color:var(--fg-muted);display:grid;place-items:center;transition:color .12s,background .12s}
 .btn-proj-edit:hover{color:var(--accent-ink);background:var(--accent-soft)}
-.proj-name-edit{flex:1;min-width:0;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--accent);background:var(--surface);font-size:15px;font-weight:600;outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.proj-name-edit{flex:1;min-width:0;height:40px;padding:9px 12px;line-height:20px;border-radius:10px;border:1px solid var(--accent);background:var(--surface);font-size:15px;font-weight:600;outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
 .proj-unassigned{margin-top:16px;display:flex;flex-direction:column;gap:8px}
 .proj-section-label{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted);padding:4px 0}
 
@@ -456,7 +457,7 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
   .main{padding:20px 16px calc(110px + env(safe-area-inset-bottom,0px))}
   .main-inner{gap:20px}
   .progress-card{flex:1 1 100%}
-  .quick-input{font-size:16px;height:48px;padding:0 10px}
+  .quick-input{font-size:16px;height:48px;padding:12px 10px;line-height:22px}
   .btn-add{height:44px;padding:0 14px}
   .filter-row{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px}
   .filter-chip{flex-shrink:0}
