@@ -77,7 +77,12 @@ begin
                    'text', msg,
                    'parse_mode', 'HTML',
                    'disable_web_page_preview', true,
+                   -- Кнопки обрабатывает бот (handle_task_callback в bot_webhook.py)
                    'reply_markup', jsonb_build_object('inline_keyboard', jsonb_build_array(
+                     jsonb_build_array(jsonb_build_object('text', '✅ Выполнено', 'callback_data', 'r:d:' || t.id)),
+                     jsonb_build_array(jsonb_build_object('text', '+15 мин', 'callback_data', 'r:s:15:' || t.id),
+                                       jsonb_build_object('text', '+1 час', 'callback_data', 'r:s:60:' || t.id),
+                                       jsonb_build_object('text', 'Завтра', 'callback_data', 'r:t:' || t.id)),
                      jsonb_build_array(jsonb_build_object('text', 'Открыть планер', 'url', site_url))))
                  ),
       headers := '{"Content-Type": "application/json"}'::jsonb

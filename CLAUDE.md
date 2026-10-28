@@ -32,6 +32,8 @@
 
 Напоминания по времени шлёт сама база: `pg_cron` раз в минуту вызывает `send_task_reminders()`
 (`supabase/04_reminders.sql`), токен бота — в Supabase Vault (`telegram_bot_token`), время задач московское.
+Под напоминанием кнопки «Выполнено», «+15 мин», «+1 час», «Завтра» (`callback_data` вида `r:…:id`) —
+их нажатия обрабатывает бот (`handle_task_callback` в `bot_webhook.py`), отложенное напоминание приходит снова.
 
 ## Таблица `projects` (Supabase)
 
