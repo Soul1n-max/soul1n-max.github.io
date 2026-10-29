@@ -47,7 +47,12 @@ if (new URLSearchParams(location.search).has('demo')) {
   };
   toggleDone = async id => {
     const t = tasks.find(t => t.id === id);
-    if (t) { t.done = !t.done; t.doneAt = t.done ? Date.now() : null; }
+    if (!t) return;
+    t.done = !t.done; t.doneAt = t.done ? Date.now() : null;
+    if (!t.recur) return;
+    const copy = nextCopyOf(t);
+    if (t.done && !copy) tasks.unshift(T(t.text, t.cat, nextDue(t.dueDate, t.recur), t.dueTime, t.projectId, { recur: t.recur, note: t.note }));
+    else if (!t.done && copy) tasks = tasks.filter(x => x.id !== copy.id);
   };
   deleteTask = async id => { tasks = tasks.filter(t => t.id !== id); };
   saveTask   = async (id, f) => {
