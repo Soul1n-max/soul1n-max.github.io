@@ -449,12 +449,7 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 
 /* ─── MOBILE ─── */
 @media (max-width: 860px) {
-  /* Страница целиком не прокручивается — прокручивается .app. Иначе встроенный браузер Telegram
-     на iPhone показывает уехавший вверх контент под своей прозрачной панелью с адресом,
-     а там теперь только тёмный фон html. */
-  html{background:var(--side)}
-  html,body{height:100%;overflow:hidden}
-  .app{flex-direction:column;height:100%;min-height:0;overflow-y:auto;overscroll-behavior-y:contain}
+  .app{flex-direction:column}
   .sidebar{
     width:auto;height:auto;position:sticky;top:0;z-index:20;flex-direction:row;align-items:center;gap:8px;
     padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;overflow:visible;
