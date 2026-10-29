@@ -3,6 +3,8 @@
 // Ничего не читает и не пишет ни в Supabase, ни в localStorage.
 if (new URLSearchParams(location.search).has('demo')) {
   const off = n => { const d = new Date(); d.setDate(d.getDate() + n); return dateKey(d); };
+  // Выполнено n дней назад — чтобы в демо у Ивана была серия дней
+  const ago = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.getTime(); };
   const demoProjects = [
     { id: 'demo-p1', name: 'Ребрендинг кофейни', color: '#8b78f0', created: Date.now() },
     { id: 'demo-p2', name: 'Сайт студии',        color: '#5ba8f0', created: Date.now() },
@@ -20,8 +22,9 @@ if (new URLSearchParams(location.search).has('demo')) {
     T('Пробежка 5 км',                      'personal', off(1),  '07:30:00', 'demo-p3', { recur: 'daily' }),
     T('Подготовить отчёт за квартал',       'urgent',   off(3),  null,       null),
     T('Собрать референсы для логотипа',     'project',  off(5),  null,       'demo-p1'),
-    T('Ответить на письмо клиента',         'contact',  off(-1), null,       null,      { done: true, doneAt: Date.now() }),
-    T('Обновить портфолио',                 'personal', off(-2), null,       null,      { done: true, doneAt: Date.now() }),
+    T('Ответить на письмо клиента',         'contact',  off(-1), null,       null,      { done: true, doneAt: ago(1) }),
+    T('Обновить портфолио',                 'personal', off(-2), null,       null,      { done: true, doneAt: ago(2) }),
+    T('Купить продукты на неделю',          'personal', off(-3), null,       null,      { done: true, doneAt: ago(3) }),
   ];
 
   // Вход и база не нужны: все операции работают только в памяти страницы

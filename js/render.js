@@ -146,6 +146,70 @@ function renderMeta() {
   document.getElementById('nav-count-tasks').textContent = allActive.length || '';
   document.getElementById('nav-count-projects').textContent = projects.length || '';
   renderSideProjects();
+  renderMascot();
+}
+
+// ═══ МАСКОТ ИВАН И СЕРИЯ ДНЕЙ ═══
+// Серия — дни подряд, в которые выполнена хотя бы одна задача (по done_at).
+// Если сегодня ещё ничего не сделано, серия до вчерашнего дня не сгорает.
+function plural(n, one, few, many) {
+  const a = n % 10, b = n % 100;
+  if (a === 1 && b !== 11) return one;
+  if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
+  return many;
+}
+
+function calcStreak() {
+  const days = new Set(tasks.filter(t => t.done && t.doneAt).map(t => dateKey(new Date(t.doneAt))));
+  const d = new Date();
+  if (!days.has(dateKey(d))) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (days.has(dateKey(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+
+const STREAK_GOALS = [3, 7, 14, 21, 30, 50, 100, 200, 365];
+
+function mascotState() {
+  const today = todayKey();
+  const active    = tasks.filter(t => !t.done);
+  const overdue   = active.filter(t => t.dueDate && t.dueDate < today).length;
+  const leftToday = active.filter(t => t.dueDate === today).length;
+  const doneToday = tasks.filter(t => t.done && t.doneAt && dateKey(new Date(t.doneAt)) === today).length;
+  const streak = calcStreak();
+  const zadach = n => n + ' ' + plural(n, 'задача', 'задачи', 'задач');
+
+  if (overdue) return { pose: 'point', streak,
+    say: `Есть просроченные: ${zadach(overdue)}. Давай закроем или перенесём.` };
+  if (doneToday && !leftToday) {
+    if (STREAK_GOALS.includes(streak) || (streak > 365 && streak % 100 === 0))
+      return { pose: 'heart', streak, say: `${streak} ${plural(streak, 'день', 'дня', 'дней')} подряд! Горжусь тобой.` };
+    return { pose: 'trophy', streak, say: 'Все дела на сегодня закрыты. Чемпион!' };
+  }
+  if (doneToday) return { pose: 'growth', streak,
+    say: `Сделано ${doneToday}, осталось ${leftToday}. Так держать!` };
+  if (leftToday) return { pose: 'thumb', streak,
+    say: streak ? `На сегодня ${zadach(leftToday)}. Закрой одну, и серия продолжится.`
+                : `На сегодня ${zadach(leftToday)}. Начнём?` };
+  return { pose: 'idea', streak,
+    say: streak ? 'На сегодня планов нет. Сделай любую задачу, чтобы не прервать серию.'
+                : 'На сегодня планов нет. Добавь первую задачу.' };
+}
+
+function renderMascot() {
+  const st  = mascotState();
+  const img = document.getElementById('mascot-img');
+  const src = `img/ivan/${st.pose}.webp`;
+  if (img.getAttribute('src') !== src) {
+    img.setAttribute('src', src);
+    img.classList.remove('pop');
+    void img.offsetWidth;
+    img.classList.add('pop');
+  }
+  document.getElementById('mascot-say').textContent = st.say;
+  document.getElementById('streak-num').textContent = st.streak;
+  document.getElementById('streak-label').textContent = plural(st.streak, 'день', 'дня', 'дней') + ' подряд';
+  document.getElementById('streak').classList.toggle('on', st.streak > 0);
 }
 
 function renderSideProjects() {
