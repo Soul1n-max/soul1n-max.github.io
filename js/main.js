@@ -12,6 +12,12 @@ async function init() {
   await initAuth();
   const tgRedirectUser = takeTgAuthRedirect();
   if (!currentUser) {
+    // Открыли во встроенном браузере Telegram — сразу перекидываем в браузер телефона, один раз за вкладку
+    if (inTelegramBrowser()) {
+      let tried = true;
+      try { tried = !!sessionStorage.getItem('spm2_ext_tried'); sessionStorage.setItem('spm2_ext_tried', '1'); } catch (_) {}
+      if (!tried) openInPhoneBrowser();
+    }
     // Вернулись со страницы входа Telegram — входим; задачи загрузит onAuthStateChange
     if (tgRedirectUser) finishTelegramLogin(tgRedirectUser, 'auth-error-login');
     return; // ждём логина

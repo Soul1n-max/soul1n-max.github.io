@@ -70,6 +70,20 @@ function tgLoginClick(errorId) {
   }
   openTelegramAuth(tgBotId, user => finishTelegramLogin(user, errorId), errorId);
 }
+function inTelegramBrowser() {
+  const ua = navigator.userAgent;
+  // На iPhone встроенные браузеры приложений не пишут «Safari/» в userAgent, Safari, Chrome и Firefox пишут
+  return !!(window.TelegramWebview || window.TelegramWebviewProxy) || /Telegram/i.test(ua)
+    || (/iPhone|iPad|iPod/.test(ua) && !/Safari\//.test(ua) && !navigator.standalone);
+}
+// Открыть сайт в обычном браузере телефона: на iPhone (iOS 17+) — ссылкой x-safari-https://,
+// на Android — intent: без пакета, тогда откроется браузер по умолчанию.
+function openInPhoneBrowser() {
+  const url = location.origin + location.pathname;
+  location.href = /Android/i.test(navigator.userAgent)
+    ? 'intent://' + url.replace(/^https:\/\//, '') + '#Intent;scheme=https;action=android.intent.action.VIEW;end'
+    : 'x-safari-' + url;
+}
 // То же, что Telegram.Login.auth из telegram-widget.js, но без загрузки скрипта с telegram.org:
 // его режут блокировщики рекламы. Окно oauth.telegram.org присылает результат через postMessage;
 // если окно закрылось без сообщения, спрашиваем результат у oauth.telegram.org сами.
