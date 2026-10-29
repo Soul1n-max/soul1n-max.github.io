@@ -503,3 +503,9 @@ body.auth-locked .app{display:none}
   .auth-logo{display:flex}
   .auth-overlay{padding:16px}
 }
+
+/* ─── BACKUP MENU ─── */
+.backup-opt{min-height:56px;gap:12px}
+.backup-opt .opt-text{white-space:normal}
+.backup-opt small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--fg-muted)}
+.backup-ico{display:grid;place-items:center;width:36px;height:36px;flex-shrink:0;border-radius:10px;background:var(--surface-2);color:var(--fg)}
