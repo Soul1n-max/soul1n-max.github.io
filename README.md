@@ -3,9 +3,9 @@
 Веб-планнер задач, календаря и проектов. Задачи синхронизируются через Supabase,
 добавлять их можно на сайте или через Telegram-бота.
 
-**Сайт:** https://soul1n-max.github.io/sinergia-planner/
+**Сайт:** https://soul1n-max.github.io/
 
-**Демо без регистрации:** https://soul1n-max.github.io/sinergia-planner/?demo
+**Демо без регистрации:** https://soul1n-max.github.io/?demo
 
 ## Возможности
 
