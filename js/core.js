@@ -3,6 +3,10 @@
 // ═══ SUPABASE ═══
 const SUPABASE_URL = 'https://goaccwjzmraditwfaeni.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_BCqoxTR0oUH_wX-Xt_SSCA_WzLkk4tU';
+// Ссылка из письма «Сбросить пароль» возвращает на сайт с #…type=recovery, а устаревшая —
+// с #…error_code=…. Смотрим адрес до createClient: клиент сам разбирает его и стирает.
+let passwordRecovery = /[#&]type=recovery(&|$)/.test(location.hash);
+const authLinkError = /[#&]error_code=/.test(location.hash);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Сервер Telegram-бота на Render: проверяет вход через Telegram и выдаёт токен входа
 const TG_LOGIN_URL = 'https://synergia-planner-1.onrender.com/site-login';
@@ -19,6 +23,9 @@ const ICON = {
   sun:   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
   moon:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
   plus:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  down:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  up:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>',
+  table: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 10v10"/></svg>',
 };
 
 // ═══ AUTH STATE ═══
@@ -34,7 +41,15 @@ function tgIdOf(user) {
 
 async function initAuth() {
   const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
+  if (authLinkError) {
+    history.replaceState(null, '', location.pathname + location.search);
+    showAuthError('auth-error-login', 'Ссылка из письма устарела или уже использована. Запросите новую.');
+  }
+  if (passwordRecovery && !session?.user) passwordRecovery = false;
+  if (passwordRecovery) {
+    // Пришли по ссылке сброса: сессия уже есть, но планнер откроем после нового пароля
+    showAuthOverlay(); showResetForm(null);
+  } else if (session?.user) {
     currentUser = session.user;
     telegramId = tgIdOf(currentUser);
     document.getElementById('btn-logout').style.display = '';
@@ -42,7 +57,10 @@ async function initAuth() {
   } else {
     showAuthOverlay();
   }
-  sb.auth.onAuthStateChange(async (_event, session) => {
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') passwordRecovery = true;
+    // Пока задаётся новый пароль, планнер закрыт; вход завершит USER_UPDATED после смены пароля
+    if (passwordRecovery && session?.user) return;
     const wasLoggedIn = !!currentUser;
     currentUser = session?.user || null;
     telegramId = tgIdOf(currentUser);
@@ -110,6 +128,8 @@ function switchAuthForm(show) {
   document.getElementById('auth-form-login').style.display    = show==='login'    ? '' : 'none';
   document.getElementById('auth-form-register').style.display = show==='register' ? '' : 'none';
   document.getElementById('auth-form-confirm').style.display  = show==='confirm'  ? '' : 'none';
+  document.getElementById('auth-form-forgot').style.display   = show==='forgot'   ? '' : 'none';
+  document.getElementById('auth-form-reset').style.display    = show==='reset'    ? '' : 'none';
 }
 
 // ═══ CONSTANTS ═══

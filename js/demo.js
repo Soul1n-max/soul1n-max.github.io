@@ -30,7 +30,7 @@ if (new URLSearchParams(location.search).has('demo')) {
   // Вход и база не нужны: все операции работают только в памяти страницы
   showAuthOverlay   = () => {};
   subscribeRealtime = () => {};
-  loadProjects      = async () => { projects = demoProjects.map(p => ({ ...p })); };
+  loadProjects      = async () => {};
   addProject        = async (name, color) => { projects.push({ id: uid(), name, color, created: Date.now() }); };
   renameProject     = async (id, name) => { const p = getProject(id); if (p) p.name = name; };
   deleteProject     = async id => {
@@ -61,6 +61,13 @@ if (new URLSearchParams(location.search).has('demo')) {
       dueTime: f.due_time, projectId: f.project_id, recur: f.recur });
   };
   moveTask   = async (id, due) => { const t = tasks.find(t => t.id === id); if (t) t.dueDate = due; };
+  importBackup = async (projRows, taskRows) => {
+    const fresh = (list, rows) => rows.filter(r => !list.some(x => x.id === r.id));
+    const p = fresh(projects, projRows), t = fresh(tasks, taskRows);
+    projects.push(...p.map(projFromDB));
+    tasks.unshift(...t.map(fromDB));
+    return { projects: p.length, tasks: t.length };
+  };
 
   hideAuthOverlay();
   initTheme();

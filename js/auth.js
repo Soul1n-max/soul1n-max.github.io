@@ -51,6 +51,99 @@ document.getElementById('btn-confirm-code').addEventListener('click', async () =
 });
 document.getElementById('confirm-code').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-confirm-code').click(); });
 
+// ═══ ВОССТАНОВЛЕНИЕ ПАРОЛЯ ═══
+// Supabase шлёт письмо со ссылкой (и кодом, если он есть в шаблоне «Reset Password»).
+// Ссылка возвращает на сайт уже со входом — остаётся задать пароль. Код вводится здесь же:
+// verifyOtp с type 'recovery' даёт тот же вход. Пока флаг passwordRecovery стоит,
+// onAuthStateChange не открывает планнер; его откроет USER_UPDATED после смены пароля.
+let resetEmail = null;
+function showResetForm(email) {
+  resetEmail = email;
+  clearAuthError('auth-error-reset');
+  document.getElementById('reset-code-field').style.display = email ? '' : 'none';
+  const sub = document.getElementById('reset-sub');
+  if (email) {
+    sub.textContent = 'Мы отправили письмо на ';
+    sub.appendChild(document.createElement('b')).textContent = email;
+    sub.append('. Введите код из письма или нажмите ссылку в нём.');
+  } else {
+    sub.textContent = 'Придумайте новый пароль для входа.';
+  }
+  switchAuthForm('reset');
+  document.getElementById(email ? 'reset-code' : 'reset-password').focus();
+}
+
+document.getElementById('btn-forgot').addEventListener('click', () => {
+  clearAuthError('auth-error-login'); clearAuthError('auth-error-forgot');
+  document.getElementById('forgot-email').value = document.getElementById('login-email').value.trim();
+  switchAuthForm('forgot');
+  document.getElementById('forgot-email').focus();
+});
+document.getElementById('btn-forgot-back').addEventListener('click', () => switchAuthForm('login'));
+
+document.getElementById('btn-forgot-send').addEventListener('click', async () => {
+  const email = document.getElementById('forgot-email').value.trim();
+  clearAuthError('auth-error-forgot');
+  if (!/^\S+@\S+\.\S+$/.test(email)) { showAuthError('auth-error-forgot', 'Введите почту'); return; }
+  const btn = document.getElementById('btn-forgot-send');
+  btn.disabled = true; btn.textContent = 'Отправляем…';
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  btn.disabled = false; btn.textContent = 'Отправить письмо';
+  if (error) {
+    showAuthError('auth-error-forgot', error.status === 429
+      ? 'Письмо уже отправлено, следующее можно запросить чуть позже.' : error.message);
+    return;
+  }
+  document.getElementById('login-email').value = email;
+  showResetForm(email);
+});
+document.getElementById('forgot-email').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-forgot-send').click(); });
+
+document.getElementById('btn-reset-save').addEventListener('click', async () => {
+  const pass = document.getElementById('reset-password').value;
+  clearAuthError('auth-error-reset');
+  const btn = document.getElementById('btn-reset-save');
+  const { data: { session } } = await sb.auth.getSession();
+  let token = '';
+  if (!session) {
+    token = document.getElementById('reset-code').value.replace(/\s/g, '');
+    if (!/^\d{6,10}$/.test(token)) { showAuthError('auth-error-reset', 'Введите цифры из письма'); return; }
+  }
+  if (pass.length < 8) { showAuthError('auth-error-reset', 'Пароль минимум 8 символов'); return; }
+  btn.disabled = true; btn.textContent = 'Сохраняем…';
+  if (!session) {
+    passwordRecovery = true;
+    const { error } = await sb.auth.verifyOtp({ email: resetEmail, token, type: 'recovery' });
+    if (error) {
+      passwordRecovery = false;
+      btn.disabled = false; btn.textContent = 'Сохранить пароль';
+      showAuthError('auth-error-reset', 'Код не подошёл или устарел: ' + error.message);
+      return;
+    }
+    // Код принят, вход уже есть — поле кода больше не нужно, даже если пароль не подойдёт
+    document.getElementById('reset-code-field').style.display = 'none';
+  }
+  passwordRecovery = false;
+  const { error } = await sb.auth.updateUser({ password: pass });
+  btn.disabled = false; btn.textContent = 'Сохранить пароль';
+  if (error) {
+    passwordRecovery = true;
+    showAuthError('auth-error-reset', error.code === 'same_password'
+      ? 'Новый пароль совпадает со старым — придумайте другой.' : error.message);
+  }
+  // При успехе USER_UPDATED в onAuthStateChange откроет планнер
+});
+document.getElementById('reset-password').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-reset-save').click(); });
+document.getElementById('reset-code').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('reset-password').focus(); });
+
+document.getElementById('btn-reset-back').addEventListener('click', async () => {
+  // После ссылки или кода вход уже есть — выходим, чтобы планнер не открылся без нового пароля
+  const recovering = passwordRecovery;
+  passwordRecovery = false;
+  if (recovering) await sb.auth.signOut();
+  switchAuthForm('login');
+});
+
 // ═══ ВХОД ЧЕРЕЗ TELEGRAM ═══
 // Окно входа Telegram (oauth.telegram.org) возвращает данные, подписанные токеном бота.
 // Сайт отправляет их боту на Render: он проверяет подпись, находит или создаёт аккаунт

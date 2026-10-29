@@ -22,6 +22,9 @@
   `/setdomain`), подпись проверяет бот на `/site-login` и выдаёт одноразовый токен входа,
   см. `supabase/README.md`. Почта с паролем — запасной вход. Аккаунт, вошедший по почте, привязывает
   Telegram тем же окном: бот на `/site-link` выдаёт код как по `/link`, сайт применяет его через `link_telegram`.
+- «Забыли пароль?» (`auth.js`): `resetPasswordForEmail` → письмо по шаблону Supabase «Reset Password» (ссылка и код
+  `{{ .Token }}`). Код вводится на сайте (`verifyOtp` type `recovery`), ссылка возвращает с `#…type=recovery`.
+  Пока стоит флаг `passwordRecovery` (`core.js`), планнер не открывается — его откроет `USER_UPDATED` после нового пароля.
 
 ## Таблица `tasks` (Supabase)
 
@@ -71,6 +74,9 @@
 - SEO и превью ссылок — в `<head>`: `description`, `canonical`, Open Graph и Twitter-карточка с картинкой
   `img/og-image.png` (1200×630, Иван на красном), иконки `img/favicon-*.png` и `img/apple-touch-icon.png`, карта сайта
   `sitemap.xml`. `robots.txt` не нужен: у сайта на `github.io/sinergia-planner/` поисковики читают его только из корня домена.
+- Копия задач: кнопка `#btn-backup` в боковом меню (`ui.js`, раздел BACKUP) — «Скачать копию» (.json в полях базы),
+  «Скачать таблицу» (.csv через «;» с BOM для Excel) и «Загрузить копию»: `backupRows()` проверяет каждую строку,
+  `importBackup()` в `data.js` добавляет только задачи и проекты с новыми id, существующие не меняет.
 - ID элементов используются в JS — при правке вёрстки не переименовывай их.
 - Встроенные обработчики (`onclick="…"`, `onsubmit="…"`) и `<script>` без `src` CSP запрещает — события
   вешаем через `addEventListener`. Формы ничего не отправляют: `submit` гасится один раз в `core.js`.
