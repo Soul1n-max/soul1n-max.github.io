@@ -119,6 +119,22 @@ async function finishTelegramLogin(user, errorId) {
     btns.forEach(b => { b.disabled = false; });
   }
 }
+// На телефоне (особенно во встроенном браузере Telegram) окно входа открывается не отдельно,
+// а в этой же вкладке. Тогда oauth.telegram.org возвращает на сайт с #tgAuthResult=<base64 JSON>
+// в адресе — забираем данные оттуда. Вызывается из init(), когда уже известно, вошёл ли пользователь.
+function takeTgAuthRedirect() {
+  const m = location.hash.match(/[#&]tgAuthResult=([^&]*)/);
+  if (!m) return null;
+  history.replaceState(null, '', location.pathname + location.search);
+  try {
+    let b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
+    b64 += '='.repeat((4 - b64.length % 4) % 4);
+    // Имя может быть по-русски: atob отдаёт байты, их декодируем как UTF-8, иначе не сойдётся подпись
+    const json = new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+    const user = JSON.parse(json);
+    return user && user.id && user.hash ? user : null;
+  } catch (_) { return null; }
+}
 document.getElementById('btn-tg-login').addEventListener('click', () => tgLoginClick('auth-error-login'));
 document.getElementById('btn-tg-register').addEventListener('click', () => tgLoginClick('auth-error-register'));
 
@@ -130,19 +146,20 @@ function tgLinkClick() {
     showAuthError('link-error', 'Сервер Telegram просыпается, нажмите ещё раз через 10–20 секунд.');
     prefetchTgBotId(); return;
   }
-  openTelegramAuth(tgBotId, async user => {
-    const btn = document.getElementById('btn-link-tg');
-    if (btn) btn.disabled = true;
-    try {
-      const res = await fetch(TG_LINK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(user) });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.code) throw new Error(data.error || 'сервер не ответил');
-      if (await applyLinkCode(data.code)) return;
-    } catch (e) {
-      showAuthError('link-error', 'Не удалось привязать Telegram: ' + e.message);
-    }
-    if (btn) btn.disabled = false;
-  }, 'link-error');
+  openTelegramAuth(tgBotId, linkWithTelegramUser, 'link-error');
+}
+async function linkWithTelegramUser(user) {
+  const btn = document.getElementById('btn-link-tg');
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch(TG_LINK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(user) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.code) throw new Error(data.error || 'сервер не ответил');
+    if (await applyLinkCode(data.code)) return;
+  } catch (e) {
+    showAuthError('link-error', 'Не удалось привязать Telegram: ' + e.message);
+  }
+  if (btn) btn.disabled = false;
 }
 
 async function linkTelegram() {

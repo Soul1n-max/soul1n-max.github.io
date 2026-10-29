@@ -10,7 +10,12 @@ async function init() {
   renderMeta();
 
   await initAuth();
-  if (!currentUser) return; // ждём логина
+  const tgRedirectUser = takeTgAuthRedirect();
+  if (!currentUser) {
+    // Вернулись со страницы входа Telegram — входим; задачи загрузит onAuthStateChange
+    if (tgRedirectUser) finishTelegramLogin(tgRedirectUser, 'auth-error-login');
+    return; // ждём логина
+  }
 
   document.getElementById('tasks-list').innerHTML =
     '<div class="tasks-empty"><p>Загрузка задач из базы данных…</p></div>';
@@ -21,6 +26,8 @@ async function init() {
 
   renderAll();
   subscribeRealtime();
+  // Вернулись со страницы Telegram после «Привязать через Telegram»
+  if (tgRedirectUser && !telegramId) linkWithTelegramUser(tgRedirectUser);
 }
 
 let rtStarted = false;
