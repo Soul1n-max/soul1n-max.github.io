@@ -170,6 +170,20 @@ function calcStreak() {
 
 const STREAK_GOALS = [3, 7, 14, 21, 30, 50, 100, 200, 365];
 
+// После каждой выполненной задачи Иван меняет образ: номер образа = сколько задач сделано сегодня
+const MASCOT_CHEERS = [
+  { pose: 'growth',   say: 'Растём!' },
+  { pose: 'graduate', say: 'Отличник!' },
+  { pose: 'robot',    say: 'Работаешь как робот!' },
+  { pose: 'tongue',   say: 'Легко!' },
+  { pose: 'hoodie',   say: 'Ты в ударе!' },
+  { pose: 'tablets',  say: 'Старое долой, новое в работу!' },
+  { pose: 'cap',      say: 'Красиво закрыл!' },
+  { pose: 'thumb',    say: 'Так держать!' },
+];
+
+let mascotAllDoneAt = null;   // сколько было сделано, когда всё на сегодня закрылось
+
 function mascotState() {
   const today = todayKey();
   const active    = tasks.filter(t => !t.done);
@@ -179,16 +193,25 @@ function mascotState() {
   const streak = calcStreak();
   const zadach = n => n + ' ' + plural(n, 'задача', 'задачи', 'задач');
 
-  if (overdue) return { pose: 'point', streak,
-    say: `Есть просроченные: ${zadach(overdue)}. Давай закроем или перенесём.` };
-  if (doneToday && !leftToday) {
+  const cheer = () => MASCOT_CHEERS[(doneToday - 1) % MASCOT_CHEERS.length];
+  if (doneToday && !leftToday && !overdue) {
+    // Кубок — в момент, когда закрыто всё на сегодня; задачи сверх плана снова меняют образ
+    if (mascotAllDoneAt !== null && doneToday > mascotAllDoneAt)
+      return { pose: cheer().pose, streak, say: `${cheer().say} Сделано за день: ${doneToday}.` };
+    mascotAllDoneAt = doneToday;
     if (STREAK_GOALS.includes(streak) || (streak > 365 && streak % 100 === 0))
       return { pose: 'heart', streak, say: `${streak} ${plural(streak, 'день', 'дня', 'дней')} подряд! Горжусь тобой.` };
     return { pose: 'trophy', streak, say: 'Все дела на сегодня закрыты. Чемпион!' };
   }
-  if (doneToday) return { pose: 'growth', streak,
-    say: `Сделано ${doneToday}, осталось ${leftToday}. Так держать!` };
-  if (leftToday) return { pose: 'thumb', streak,
+  mascotAllDoneAt = null;
+  if (doneToday) {
+    const c = cheer();
+    const left = leftToday ? `осталось ${leftToday}` : `просрочено ещё ${overdue}`;
+    return { pose: c.pose, streak, say: `${c.say} Сделано ${doneToday}, ${left}.` };
+  }
+  if (overdue) return { pose: 'shrug', streak,
+    say: `Есть просроченные: ${zadach(overdue)}. Давай закроем или перенесём.` };
+  if (leftToday) return { pose: 'think', streak,
     say: streak ? `На сегодня ${zadach(leftToday)}. Закрой одну, и серия продолжится.`
                 : `На сегодня ${zadach(leftToday)}. Начнём?` };
   return { pose: 'idea', streak,
@@ -196,7 +219,16 @@ function mascotState() {
                 : 'На сегодня планов нет. Добавь первую задачу.' };
 }
 
+// Образы грузятся заранее, чтобы после галочки Иван сменился сразу, без пустого кадра
+let mascotPreloaded = false;
+function preloadMascot() {
+  if (mascotPreloaded) return;
+  mascotPreloaded = true;
+  [...MASCOT_CHEERS.map(c => c.pose), 'trophy', 'heart'].forEach(p => { new Image().src = `img/ivan/${p}.webp`; });
+}
+
 function renderMascot() {
+  preloadMascot();
   const st  = mascotState();
   const img = document.getElementById('mascot-img');
   const src = `img/ivan/${st.pose}.webp`;
