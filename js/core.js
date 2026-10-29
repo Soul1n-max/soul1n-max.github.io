@@ -65,11 +65,13 @@ async function initAuth() {
   });
 }
 function showAuthOverlay() {
+  document.body.classList.add('auth-locked');
   document.getElementById('auth-overlay').style.display = 'flex';
   prefetchTgBotId();
 }
 function hideAuthOverlay() {
   document.getElementById('auth-overlay').style.display = 'none';
+  document.body.classList.remove('auth-locked');
   clearAuthInputs();
 }
 // Пароль, оставшийся в скрытой форме входа, браузер принимал за вход при добавлении

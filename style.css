@@ -414,7 +414,10 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .cat-remind   {--tag-color:var(--c-remind);  --tag-bg:var(--b-remind)}
 
 /* ─── AUTH ─── */
-.auth-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;gap:16px;padding:16px;overflow-y:auto}
+/* Пока не вошли, приложение под экраном входа не рисуется: во встроенном браузере Telegram
+   на iPhone оно просвечивало над окном входа и прокручивалось под ним. */
+body.auth-locked .app{display:none}
+.auth-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;gap:16px;padding:16px;overflow-y:auto;overscroll-behavior:contain}
 .auth-hero{flex:1 1 480px;background:var(--side);color:var(--side-fg);border-radius:28px;padding:clamp(28px,5vw,56px);display:flex;flex-direction:column;justify-content:space-between;gap:48px}
 .auth-hero h1{font-family:'Unbounded','Onest',sans-serif;font-size:clamp(34px,4.2vw,58px);line-height:1.04;font-weight:600;letter-spacing:-.035em}
 .auth-hero h1 span{color:var(--side-accent)}
