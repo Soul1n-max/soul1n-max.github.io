@@ -98,6 +98,13 @@ async function addTask(text, cat, due, dueTime, projId, recur) {
   return true;
 }
 
+// Следующая невыполненная копия повторяющейся задачи, если она уже есть
+function nextCopyOf(t) {
+  const nd = nextDue(t.dueDate, t.recur);
+  return tasks.find(x => x.id !== t.id && !x.done && x.recur === t.recur && x.text === t.text
+    && x.dueDate === nd && (x.projectId || null) === (t.projectId || null)) || null;
+}
+
 async function toggleDone(id) {
   const t = tasks.find(t => t.id === id);
   if (!t) return;
@@ -107,16 +114,23 @@ async function toggleDone(id) {
   if (error) { console.error('Update:', error); alert('Не удалось сохранить: ' + error.message); return; }
   t.done = newDone;
   t.doneAt = newDone ? Date.now() : null;
-  if (newDone && t.recur) {
-    const nd = nextDue(t.dueDate, t.recur);
+  if (!t.recur) return;
+  const copy = nextCopyOf(t);
+  if (newDone && !copy) {
     const row = {
       id: uid(), text: t.text, cat: t.cat, note: t.note || '', done: false,
-      due_date: nd, due_time: t.dueTime || null,
+      due_date: nextDue(t.dueDate, t.recur), due_time: t.dueTime || null,
       project_id: t.projectId || null, recur: t.recur,
       user_id: telegramId || null,
     };
-    const { data } = await sb.from('tasks').insert([row]).select().single();
-    if (data) tasks.unshift(fromDB(data));
+    const { data, error: insErr } = await sb.from('tasks').insert([row]).select().single();
+    if (insErr) { console.error('Recur insert:', insErr); alert('Задача выполнена, но следующий повтор не создался: ' + insErr.message); return; }
+    tasks.unshift(fromDB(data));
+  } else if (!newDone && copy) {
+    // Отметку сняли — убираем копию, созданную при выполнении, чтобы повтор не задвоился
+    const { error: delErr } = await sb.from('tasks').delete().eq('id', copy.id);
+    if (delErr) { console.error('Recur delete:', delErr); return; }
+    tasks = tasks.filter(x => x.id !== copy.id);
   }
 }
 
