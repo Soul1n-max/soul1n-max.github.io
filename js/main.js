@@ -11,6 +11,7 @@ async function init() {
 
   await initAuth();
   const tgRedirectUser = takeTgAuthRedirect();
+  if (passwordRecovery) return; // ждём новый пароль, задачи загрузит onAuthStateChange
   if (!currentUser) {
     // Открыли во встроенном браузере Telegram — сразу перекидываем в браузер телефона, один раз за вкладку
     if (inTelegramBrowser()) {

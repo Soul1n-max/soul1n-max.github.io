@@ -22,6 +22,9 @@
   `/setdomain`), подпись проверяет бот на `/site-login` и выдаёт одноразовый токен входа,
   см. `supabase/README.md`. Почта с паролем — запасной вход. Аккаунт, вошедший по почте, привязывает
   Telegram тем же окном: бот на `/site-link` выдаёт код как по `/link`, сайт применяет его через `link_telegram`.
+- «Забыли пароль?» (`auth.js`): `resetPasswordForEmail` → письмо по шаблону Supabase «Reset Password» (ссылка и код
+  `{{ .Token }}`). Код вводится на сайте (`verifyOtp` type `recovery`), ссылка возвращает с `#…type=recovery`.
+  Пока стоит флаг `passwordRecovery` (`core.js`), планнер не открывается — его откроет `USER_UPDATED` после нового пароля.
 
 ## Таблица `tasks` (Supabase)
 
