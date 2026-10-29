@@ -68,6 +68,9 @@
 - Календарь на главной: `#month-card` (`renderMonthCard()`, общая сетка `monthGridHTML()` с окном выбора даты).
   Нажатие на день — `setDayFilter()`: список показывает только этот день, поле «Дата» ставится на него.
   Задачи мышью перетаскиваются на любой элемент с `data-drop="YYYY-MM-DD"` → `moveTask()`.
+- SEO и превью ссылок — в `<head>`: `description`, `canonical`, Open Graph и Twitter-карточка с картинкой
+  `img/og-image.png` (1200×630, Иван на красном), иконки `img/favicon-*.png` и `img/apple-touch-icon.png`, карта сайта
+  `sitemap.xml`. `robots.txt` не нужен: у сайта на `github.io/sinergia-planner/` поисковики читают его только из корня домена.
 - ID элементов используются в JS — при правке вёрстки не переименовывай их.
 - Встроенные обработчики (`onclick="…"`, `onsubmit="…"`) и `<script>` без `src` CSP запрещает — события
   вешаем через `addEventListener`. Формы ничего не отправляют: `submit` гасится один раз в `core.js`.
