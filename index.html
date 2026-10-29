@@ -15,7 +15,7 @@
      Обновлять версию — вместе с новым хешем. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 <body class="auth-locked">
 
@@ -58,6 +58,8 @@
       </div>
       <div class="side-actions">
         <button class="btn-icon" id="btn-theme" aria-label="Сменить тему"></button>
+        <button class="btn-icon" id="btn-backup" aria-label="Копия задач" aria-haspopup="menu" aria-expanded="false" title="Копия задач"></button>
+        <input type="file" id="backup-file" accept=".json,application/json" hidden>
         <button class="btn-logout" id="btn-logout" style="display:none">Выйти</button>
       </div>
     </div>
@@ -259,13 +261,13 @@
 </div>
 
 <!-- Скрипты подключаются по порядку: каждый следующий пользуется функциями предыдущих -->
-<script src="js/core.js?v=9"></script>
-<script src="js/data.js?v=9"></script>
-<script src="js/render.js?v=9"></script>
-<script src="js/fields.js?v=9"></script>
-<script src="js/ui.js?v=9"></script>
-<script src="js/auth.js?v=9"></script>
-<script src="js/main.js?v=9"></script>
-<script src="js/demo.js?v=9"></script>
+<script src="js/core.js?v=10"></script>
+<script src="js/data.js?v=10"></script>
+<script src="js/render.js?v=10"></script>
+<script src="js/fields.js?v=10"></script>
+<script src="js/ui.js?v=10"></script>
+<script src="js/auth.js?v=10"></script>
+<script src="js/main.js?v=10"></script>
+<script src="js/demo.js?v=10"></script>
 </body>
 </html>

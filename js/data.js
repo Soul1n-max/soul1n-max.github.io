@@ -180,3 +180,28 @@ async function deleteProject(id) {
   tasks.forEach(t => { if (t.projectId === id) t.projectId = null; });
 }
 
+
+// ═══ BACKUP ═══
+// Загрузка копии: строки уже проверены (backupRows в ui.js), владелец — текущий пользователь.
+// Задачи и проекты, которые уже есть в базе (тот же id), не меняются. Возвращает, сколько добавлено.
+async function importBackup(projRows, taskRows) {
+  const put = async (table, rows) => {
+    let added = 0;
+    for (let i = 0; i < rows.length; i += 500) {
+      const part = rows.slice(i, i + 500).map(r => ({ ...r, user_id: telegramId }));
+      const { data, error } = await sb.from(table).upsert(part, { onConflict: 'id', ignoreDuplicates: true }).select('id');
+      if (error) throw error;
+      added += (data || []).length;
+    }
+    return added;
+  };
+  try {
+    const p = await put('projects', projRows);
+    const t = await put('tasks', taskRows);
+    return { projects: p, tasks: t };
+  } catch (error) {
+    console.error('Backup import:', error);
+    alert('Не удалось загрузить копию: ' + error.message);
+    return null;
+  }
+}
