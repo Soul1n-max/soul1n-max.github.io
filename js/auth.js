@@ -68,9 +68,6 @@ function tgLoginClick(errorId) {
     showAuthError(errorId, 'Сервер входа просыпается, нажмите ещё раз через 10–20 секунд.');
     prefetchTgBotId(); return;
   }
-  // Во встроенном браузере Telegram вкладка уйдёт на oauth.telegram.org и вернётся без данных входа:
-  // метка переживёт перезагрузку, и init() покажет совет открыть сайт в Safari
-  try { sessionStorage.setItem('spm2_tg_pending', '1'); } catch (_) {}
   openTelegramAuth(tgBotId, user => finishTelegramLogin(user, errorId), errorId);
 }
 function inTelegramBrowser() {
@@ -81,25 +78,12 @@ function inTelegramBrowser() {
 }
 // Открыть сайт в обычном браузере телефона: на iPhone (iOS 17+) — ссылкой x-safari-https://,
 // на Android — intent: без пакета, тогда откроется браузер по умолчанию.
-// Встроенный браузер Telegram может такую ссылку и не пропустить — тогда остаётся совет с кнопками.
 function openInPhoneBrowser() {
   const url = location.origin + location.pathname;
   location.href = /Android/i.test(navigator.userAgent)
     ? 'intent://' + url.replace(/^https:\/\//, '') + '#Intent;scheme=https;action=android.intent.action.VIEW;end'
     : 'x-safari-' + url;
 }
-document.querySelectorAll('.tg-hint-open').forEach(btn => btn.addEventListener('click', openInPhoneBrowser));
-function showTgHint() {
-  document.querySelectorAll('.tg-hint').forEach(el => { el.hidden = false; });
-}
-document.querySelectorAll('.tg-hint-copy').forEach(btn => btn.addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText(location.origin + location.pathname);
-    btn.textContent = 'Ссылка скопирована';
-  } catch (_) {
-    btn.textContent = location.origin + location.pathname;
-  }
-}));
 // То же, что Telegram.Login.auth из telegram-widget.js, но без загрузки скрипта с telegram.org:
 // его режут блокировщики рекламы. Окно oauth.telegram.org присылает результат через postMessage;
 // если окно закрылось без сообщения, спрашиваем результат у oauth.telegram.org сами.
@@ -114,7 +98,6 @@ function openTelegramAuth(botId, onUser, errorId) {
   let done = false;
   const finish = user => {
     if (done) return;
-    try { sessionStorage.removeItem('spm2_tg_pending'); } catch (_) {}
     done = true; clearInterval(timer); window.removeEventListener('message', onMessage);
     if (user) onUser(user);
   };
