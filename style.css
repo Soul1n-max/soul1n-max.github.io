@@ -449,6 +449,11 @@ body.auth-locked .app{display:none}
 .auth-tg:disabled{opacity:.6;cursor:not-allowed}
 .auth-error{background:var(--b-urgent);border:1px solid var(--c-urgent);border-radius:12px;padding:10px 14px;font-size:14px;color:var(--c-urgent);margin-bottom:16px;display:none}
 .auth-error.visible{display:block}
+/* Совет открыть сайт в Safari: во встроенном браузере Telegram окно входа oauth.telegram.org
+   Telegram перехватывает и возвращает на сайт без данных входа */
+.tg-hint{margin-top:12px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);font-size:14px;line-height:1.45;color:var(--fg-muted)}
+.tg-hint[hidden]{display:none}
+.tg-hint-copy{display:block;width:100%;min-height:44px;margin-top:10px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--fg);font-size:14px;font-weight:600}
 
 /* ─── MOBILE ─── */
 @media (max-width: 860px) {

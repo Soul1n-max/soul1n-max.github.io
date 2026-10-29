@@ -15,7 +15,7 @@
      Обновлять версию — вместе с новым хешем. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body class="auth-locked">
 
@@ -227,6 +227,7 @@
         <p class="auth-sub">Войдите, чтобы увидеть свои задачи</p>
         <div class="auth-error" id="auth-error-login" role="alert"></div>
         <button class="auth-tg" id="btn-tg-login" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 4.5L2.5 11.8l6 2.2M21.5 4.5l-3 15-7-5.3M21.5 4.5L8.5 14l3 5.5 2-5.3"/></svg>Войти через Telegram</button>
+        <div class="tg-hint" hidden>Внутри Telegram вход через Telegram не срабатывает. Откройте сайт в Safari: в меню браузера Telegram выберите «Открыть в Safari» или скопируйте ссылку и вставьте её в Safari. Можно и войти по почте ниже.<button type="button" class="tg-hint-copy">Скопировать ссылку</button></div>
         <div class="auth-or">или по почте</div>
         <div class="auth-field"><label class="auth-label" for="login-email">Email</label><input class="auth-input" id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
         <div class="auth-field"><label class="auth-label" for="login-password">Пароль</label><input class="auth-input" id="login-password" type="password" placeholder="••••••" autocomplete="current-password"></div>
@@ -239,6 +240,7 @@
         <p class="auth-sub">Создайте аккаунт для доступа к планнеру</p>
         <div class="auth-error" id="auth-error-register" role="alert"></div>
         <button class="auth-tg" id="btn-tg-register" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 4.5L2.5 11.8l6 2.2M21.5 4.5l-3 15-7-5.3M21.5 4.5L8.5 14l3 5.5 2-5.3"/></svg>Войти через Telegram</button>
+        <div class="tg-hint" hidden>Внутри Telegram вход через Telegram не срабатывает. Откройте сайт в Safari: в меню браузера Telegram выберите «Открыть в Safari» или скопируйте ссылку и вставьте её в Safari. Можно и войти по почте ниже.<button type="button" class="tg-hint-copy">Скопировать ссылку</button></div>
         <div class="auth-or">или по почте</div>
         <div class="auth-field"><label class="auth-label" for="reg-email">Email</label><input class="auth-input" id="reg-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
         <div class="auth-field"><label class="auth-label" for="reg-password">Пароль</label><input class="auth-input" id="reg-password" type="password" placeholder="Минимум 8 символов" autocomplete="new-password"></div>
@@ -259,13 +261,13 @@
 </div>
 
 <!-- Скрипты подключаются по порядку: каждый следующий пользуется функциями предыдущих -->
-<script src="js/core.js?v=6"></script>
-<script src="js/data.js?v=6"></script>
-<script src="js/render.js?v=6"></script>
-<script src="js/fields.js?v=6"></script>
-<script src="js/ui.js?v=6"></script>
-<script src="js/auth.js?v=6"></script>
-<script src="js/main.js?v=6"></script>
-<script src="js/demo.js?v=6"></script>
+<script src="js/core.js?v=7"></script>
+<script src="js/data.js?v=7"></script>
+<script src="js/render.js?v=7"></script>
+<script src="js/fields.js?v=7"></script>
+<script src="js/ui.js?v=7"></script>
+<script src="js/auth.js?v=7"></script>
+<script src="js/main.js?v=7"></script>
+<script src="js/demo.js?v=7"></script>
 </body>
 </html>

@@ -68,8 +68,28 @@ function tgLoginClick(errorId) {
     showAuthError(errorId, 'Сервер входа просыпается, нажмите ещё раз через 10–20 секунд.');
     prefetchTgBotId(); return;
   }
+  // Во встроенном браузере Telegram вкладка уйдёт на oauth.telegram.org и вернётся без данных входа:
+  // метка переживёт перезагрузку, и init() покажет совет открыть сайт в Safari
+  try { sessionStorage.setItem('spm2_tg_pending', '1'); } catch (_) {}
   openTelegramAuth(tgBotId, user => finishTelegramLogin(user, errorId), errorId);
 }
+function inTelegramBrowser() {
+  const ua = navigator.userAgent;
+  // На iPhone встроенные браузеры приложений не пишут «Safari/» в userAgent, Safari, Chrome и Firefox пишут
+  return !!(window.TelegramWebview || window.TelegramWebviewProxy) || /Telegram/i.test(ua)
+    || (/iPhone|iPad|iPod/.test(ua) && !/Safari\//.test(ua));
+}
+function showTgHint() {
+  document.querySelectorAll('.tg-hint').forEach(el => { el.hidden = false; });
+}
+document.querySelectorAll('.tg-hint-copy').forEach(btn => btn.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(location.origin + location.pathname);
+    btn.textContent = 'Ссылка скопирована';
+  } catch (_) {
+    btn.textContent = location.origin + location.pathname;
+  }
+}));
 // То же, что Telegram.Login.auth из telegram-widget.js, но без загрузки скрипта с telegram.org:
 // его режут блокировщики рекламы. Окно oauth.telegram.org присылает результат через postMessage;
 // если окно закрылось без сообщения, спрашиваем результат у oauth.telegram.org сами.
@@ -84,6 +104,7 @@ function openTelegramAuth(botId, onUser, errorId) {
   let done = false;
   const finish = user => {
     if (done) return;
+    try { sessionStorage.removeItem('spm2_tg_pending'); } catch (_) {}
     done = true; clearInterval(timer); window.removeEventListener('message', onMessage);
     if (user) onUser(user);
   };

@@ -11,7 +11,11 @@ async function init() {
 
   await initAuth();
   const tgRedirectUser = takeTgAuthRedirect();
+  let tgPending = false;
+  try { tgPending = !!sessionStorage.getItem('spm2_tg_pending'); sessionStorage.removeItem('spm2_tg_pending'); } catch (_) {}
   if (!currentUser) {
+    // Нажали «Войти через Telegram», а вернулись без данных — так бывает во встроенном браузере Telegram
+    if (inTelegramBrowser() || (tgPending && !tgRedirectUser)) showTgHint();
     // Вернулись со страницы входа Telegram — входим; задачи загрузит onAuthStateChange
     if (tgRedirectUser) finishTelegramLogin(tgRedirectUser, 'auth-error-login');
     return; // ждём логина
