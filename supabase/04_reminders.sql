@@ -32,7 +32,7 @@ as $$
 declare
   reminder_tz constant text     := 'Europe/Moscow';
   catch_up    constant interval := interval '30 minutes';  -- пропущенные минуты всё равно отправить
-  site_url    constant text     := 'https://soul1n-max.github.io/sinergia-planner/';
+  site_url    constant text     := 'https://soul1n-max.github.io/';
   token text;
   t     record;
   msg   text;

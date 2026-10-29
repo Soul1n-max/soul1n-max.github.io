@@ -9,8 +9,9 @@
 Тема хранится в localStorage (`spm2_theme`). Старые проекты из localStorage (`spm2_projects`) при входе
 один раз переносятся в таблицу `projects` с теми же id, копия остаётся в `spm2_projects_backup`.
 
-- Сайт: https://soul1n-max.github.io/sinergia-planner/ (репозиторий `Soul1n-max/sinergia-planner`,
-  GitHub Pages из ветки `main`, корень). Git на компьютере пользователя не установлен —
+- Сайт: https://soul1n-max.github.io/ (репозиторий `Soul1n-max/soul1n-max.github.io`, до 2026-10-29 назывался
+  `sinergia-planner`; GitHub Pages из ветки `main`, корень). Старый адрес `/sinergia-planner/` ведёт сюда через
+  отдельный репозиторий-переадресацию `Soul1n-max/sinergia-planner`. Git на компьютере пользователя не установлен —
   изменения выкладываются через сайт GitHub (Upload files / редактор).
 - Бот: приватный репозиторий `Soul1n-max/synergia-planner`, Render-сервис `synergia-planner-1`
   (`gunicorn bot_webhook:flask_app`, webhook-режим). Ключи берёт из переменных Render
@@ -73,7 +74,7 @@
   Задачи мышью перетаскиваются на любой элемент с `data-drop="YYYY-MM-DD"` → `moveTask()`.
 - SEO и превью ссылок — в `<head>`: `description`, `canonical`, Open Graph и Twitter-карточка с картинкой
   `img/og-image.png` (1200×630, Иван на красном), иконки `img/favicon-*.png` и `img/apple-touch-icon.png`, карта сайта
-  `sitemap.xml`. `robots.txt` не нужен: у сайта на `github.io/sinergia-planner/` поисковики читают его только из корня домена.
+  `sitemap.xml` и `robots.txt` (сайт в корне домена, поэтому поисковики их читают).
 - Копия задач: кнопка `#btn-backup` в боковом меню (`ui.js`, раздел BACKUP) — «Скачать копию» (.json в полях базы),
   «Скачать таблицу» (.csv через «;» с BOM для Excel) и «Загрузить копию»: `backupRows()` проверяет каждую строку,
   `importBackup()` в `data.js` добавляет только задачи и проекты с новыми id, существующие не меняет.

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://soul1n-max.github.io/sitemap.xml
