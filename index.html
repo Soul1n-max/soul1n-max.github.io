@@ -15,7 +15,7 @@
      Обновлять версию — вместе с новым хешем. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 <body class="auth-locked">
 
@@ -230,6 +230,7 @@
         <div class="auth-or">или по почте</div>
         <div class="auth-field"><label class="auth-label" for="login-email">Email</label><input class="auth-input" id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
         <div class="auth-field"><label class="auth-label" for="login-password">Пароль</label><input class="auth-input" id="login-password" type="password" placeholder="••••••" autocomplete="current-password"></div>
+        <div class="auth-forgot"><button type="button" id="btn-forgot">Забыли пароль?</button></div>
         <button type="button" class="auth-btn" id="btn-login">Войти</button>
         <div class="auth-switch">Нет аккаунта? <button type="button" id="switch-to-register">Зарегистрироваться</button></div>
       </form>
@@ -254,18 +255,37 @@
         <button type="button" class="auth-btn" id="btn-confirm-code">Подтвердить</button>
         <div class="auth-switch">Уже подтвердили по ссылке? <button type="button" id="btn-to-login-after-reg">Войти</button></div>
       </form>
+
+      <form id="auth-form-forgot" style="display:none">
+        <h2 class="auth-title">Забыли пароль?</h2>
+        <p class="auth-sub">Укажите почту, с которой входите. Пришлём письмо, чтобы задать новый пароль.</p>
+        <div class="auth-error" id="auth-error-forgot" role="alert"></div>
+        <div class="auth-field"><label class="auth-label" for="forgot-email">Email</label><input class="auth-input" id="forgot-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+        <button type="button" class="auth-btn" id="btn-forgot-send">Отправить письмо</button>
+        <div class="auth-switch">Вспомнили пароль? <button type="button" id="btn-forgot-back">Войти</button></div>
+      </form>
+
+      <form id="auth-form-reset" style="display:none">
+        <h2 class="auth-title">Новый пароль</h2>
+        <p class="auth-sub" id="reset-sub">Придумайте новый пароль для входа.</p>
+        <div class="auth-error" id="auth-error-reset" role="alert"></div>
+        <div class="auth-field" id="reset-code-field"><label class="auth-label" for="reset-code">Код из письма</label><input class="auth-input" id="reset-code" type="text" inputmode="numeric" maxlength="10" placeholder="123456" autocomplete="one-time-code" spellcheck="false"></div>
+        <div class="auth-field"><label class="auth-label" for="reset-password">Новый пароль</label><input class="auth-input" id="reset-password" type="password" placeholder="Минимум 8 символов" autocomplete="new-password"></div>
+        <button type="button" class="auth-btn" id="btn-reset-save">Сохранить пароль</button>
+        <div class="auth-switch">Передумали? <button type="button" id="btn-reset-back">Вернуться ко входу</button></div>
+      </form>
     </div>
   </section>
 </div>
 
 <!-- Скрипты подключаются по порядку: каждый следующий пользуется функциями предыдущих -->
-<script src="js/core.js?v=9"></script>
-<script src="js/data.js?v=9"></script>
-<script src="js/render.js?v=9"></script>
-<script src="js/fields.js?v=9"></script>
-<script src="js/ui.js?v=9"></script>
-<script src="js/auth.js?v=9"></script>
-<script src="js/main.js?v=9"></script>
-<script src="js/demo.js?v=9"></script>
+<script src="js/core.js?v=10"></script>
+<script src="js/data.js?v=10"></script>
+<script src="js/render.js?v=10"></script>
+<script src="js/fields.js?v=10"></script>
+<script src="js/ui.js?v=10"></script>
+<script src="js/auth.js?v=10"></script>
+<script src="js/main.js?v=10"></script>
+<script src="js/demo.js?v=10"></script>
 </body>
 </html>

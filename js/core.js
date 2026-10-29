@@ -3,6 +3,10 @@
 // ═══ SUPABASE ═══
 const SUPABASE_URL = 'https://goaccwjzmraditwfaeni.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_BCqoxTR0oUH_wX-Xt_SSCA_WzLkk4tU';
+// Ссылка из письма «Сбросить пароль» возвращает на сайт с #…type=recovery, а устаревшая —
+// с #…error_code=…. Смотрим адрес до createClient: клиент сам разбирает его и стирает.
+let passwordRecovery = /[#&]type=recovery(&|$)/.test(location.hash);
+const authLinkError = /[#&]error_code=/.test(location.hash);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Сервер Telegram-бота на Render: проверяет вход через Telegram и выдаёт токен входа
 const TG_LOGIN_URL = 'https://synergia-planner-1.onrender.com/site-login';
@@ -34,7 +38,15 @@ function tgIdOf(user) {
 
 async function initAuth() {
   const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
+  if (authLinkError) {
+    history.replaceState(null, '', location.pathname + location.search);
+    showAuthError('auth-error-login', 'Ссылка из письма устарела или уже использована. Запросите новую.');
+  }
+  if (passwordRecovery && !session?.user) passwordRecovery = false;
+  if (passwordRecovery) {
+    // Пришли по ссылке сброса: сессия уже есть, но планнер откроем после нового пароля
+    showAuthOverlay(); showResetForm(null);
+  } else if (session?.user) {
     currentUser = session.user;
     telegramId = tgIdOf(currentUser);
     document.getElementById('btn-logout').style.display = '';
@@ -42,7 +54,10 @@ async function initAuth() {
   } else {
     showAuthOverlay();
   }
-  sb.auth.onAuthStateChange(async (_event, session) => {
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') passwordRecovery = true;
+    // Пока задаётся новый пароль, планнер закрыт; вход завершит USER_UPDATED после смены пароля
+    if (passwordRecovery && session?.user) return;
     const wasLoggedIn = !!currentUser;
     currentUser = session?.user || null;
     telegramId = tgIdOf(currentUser);
@@ -110,6 +125,8 @@ function switchAuthForm(show) {
   document.getElementById('auth-form-login').style.display    = show==='login'    ? '' : 'none';
   document.getElementById('auth-form-register').style.display = show==='register' ? '' : 'none';
   document.getElementById('auth-form-confirm').style.display  = show==='confirm'  ? '' : 'none';
+  document.getElementById('auth-form-forgot').style.display   = show==='forgot'   ? '' : 'none';
+  document.getElementById('auth-form-reset').style.display    = show==='reset'    ? '' : 'none';
 }
 
 // ═══ CONSTANTS ═══
