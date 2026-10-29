@@ -71,6 +71,9 @@
 - Календарь на главной: `#month-card` (`renderMonthCard()`, общая сетка `monthGridHTML()` с окном выбора даты).
   Нажатие на день — `setDayFilter()`: список показывает только этот день, поле «Дата» ставится на него.
   Задачи мышью перетаскиваются на любой элемент с `data-drop="YYYY-MM-DD"` → `moveTask()`.
+- SEO и превью ссылок — в `<head>`: `description`, `canonical`, Open Graph и Twitter-карточка с картинкой
+  `img/og-image.png` (1200×630, Иван на красном), иконки `img/favicon-*.png` и `img/apple-touch-icon.png`, карта сайта
+  `sitemap.xml`. `robots.txt` не нужен: у сайта на `github.io/sinergia-planner/` поисковики читают его только из корня домена.
 - Копия задач: кнопка `#btn-backup` в боковом меню (`ui.js`, раздел BACKUP) — «Скачать копию» (.json в полях базы),
   «Скачать таблицу» (.csv через «;» с BOM для Excel) и «Загрузить копию»: `backupRows()` проверяет каждую строку,
   `importBackup()` в `data.js` добавляет только задачи и проекты с новыми id, существующие не меняет.
