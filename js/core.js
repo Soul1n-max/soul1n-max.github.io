@@ -278,6 +278,48 @@ function fmtSize(b) {
 }
 function getProject(id) { return projects.find(p => p.id === id) || null; }
 
+// ═══ ЧАСОВОЙ ПОЯС ═══
+// Пояс берём у устройства (браузер знает его сам), data.js сохраняет его в user_settings —
+// по нему база шлёт напоминания, а бот считает «сегодня». Без записи — московское время.
+const TZ_DEFAULT = 'Europe/Moscow';
+const TZ_CITIES = {
+  'Europe/Kaliningrad': 'Калининград', 'Europe/Moscow': 'Москва', 'Europe/Simferopol': 'Симферополь',
+  'Europe/Kirov': 'Киров', 'Europe/Volgograd': 'Волгоград', 'Europe/Samara': 'Самара',
+  'Europe/Astrakhan': 'Астрахань', 'Europe/Saratov': 'Саратов', 'Europe/Ulyanovsk': 'Ульяновск',
+  'Asia/Yekaterinburg': 'Екатеринбург', 'Asia/Omsk': 'Омск', 'Asia/Novosibirsk': 'Новосибирск',
+  'Asia/Barnaul': 'Барнаул', 'Asia/Tomsk': 'Томск', 'Asia/Novokuznetsk': 'Новокузнецк',
+  'Asia/Krasnoyarsk': 'Красноярск', 'Asia/Irkutsk': 'Иркутск', 'Asia/Chita': 'Чита',
+  'Asia/Yakutsk': 'Якутск', 'Asia/Khandyga': 'Хандыга', 'Asia/Vladivostok': 'Владивосток',
+  'Asia/Ust-Nera': 'Усть-Нера', 'Asia/Magadan': 'Магадан', 'Asia/Sakhalin': 'Сахалин',
+  'Asia/Srednekolymsk': 'Среднеколымск', 'Asia/Kamchatka': 'Камчатка', 'Asia/Anadyr': 'Анадырь',
+  'Europe/Minsk': 'Минск', 'Asia/Almaty': 'Алматы', 'Asia/Tashkent': 'Ташкент', 'Asia/Bishkek': 'Бишкек',
+  'Asia/Yerevan': 'Ереван', 'Asia/Tbilisi': 'Тбилиси', 'Asia/Baku': 'Баку', 'Europe/Kiev': 'Киев', 'Europe/Kyiv': 'Киев',
+};
+function deviceTz() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return typeof tz === 'string' && /^[A-Za-z][\w+\-]*(\/[\w+\-]+)*$/.test(tz) && tz.length <= 64 ? tz : null;
+  } catch (_) { return null; }
+}
+// Сдвиг пояса от UTC в минутах в момент date
+function tzOffsetMin(tz, date) {
+  const p = {};
+  new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric' }).formatToParts(date).forEach(x => { p[x.type] = +x.value; });
+  return Math.round((Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - Math.floor(date.getTime() / 60000) * 60000) / 60000);
+}
+// «МСК», «МСК+2», «МСК−1», «МСК+2:30»
+function mskDiff(tz) {
+  let d;
+  try { const now = new Date(); d = tzOffsetMin(tz, now) - tzOffsetMin(TZ_DEFAULT, now); } catch (_) { return ''; }
+  if (!d) return 'МСК';
+  const a = Math.abs(d), m = a % 60;
+  return 'МСК' + (d > 0 ? '+' : '−') + Math.floor(a / 60) + (m ? ':' + String(m).padStart(2, '0') : '');
+}
+function tzCity(tz) {
+  return TZ_CITIES[tz] || String(tz).split('/').pop().replace(/_/g, ' ');
+}
+
 // ═══ DB MAPPING ═══
 function fromDB(row) {
   return {

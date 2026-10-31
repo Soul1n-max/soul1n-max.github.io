@@ -146,6 +146,8 @@ svg{flex-shrink:0}
 .av-name-btns button{min-height:44px;padding:0 12px;border-radius:10px;border:0;font-size:13px;font-weight:600}
 .av-name-save{background:var(--accent);color:var(--on-accent)}
 .av-name-cancel{background:var(--surface-2);color:var(--fg)}
+.av-tz{display:flex;align-items:center;gap:12px;min-height:56px;padding:4px 12px 10px;font-size:14px;font-weight:500}
+.av-tz small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--fg-muted)}
 .av-msg{margin:6px 8px 4px;font-size:13px;color:var(--accent-ink)}
 
 /* ─── PAGE HEAD ─── */
