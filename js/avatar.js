@@ -171,7 +171,43 @@ function avatarTzHTML() {
   if (!tz) return '';
   const diff = mskDiff(tz);
   return `<div class="av-tz"><span class="backup-ico">${CLOCK_ICON}</span><span class="opt-text">${escHtml(tzCity(tz))}${diff ? ` · ${escHtml(diff)}` : ''}` +
-    `<small>Часовой пояс определён по устройству. По нему приходят напоминания</small></span></div>`;
+    `<small>Часовой пояс определён по устройству. По нему приходят напоминания и утренняя сводка</small></span></div>`;
+}
+// Утренняя сводка от бота: выключатель и время (шаг 30 минут, с 5:00 до 12:00), сохраняется сразу
+const SUN_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M5.6 5.6l1.4 1.4M3 13h2M19 13h2M17 7l1.4-1.4M7 17a5 5 0 0 1 10 0"/><path d="M3 21h18"/></svg>';
+const STEP_ICON = d => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+const MORNING_MIN = 5 * 60, MORNING_MAX = 12 * 60;
+const morningDemo = { on: true, time: MORNING_DEFAULT };
+let morningSaveTimer = null;
+function morningState() { return avatarDemo.on ? morningDemo : { on: morningOn, time: morningTime }; }
+function morningMin(t) { const [h, m] = String(t).split(':').map(Number); return h * 60 + m; }
+function avatarMorningHTML() {
+  const st = morningState();
+  if (st.on === null || (!avatarDemo.on && !telegramId)) return '';
+  const m = morningMin(st.time);
+  const time = st.on ? `<div class="av-morning-time"><span>Приходит в</span>
+      <button type="button" class="av-step" data-morning-step="-30" aria-label="На 30 минут раньше" ${m <= MORNING_MIN ? 'disabled' : ''}>${STEP_ICON('M15 6l-6 6 6 6')}</button>
+      <span class="av-morning-val" aria-live="polite">${escHtml(st.time)}</span>
+      <button type="button" class="av-step" data-morning-step="30" aria-label="На 30 минут позже" ${m >= MORNING_MAX ? 'disabled' : ''}>${STEP_ICON('M9 6l6 6-6 6')}</button></div>` : '';
+  return `<button type="button" class="ui-opt backup-opt av-morning" data-morning-toggle role="switch" aria-checked="${!!st.on}">
+      <span class="backup-ico">${SUN_ICON}</span><span class="opt-text">Утренняя сводка в Telegram<small>Задачи на день, просроченные и серия дней</small></span>
+      <span class="av-switch" aria-hidden="true"></span></button>${time}`;
+}
+function changeMorning(on, time) {
+  const st = morningState();
+  if (avatarDemo.on) { morningDemo.on = on; morningDemo.time = time; paintAvatarMenu(); return; }
+  const prev = { on: st.on, time: st.time };
+  morningOn = on; morningTime = time; avatarMenu.msg = '';
+  paintAvatarMenu();
+  // Стрелку времени жмут несколько раз подряд — сохраняем, когда перестали
+  clearTimeout(morningSaveTimer);
+  morningSaveTimer = setTimeout(async () => {
+    const err = await saveMorning(morningOn, morningTime);
+    if (!err) return;
+    morningOn = prev.on; morningTime = prev.time;
+    avatarMenu.msg = 'Настройка сводки не сохранилась: ' + err.message;
+    if (avatarMenu.box) paintAvatarMenu();
+  }, 600);
 }
 function paintAvatarMenu() {
   const box = avatarMenu.box, cur = avatarCurrent();
@@ -191,6 +227,7 @@ function paintAvatarMenu() {
       : `<span class="av-name-row"><span class="av-name">${escHtml(avatarName())}</span><button type="button" class="av-name-edit" data-name-edit aria-label="Изменить имя и фамилию" title="Изменить имя">${ICON.note}</button></span>`}
       <span class="av-sub">${escHtml(avatarSub())}</span></div></div>
     ${avatarTzHTML()}
+    ${avatarMorningHTML()}
     <div class="av-grid" role="group" aria-label="Выберите аватар">${opts.join('')}</div>
     <button type="button" class="ui-opt backup-opt av-upload" data-av-upload ${avatarMenu.busy ? 'disabled' : ''}>
       <span class="backup-ico">${ICON.up}</span><span class="opt-text">${avatarMenu.busy ? 'Загружаем…' : 'Загрузить своё фото'}<small>JPG или PNG, обрежем в квадрат</small></span></button>
@@ -249,6 +286,21 @@ function openAvatarMenu() {
 }
 async function onAvatarMenuClick(e) {
   if (avatarMenu.busy) return;
+  if (e.target.closest('[data-morning-toggle]')) {
+    const st = morningState();
+    changeMorning(!st.on, st.time);
+    avatarMenu.box?.querySelector('[data-morning-toggle]')?.focus();
+    return;
+  }
+  const step = e.target.closest('[data-morning-step]');
+  if (step) {
+    const st = morningState();
+    const m = Math.min(MORNING_MAX, Math.max(MORNING_MIN, morningMin(st.time) + Number(step.dataset.morningStep)));
+    changeMorning(st.on, String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'));
+    const again = avatarMenu.box?.querySelector(`[data-morning-step="${step.dataset.morningStep}"]`);
+    (again && !again.disabled ? again : avatarMenu.box?.querySelector('[data-morning-toggle]'))?.focus();
+    return;
+  }
   if (e.target.closest('[data-av-logout]')) { closeAvatarMenu(false); document.getElementById('btn-logout').click(); return; }
   if (e.target.closest('[data-name-edit]')) {
     avatarMenu.editing = true; avatarMenu.msg = ''; paintAvatarMenu();

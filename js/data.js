@@ -58,14 +58,27 @@ async function loadProjects() {
 // запись обновится. userTz — то, что сейчас записано (null — ещё не знаем)
 let userTz = null;
 let tzSyncedFor = null;
+// Утренняя сводка от бота (user_settings.morning / morning_time, supabase/12_morning_summary.sql).
+// morningOn null — столбцов в базе ещё нет, переключатель в окне аватара не показываем
+const MORNING_DEFAULT = '09:00';
+let morningOn = null, morningTime = MORNING_DEFAULT;
+async function saveMorning(on, time) {
+  if (!telegramId) return new Error('Сначала привяжите Telegram');
+  const { error } = await sb.from('user_settings').upsert({ user_id: telegramId, morning: on, morning_time: time + ':00' });
+  return error;
+}
 async function syncTimezone() {
   const tz = deviceTz();
   if (!telegramId || tzSyncedFor === telegramId) return;
   tzSyncedFor = telegramId;
   try {
-    const { data, error } = await sb.from('user_settings').select('tz').eq('user_id', telegramId).maybeSingle();
+    // select('*'): столбцов утренней сводки нет, пока не запущен 12_morning_summary.sql — пояс всё равно читаем
+    const { data, error } = await sb.from('user_settings').select('*').eq('user_id', telegramId).maybeSingle();
     if (error) throw error;
     userTz = data?.tz || TZ_DEFAULT;
+    morningOn = !data || !('morning' in data) ? (data ? null : true) : data.morning !== false;
+    if (data && 'morning' in data) morningTime = String(data.morning_time || MORNING_DEFAULT).slice(0, 5);
+    else if (!data) morningTime = MORNING_DEFAULT;
     if (tz && tz !== data?.tz) {
       const { error: upErr } = await sb.from('user_settings').upsert({ user_id: telegramId, tz });
       if (upErr) throw upErr;
