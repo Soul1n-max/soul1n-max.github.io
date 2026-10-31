@@ -22,6 +22,11 @@ if (new URLSearchParams(location.search).has('demo')) {
     T('Пробежка 5 км',                      'personal', off(1),  '07:30:00', 'demo-p3', { recur: 'daily' }),
     T('Подготовить отчёт за квартал',       'urgent',   off(3),  null,       null),
     T('Собрать референсы для логотипа',     'project',  off(5),  null,       'demo-p1'),
+    T('Записаться к стоматологу',           'personal', off(12), null,       'demo-p3'),
+    // Пришли из Telegram-бота без даты — попадают в «Не рассортированные»
+    T('Посмотреть вебинар по UX',           null,       null,    null,       null,      { note: 'Ссылка в переписке с куратором' }),
+    T('Скинуть Ане фото для презентации',   'contact',  null,    null,       'demo-p1'),
+    T('Проверить почту от куратора',        'remind',   off(0),  null,       null,      { done: true, doneAt: Date.now() }),
     T('Ответить на письмо клиента',         'contact',  off(-1), null,       null,      { done: true, doneAt: ago(1) }),
     T('Обновить портфолио',                 'personal', off(-2), null,       null,      { done: true, doneAt: ago(2) }),
     T('Купить продукты на неделю',          'personal', off(-3), null,       null,      { done: true, doneAt: ago(3) }),

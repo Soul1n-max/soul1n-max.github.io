@@ -121,7 +121,8 @@ function renderPop() {
         <button type="button" class="mc-nav" data-nav="1" aria-label="Следующий месяц">${ICON.chev}</button></div>
       <div class="dp-grid">${monthGridHTML(uiPop.y, uiPop.m, { selected: v, focusKey, marks: activeByDate() })}</div></div>
       <div class="pop-foot">${chip(today, 'Сегодня')}${chip(addDays(today, 1), 'Завтра')}${chip(addDays(today, 7), 'Через неделю')}` +
-      (v ? '<button type="button" class="pop-chip clear" data-v="">Убрать</button>' : '') + '</div>';
+      // data-required на поле — дата обязательна, убрать её нельзя
+      (v && !el.hasAttribute('data-required') ? '<button type="button" class="pop-chip clear" data-v="">Убрать</button>' : '') + '</div>';
   } else {
     const v = el.value ? el.value.slice(0, 5) : '';
     const [hh, mm] = v ? v.split(':') : ['', ''];

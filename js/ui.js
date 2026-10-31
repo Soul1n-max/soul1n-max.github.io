@@ -56,7 +56,9 @@ async function doAddTask() {
   const input = document.getElementById('task-input');
   const text  = input.value.trim();
   if (!text) { input.focus(); return; }
-  const due     = document.getElementById('task-due').value || null;
+  const dueEl   = document.getElementById('task-due');
+  if (!dueEl.value) dueEl.value = todayKey(); // дата обязательна; без неё задачи приходят только из бота
+  const due     = dueEl.value;
   const dueTime = document.getElementById('task-time').value || null;
   const proj    = document.getElementById('task-project').value || null;
   const recur   = document.getElementById('task-recur').value || null;
@@ -76,6 +78,34 @@ async function doAddTask() {
 }
 document.getElementById('btn-add').addEventListener('click', doAddTask);
 singleLine(document.getElementById('task-input'), doAddTask);
+document.getElementById('task-due').value = todayKey();
+
+// ═══ ПОИСК ПО ЛЕНТЕ ═══
+// Ищет по тексту и заметке без учёта регистра, вместе с фильтром типа; Esc очищает.
+// На телефоне поле свёрнуто в кнопку-лупу и раскрывается на всю ширину, пока в нём ищут.
+const searchEl = document.getElementById('task-search');
+function setSearch(v) {
+  searchEl.value = v;
+  searchQuery = v.trim().toLowerCase();
+  document.getElementById('search-clear').hidden = !v;
+  document.getElementById('feed-tools').classList.toggle('searching', !!v || document.activeElement === searchEl);
+  renderTasks();
+}
+singleLine(searchEl, () => searchEl.blur());
+searchEl.addEventListener('input', () => setSearch(searchEl.value));
+searchEl.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  e.preventDefault();
+  if (searchEl.value) setSearch(''); else searchEl.blur();
+});
+searchEl.addEventListener('focus', () => document.getElementById('feed-tools').classList.add('searching'));
+searchEl.addEventListener('blur', () => document.getElementById('feed-tools').classList.toggle('searching', !!searchEl.value));
+document.getElementById('search-clear').addEventListener('click', () => { setSearch(''); searchEl.focus(); });
+
+document.getElementById('qa-more').addEventListener('click', e => {
+  const open = e.currentTarget.closest('.quick-add').classList.toggle('open');
+  e.currentTarget.setAttribute('aria-expanded', open);
+});
 
 document.querySelectorAll('.tag-btn').forEach(btn => {
   btn.setAttribute('aria-pressed', 'false');

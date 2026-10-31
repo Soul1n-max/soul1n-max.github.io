@@ -46,7 +46,7 @@ function makeTaskEl(task) {
         <textarea class="edit-text one-line" id="et-${task.id}" rows="1" wrap="off" maxlength="300" autocomplete="off">${escHtml(task.text)}</textarea>
         <div class="extra-row edit-fields">
           <select class="ui-field" data-label="Тип" id="ec-${task.id}"><option value="">Без типа</option>${catOptions}</select>
-          <input type="date" class="ui-field" data-label="Дата" id="ed-${task.id}" value="${task.dueDate || ''}">
+          <input type="date" class="ui-field" data-label="Дата" id="ed-${task.id}" value="${task.dueDate || ''}"${task.dueDate ? ' data-required' : ''}>
           <input type="time" class="ui-field" data-label="Время" id="eh-${task.id}" value="${fmtTime(task.dueTime)}">
           <select class="ui-field" data-label="Проект" id="ep-${task.id}"><option value="">Без проекта</option>${projOptions}</select>
           <select class="ui-field" data-label="Повтор" id="er-${task.id}"><option value="">Нет</option>${recurOptions}</select>
@@ -67,9 +67,7 @@ function makeTaskEl(task) {
   // Одна задача бывает в DOM дважды (скрытая вкладка и открытая), поэтому ищем поля только в своей карточке
   const own = id => div.querySelector('#' + CSS.escape(id));
   div.querySelectorAll('.ui-field').forEach(uiField);
-  // Мышью активную задачу можно перетащить на день календаря; пока открыта форма, тянуть нельзя (мешает выделять текст)
-  const canDrag = !task.done && CAN_DRAG;
-  if (canDrag) div.draggable = true;
+  // Активную задачу можно перетащить на день календаря (drag.js); пока открыта форма, тянуть нельзя
   // Выполнение подтверждается, чтобы случайный клик не закрыл задачу; вернуть в работу можно сразу
   div.querySelector('.task-check').addEventListener('click', async () => {
     if (!task.done) { div.classList.toggle('confirming'); return; }
@@ -80,7 +78,6 @@ function makeTaskEl(task) {
   div.querySelector('[data-note]').addEventListener('click', () => {
     const row = own('nr-'+task.id);
     row.classList.toggle('open');
-    if (canDrag) div.draggable = !row.classList.contains('open');
     if (row.classList.contains('open')) own('et-'+task.id).focus();
   });
   div.querySelector('[data-save]').addEventListener('click', async () => {
@@ -102,7 +99,6 @@ function makeTaskEl(task) {
   singleLine(own('et-'+task.id), () => div.querySelector('[data-save]').click());
   div.querySelector('[data-close]').addEventListener('click', () => {
     own('nr-'+task.id).classList.remove('open');
-    if (canDrag) div.draggable = true;
   });
   // Удаление в два нажатия: первое просит подтвердить, через 3 секунды кнопка возвращается
   const delBtn = div.querySelector('[data-del]');
@@ -137,11 +133,14 @@ function sectionHead(text, count, extraCls) {
 
 // ═══ RENDER META (прогресс, счётчики, боковое меню) ═══
 function renderMeta() {
+  // Прогресс за сегодня, как и фраза Ивана: сделано сегодня из (оставшихся на сегодня + сделанных сегодня)
+  const today     = todayKey();
   const allActive = tasks.filter(t => !t.done);
-  const allDone   = tasks.filter(t =>  t.done);
-  const total = allActive.length + allDone.length;
-  const pct   = total ? Math.round(allDone.length / total * 100) : 0;
-  document.getElementById('prog-text').innerHTML = `${allDone.length} <span style="color:var(--fg-muted);font-weight:500">из ${total}</span>`;
+  const leftToday = allActive.filter(t => t.dueDate === today).length;
+  const doneToday = tasks.filter(t => t.done && t.doneAt && dateKey(new Date(t.doneAt)) === today).length;
+  const total = leftToday + doneToday;
+  const pct   = total ? Math.round(doneToday / total * 100) : 0;
+  document.getElementById('prog-text').innerHTML = `${doneToday} <span style="color:var(--fg-muted);font-weight:500">из ${total}</span>`;
   document.getElementById('prog-fill').style.width = pct + '%';
   document.getElementById('nav-count-tasks').textContent = allActive.length || '';
   document.getElementById('nav-count-projects').textContent = projects.length || '';
@@ -247,18 +246,30 @@ function renderMascot() {
 function renderSideProjects() {
   const box = document.getElementById('side-projects');
   box.innerHTML = '';
-  if (!projects.length) {
-    box.innerHTML = '<div class="side-empty">Пока нет проектов</div>';
-    return;
-  }
-  projects.forEach(p => {
-    const n = tasks.filter(t => t.projectId === p.id && !t.done).length;
+  if (!projects.length) box.innerHTML = '<div class="side-empty">Пока нет проектов</div>';
+  // Нажатие оставляет в ленте задачи проекта; повторное — возвращает всю ленту
+  const item = (key, dot, name) => {
+    const n = tasks.filter(t => !t.done && (key === 'none' ? !t.projectId : t.projectId === key)).length;
     const b = document.createElement('button');
-    b.className = 'side-proj';
-    b.innerHTML = `<span class="dot" style="background:${p.color}"></span><span class="name">${escHtml(p.name)}</span><span class="cnt">${n}</span>`;
-    b.addEventListener('click', () => switchTab('projects'));
+    b.className = 'side-proj' + (key === 'none' ? ' none' : '');
+    b.setAttribute('aria-pressed', projFilter === key);
+    b.innerHTML = `<span class="dot" style="background:${dot}"></span><span class="name">${escHtml(name)}</span><span class="cnt">${n}</span>`;
+    b.addEventListener('click', () => setProjFilter(projFilter === key ? null : key));
     box.appendChild(b);
-  });
+  };
+  projects.forEach(p => item(p.id, p.color, p.name));
+  item('none', 'transparent', 'Без проекта');
+}
+function setProjFilter(key) {
+  const sel = document.getElementById('task-project');
+  // Новая задача из поля сверху попадает в выбранный проект
+  if (key && key !== 'none') sel.value = key;
+  else if (sel.value === projFilter) sel.value = '';
+  projFilter = key;
+  if (activeTab !== 'tasks') switchTab('tasks'); else renderAll();
+}
+function projFilterName() {
+  return projFilter === 'none' ? 'Без проекта' : (getProject(projFilter) || {}).name || '';
 }
 
 // ═══ RENDER TASKS ═══
@@ -269,18 +280,23 @@ function renderTasks() {
   if (currentUser && !telegramId && document.getElementById('link-card')) return;
   list.innerHTML = ''; dlist.innerHTML = '';
 
+  if (projFilter && projFilter !== 'none' && !getProject(projFilter)) projFilter = null; // проект удалили
   const today     = todayKey();
-  const shown     = t => (activeFilter==='all' || t.cat===activeFilter) && (!dayFilter || t.dueDate===dayFilter);
+  const inProj    = t => !projFilter || (projFilter === 'none' ? !t.projectId : t.projectId === projFilter);
+  const found     = t => !searchQuery || (t.text + '\n' + (t.note || '')).toLowerCase().includes(searchQuery);
+  const base      = t => inProj(t) && found(t);
+  const shown     = t => base(t) && (activeFilter==='all' || t.cat===activeFilter) && (!dayFilter || t.dueDate===dayFilter);
   const active    = tasks.filter(t => !t.done && shown(t)).sort(byDue);
   const done      = tasks.filter(t =>  t.done && shown(t));
   const allActive = tasks.filter(t => !t.done);
   const allDone   = tasks.filter(t =>  t.done);
   const total     = allActive.length + allDone.length;
 
-  document.getElementById('fc-all').textContent = allActive.length;
+  // Счётчики категорий — с учётом проекта и поиска, чтобы было видно, где искать дальше
+  document.getElementById('fc-all').textContent = allActive.filter(base).length;
   ['project','contact','remind','urgent','personal'].forEach(c => {
     const el = document.getElementById('fc-'+c);
-    if (el) el.textContent = tasks.filter(t => !t.done && t.cat===c).length;
+    if (el) el.textContent = allActive.filter(t => t.cat===c && base(t)).length;
   });
   document.getElementById('done-count').textContent = allDone.length;
 
@@ -303,48 +319,95 @@ function renderTasks() {
     document.getElementById('btn-link-tg').addEventListener('click', tgLinkClick);
     document.getElementById('btn-link').addEventListener('click', linkTelegram);
     document.getElementById('link-code').addEventListener('keydown', e => { if (e.key==='Enter') linkTelegram(); });
-  } else if (dayFilter) {
-    const d = parseDate(dayFilter);
-    const bar = document.createElement('div');
-    bar.className = 'day-filter';
-    bar.innerHTML = `<div class="df-text"><small>${dayFilter === today ? 'Сегодня' : RU_WEEKDAYS[d.getDay()]}</small><b>${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}</b></div>
-      <button class="btn-sm" type="button">Все задачи</button>`;
-    bar.querySelector('button').addEventListener('click', () => setDayFilter(null));
-    list.appendChild(bar);
-    if (active.length) active.forEach(t => list.appendChild(makeTaskEl(t)));
-    else {
+  } else {
+    // Полосы выбранного проекта и дня: что сейчас показано и как вернуться ко всей ленте
+    const filterBar = (small, title, onBack) => {
+      const bar = document.createElement('div');
+      bar.className = 'day-filter';
+      bar.innerHTML = `<div class="df-text"><small>${small}</small><b>${title}</b></div>
+        <button class="btn-sm" type="button">В ленту задач</button>`;
+      bar.querySelector('button').addEventListener('click', onBack);
+      list.appendChild(bar);
+    };
+    if (projFilter) {
+      const p = getProject(projFilter);
+      filterBar('Проект', (p ? `<i class="df-dot" style="background:${p.color}"></i>` : '') + escHtml(projFilterName()), () => setProjFilter(null));
+    }
+    if (dayFilter) {
+      const d = parseDate(dayFilter);
+      filterBar(dayFilter === today ? 'Сегодня' : RU_WEEKDAYS[d.getDay()], `${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}`, () => setDayFilter(null));
+    }
+    const emptyBox = html => {
       const empty = document.createElement('div');
       empty.className = 'tasks-empty';
-      empty.innerHTML = done.length ? '<p>Все задачи этого дня выполнены</p>'
-        : '<div class="empty-title">Свободный день</div><p>Новая задача из поля сверху попадёт на этот день</p>';
+      empty.innerHTML = html;
       list.appendChild(empty);
-    }
-  } else if (active.length === 0 && total === 0) {
-    list.innerHTML = `<div class="tasks-empty"><div class="empty-title">Задач пока нет</div><p>Добавьте первую — поле сверху</p></div>`;
-  } else if (active.length === 0) {
-    list.innerHTML = `<div class="tasks-empty"><p>Нет активных задач в этой категории</p></div>`;
-  } else {
-    const overdue  = active.filter(t =>  t.dueDate && t.dueDate < today);
-    const dueToday = active.filter(t =>  t.dueDate === today);
-    const rest     = active.filter(t => !t.dueDate || t.dueDate > today);
-    if (overdue.length) {
-      list.appendChild(sectionHead('Просрочено', overdue.length, 'overdue'));
-      overdue.forEach(t => list.appendChild(makeTaskEl(t)));
-    }
-    if (dueToday.length) {
-      list.appendChild(sectionHead('Сегодня', dueToday.length));
-      dueToday.forEach(t => list.appendChild(makeTaskEl(t)));
-    }
-    if (rest.length) {
-      if (overdue.length || dueToday.length) list.appendChild(sectionHead('Дальше', rest.length));
-      rest.forEach(t => list.appendChild(makeTaskEl(t)));
+    };
+    if (total === 0) {
+      emptyBox('<img class="empty-ivan" src="img/ivan/idea.webp" width="88" height="120" alt=""><div class="empty-title">Задач пока нет</div><p>Добавьте первую — поле сверху</p>');
+    } else if (!active.length && searchQuery) {
+      emptyBox(`<div class="empty-title">Ничего не нашлось</div><p>Нет активных задач со словами «${escHtml(searchQuery)}». Esc — очистить поиск</p>`);
+    } else if (dayFilter && !active.length) {
+      emptyBox(done.length ? '<p>Все задачи этого дня выполнены</p>'
+        : '<img class="empty-ivan" src="img/ivan/tongue.webp" width="88" height="120" alt=""><div class="empty-title">Свободный день</div><p>Новая задача из поля сверху попадёт на этот день</p>');
+    } else if (!active.length) {
+      emptyBox(projFilter ? '<p>В этом проекте нет активных задач</p>' : '<p>Нет активных задач в этой категории</p>');
+    } else if (dayFilter) {
+      active.forEach(t => list.appendChild(makeTaskEl(t)));
+    } else {
+      renderFeedGroups(list, active, today);
     }
   }
   if (showDone) done.forEach(t => dlist.appendChild(makeTaskEl(t)));
-  if (dayFilter) document.getElementById('done-count').textContent = done.length;
+  if (dayFilter || projFilter || searchQuery) document.getElementById('done-count').textContent = done.length;
+  if (searchQuery) [list, dlist].forEach(box => box.querySelectorAll('.task-text, .task-note-preview').forEach(markMatches));
   renderMonthCard();
   renderWeek();
   updateProjectSelect();
+}
+
+// Группы ленты по сроку. Группа с data-drop — цель перетаскивания: задача получает её дату
+// («На этой неделе» — послезавтра, «Позже» — первый день после этой недели).
+// В «Просрочено» и «Не рассортированные» бросить нельзя: дата при постановке обязательна.
+// Пустые группы-цели скрыты и появляются, только пока задачу тянут; своя группа задачи целью не считается (style.css).
+function renderFeedGroups(list, active, today) {
+  const tom      = addDays(today, 1);
+  const weekEnd  = addDays(today, (7 - parseDate(today).getDay()) % 7); // воскресенье этой недели
+  const weekFrom = addDays(today, 2);
+  const laterEnd = weekEnd > tom ? weekEnd : tom;
+  const groups = [
+    { title: 'Просрочено', cls: 'overdue', has: d => d && d < today },
+    { title: 'Не рассортированные', cls: 'inbox', has: d => !d,
+      hint: 'Перетащите на день или укажите дату' },
+    { title: 'Сегодня',        drop: today,    has: d => d === today },
+    { title: 'Завтра',         drop: tom,      has: d => d === tom },
+    { title: 'На этой неделе', drop: weekFrom <= weekEnd ? weekFrom : null, has: d => d > tom && d <= weekEnd },
+    { title: 'Позже',          drop: addDays(laterEnd, 1), has: d => d > laterEnd },
+  ];
+  groups.forEach(g => {
+    const items = active.filter(t => g.has(t.dueDate));
+    if (!items.length && !g.drop) return;
+    const sec = document.createElement('section');
+    sec.className = 'feed-group' + (items.length ? '' : ' empty');
+    sec.setAttribute('aria-label', g.title);
+    if (g.drop) sec.dataset.drop = g.drop;
+    sec.appendChild(sectionHead(g.title, items.length, g.cls));
+    if (g.hint) sec.insertAdjacentHTML('beforeend', `<p class="feed-hint">${g.hint}</p>`);
+    if (!items.length) sec.insertAdjacentHTML('beforeend', '<div class="feed-drop-hint">Отпустите, чтобы перенести сюда</div>');
+    items.forEach(t => sec.appendChild(makeTaskEl(t)));
+    list.appendChild(sec);
+  });
+}
+
+// Подсветка найденного текста в карточке
+function markMatches(el) {
+  const text = el.textContent, low = text.toLowerCase();
+  let html = '', i = 0, j;
+  while ((j = low.indexOf(searchQuery, i)) !== -1) {
+    html += escHtml(text.slice(i, j)) + '<mark>' + escHtml(text.slice(j, j + searchQuery.length)) + '</mark>';
+    i = j + searchQuery.length;
+  }
+  if (i) el.innerHTML = html + escHtml(text.slice(i));
 }
 
 // ═══ WEEK STRIP ═══
@@ -436,6 +499,7 @@ function makeDayCell(dayNum, key, dayTasks, otherMonth) {
     dayTasks.slice(0, 2).forEach(t => {
       const ev = document.createElement('span');
       ev.className = 'cal-ev' + (isPast ? ' overdue' : '');
+      ev.dataset.id = t.id;   // событие в клетке можно перетащить на другой день (drag.js)
       ev.textContent = (t.dueTime ? fmtTime(t.dueTime) + ' ' : '') + t.text;
       el.appendChild(ev);
     });
@@ -506,7 +570,7 @@ function renderProjects() {
   list.innerHTML = '';
 
   if (projects.length === 0) {
-    list.innerHTML = `<div class="tasks-empty"><div class="empty-title">Нет проектов</div><p>Создайте первый — поле сверху</p></div>`;
+    list.innerHTML = `<div class="tasks-empty"><img class="empty-ivan" src="img/ivan/think.webp" width="88" height="120" alt=""><div class="empty-title">Нет проектов</div><p>Создайте первый — поле сверху</p></div>`;
   }
 
   projects.forEach(proj => {
@@ -662,7 +726,7 @@ function gridKey(e, key) {
 function setDayFilter(key) {
   const due = document.getElementById('task-due');
   if (key) due.value = key;
-  else if (due.value === dayFilter) due.value = '';
+  else if (due.value === dayFilter) due.value = todayKey(); // дата обязательна: без выбранного дня — сегодня
   dayFilter = key;
   if (key) miniAnchor = key;
   renderTasks();
@@ -706,42 +770,5 @@ document.getElementById('mc-grid').addEventListener('keydown', e => {
   document.querySelector(`#mc-grid [data-key="${next}"]`).focus();
 });
 
-// ═══ ПЕРЕТАСКИВАНИЕ ЗАДАЧ НА ДЕНЬ ═══
-// Цели — любые элементы с data-drop: дни календаря на главной, «Ближайшие 7 дней», дни большого календаря
-let dragId = null;
-document.addEventListener('dragstart', e => {
-  const item = e.target.closest && e.target.closest('.task-item[draggable="true"]');
-  if (!item) return;
-  dragId = item.dataset.id;
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', item.querySelector('.task-text').textContent);
-  item.classList.add('dragging');
-  document.body.classList.add('dragging-task');
-});
-document.addEventListener('dragover', e => {
-  if (!dragId) return;
-  const t = e.target.closest && e.target.closest('[data-drop]');
-  document.querySelectorAll('.drop-over').forEach(el => { if (el !== t) el.classList.remove('drop-over'); });
-  if (!t) return;
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  t.classList.add('drop-over');
-});
-// Перерисовка после переноса удаляет перетаскиваемую карточку, и dragend до документа не доходит — убираем подсветку сами
-function endDrag() {
-  dragId = null;
-  document.querySelectorAll('.dragging, .drop-over').forEach(el => el.classList.remove('dragging', 'drop-over'));
-  document.body.classList.remove('dragging-task');
-}
-document.addEventListener('dragend', endDrag);
-document.addEventListener('drop', async e => {
-  const t = e.target.closest && e.target.closest('[data-drop]');
-  if (!dragId || !t) return;
-  e.preventDefault();
-  const task = tasks.find(x => x.id === dragId);
-  endDrag();
-  if (!task || task.dueDate === t.dataset.drop) return;
-  await moveTask(task.id, t.dataset.drop);
-  renderAll();
-});
+// Перетаскивание задач на день — в drag.js
 

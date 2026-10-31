@@ -21,16 +21,25 @@ document.getElementById('btn-login').addEventListener('click', async () => {
 document.getElementById('btn-register').addEventListener('click', async () => {
   const email = document.getElementById('reg-email').value.trim();
   const pass  = document.getElementById('reg-password').value;
+  const pass2 = document.getElementById('reg-password2').value;
   clearAuthError('auth-error-register');
   if (!email || !pass) { showAuthError('auth-error-register','Заполните email и пароль'); return; }
   if (pass.length < 8) { showAuthError('auth-error-register','Пароль минимум 8 символов'); return; }
+  if (pass !== pass2) {
+    showAuthError('auth-error-register','Пароли не совпадают — введите один и тот же пароль дважды');
+    document.getElementById('reg-password2').focus();
+    return;
+  }
+  if (!consentsGiven()) return;
   const btn = document.getElementById('btn-register');
   btn.disabled = true; btn.textContent = 'Создание…';
   // Ссылка из письма ведёт обратно на этот сайт, а не на адрес по умолчанию
   const { error } = await sb.auth.signUp({ email, password: pass,
-    options: { emailRedirectTo: location.origin + location.pathname } });
+    options: { emailRedirectTo: location.origin + location.pathname, data: { consent: consentRecord() } } });
   btn.disabled = false; btn.textContent = 'Создать аккаунт';
   if (error) { showAuthError('auth-error-register', error.message); return; }
+  // Окно «Спасибо за регистрацию» покажет js/onboarding.js после подтверждения кода
+  try { localStorage.setItem('spm2_just_registered', '1'); } catch (_) {}
   document.getElementById('confirm-email').textContent = email;
   document.getElementById('login-email').value = email;
   switchAuthForm('confirm');
@@ -50,6 +59,39 @@ document.getElementById('btn-confirm-code').addEventListener('click', async () =
   // Сессию подхватит onAuthStateChange, как после обычного входа
 });
 document.getElementById('confirm-code').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-confirm-code').click(); });
+
+// ═══ СОГЛАСИЯ ПРИ РЕГИСТРАЦИИ ═══
+// Три отдельные галочки: соглашение с подтверждением возраста (#reg-terms), согласие на обработку ПДн
+// (#reg-consent) и согласие на трансграничную передачу (#reg-transfer). Без всех трёх регистрация не начинается.
+// Номера редакций документов: меняете terms / privacy / consent / transfer.html — увеличьте и здесь.
+const CONSENT_VERSION = { terms: 1, privacy: 1, consent: 1, transfer: 1, age14: true };
+const CONSENT_CHECKS = [
+  { id: 'reg-terms',    what: 'примите пользовательское соглашение и подтвердите возраст' },
+  { id: 'reg-consent',  what: 'дайте согласие на обработку персональных данных' },
+  { id: 'reg-transfer', what: 'дайте согласие на трансграничную передачу персональных данных' },
+];
+function consentsGiven() {
+  const missing = CONSENT_CHECKS.filter(c => {
+    const box = document.getElementById(c.id);
+    if (box.checked) box.removeAttribute('aria-invalid'); else box.setAttribute('aria-invalid', 'true');
+    return !box.checked;
+  });
+  if (!missing.length) return true;
+  showAuthError('auth-error-register', missing.length === 1
+    ? 'Чтобы зарегистрироваться, ' + missing[0].what + '.'
+    : `Чтобы зарегистрироваться, отметьте ${missing.length === CONSENT_CHECKS.length ? 'все три галочки' : 'обе пустые галочки'}: они подсвечены красным.`);
+  document.getElementById(missing[0].id).focus();
+  return false;
+}
+// Когда и на какие редакции дано согласие: сохраняется в user_metadata аккаунта как подтверждение.
+// Для доступа к данным это поле не используется (ему не доверяем, см. tgIdOf).
+function consentRecord() {
+  return { ...CONSENT_VERSION, at: new Date().toISOString() };
+}
+CONSENT_CHECKS.forEach(c => document.getElementById(c.id).addEventListener('change', e => {
+  e.target.removeAttribute('aria-invalid');
+  if (CONSENT_CHECKS.every(x => document.getElementById(x.id).checked)) clearAuthError('auth-error-register');
+}));
 
 // ═══ ВОССТАНОВЛЕНИЕ ПАРОЛЯ ═══
 // Supabase шлёт письмо со ссылкой (и кодом, если он есть в шаблоне «Reset Password»).
@@ -243,7 +285,12 @@ function takeTgAuthRedirect() {
   } catch (_) { return null; }
 }
 document.getElementById('btn-tg-login').addEventListener('click', () => tgLoginClick('auth-error-login'));
-document.getElementById('btn-tg-register').addEventListener('click', () => tgLoginClick('auth-error-register'));
+document.getElementById('btn-tg-register').addEventListener('click', () => {
+  if (!consentsGiven()) return;
+  // Аккаунт через Telegram создаёт сервер бота, поэтому отметку о согласиях запишет js/onboarding.js после входа
+  try { localStorage.setItem('spm2_consent_pending', JSON.stringify(consentRecord())); } catch (_) {}
+  tgLoginClick('auth-error-register');
+});
 
 // Привязка вошедшего по почте аккаунта через окно Telegram: бот проверяет подпись и выдаёт
 // тот же одноразовый код, что по команде /link, сайт применяет его через link_telegram.
@@ -301,5 +348,34 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 
 // Enter key on login fields
 document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btn-login').click(); });
-document.getElementById('reg-password').addEventListener('keydown',   e => { if(e.key==='Enter') document.getElementById('btn-register').click(); });
+document.getElementById('reg-password').addEventListener('keydown',   e => { if(e.key==='Enter') document.getElementById('reg-password2').focus(); });
+document.getElementById('reg-password2').addEventListener('keydown',  e => { if(e.key==='Enter') document.getElementById('btn-register').click(); });
+
+// ═══ ПОКАЗАТЬ / СКРЫТЬ ПАРОЛЬ ═══
+// Кнопка-«глаз» у каждого поля пароля: вход, регистрация (оба поля), новый пароль.
+const EYE_OPEN  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_SHUT  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.8 9.8 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+document.querySelectorAll('#auth-overlay input[type="password"]').forEach(input => {
+  const wrap = document.createElement('div');
+  wrap.className = 'auth-pass';
+  input.parentNode.insertBefore(wrap, input);
+  wrap.appendChild(input);
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'auth-eye';
+  btn.setAttribute('aria-controls', input.id);
+  const paint = shown => {
+    btn.innerHTML = shown ? EYE_SHUT : EYE_OPEN;
+    btn.setAttribute('aria-pressed', String(shown));
+    btn.setAttribute('aria-label', shown ? 'Скрыть пароль' : 'Показать пароль');
+  };
+  paint(false);
+  btn.addEventListener('click', () => {
+    const shown = input.type === 'password';
+    input.type = shown ? 'text' : 'password';
+    paint(shown);
+    input.focus();
+  });
+  wrap.appendChild(btn);
+});
 

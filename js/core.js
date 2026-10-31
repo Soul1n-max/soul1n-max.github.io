@@ -158,9 +158,12 @@ let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 let calSelected = null;
 let dayFilter = null;     // день, выбранный в календаре на главной: список задач показывает только его
+let projFilter = null;    // проект, выбранный в боковом меню: id проекта или 'none' — «Без проекта»
+let searchQuery = '';     // текст из поиска над лентой, в нижнем регистре
 let miniAnchor = todayKey(); // какой месяц (и на телефоне — какую неделю) показывает календарь на главной
 let miniExpanded = false;
-const CAN_DRAG = window.matchMedia && matchMedia('(pointer: fine)').matches;
+// Перетаскивание задач на день (drag.js) работает и мышью, и пальцем — долгим нажатием
+const CAN_DRAG = typeof PointerEvent !== 'undefined';
 let pickedColor = PROJ_COLORS[0];
 
 // ═══ UTILS ═══
