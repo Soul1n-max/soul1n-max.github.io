@@ -80,6 +80,13 @@ async function loadTasks() {
 }
 
 async function addTask(text, cat, due, dueTime, projId, recur) {
+  // Задачи хранятся по Telegram ID (так их видит и бот), без привязки база их не примет
+  if (!telegramId) {
+    showLinkCard();
+    announce('Сначала привяжите Telegram — задача сохранится после привязки.');
+    if (document.getElementById('link-error')) showAuthError('link-error', 'Чтобы сохранить задачу, сначала привяжите Telegram — так задачи появятся и в боте.');
+    return false;
+  }
   const row = {
     id:         uid(),
     text,
