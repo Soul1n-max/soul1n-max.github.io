@@ -2,6 +2,7 @@
 
 // ═══ MAIN RENDER ═══
 function renderAll() {
+  renderDeferred = false;
   renderMeta();
   if (activeTab==='tasks')    renderTasks();
   if (activeTab==='calendar') renderCalendar();

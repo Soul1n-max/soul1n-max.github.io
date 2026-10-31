@@ -43,4 +43,9 @@ union all
 select 'Публичное хранилище', name, 'файлы бакета открыты всем по ссылке'
   from storage.buckets where public
 
+union all
+select 'Политика хранилища', policyname,
+       'роли ' || array_to_string(roles, ',') || ', ' || cmd || ', условие: ' || coalesce(qual, with_check, '—')
+  from pg_policies where schemaname = 'storage' and tablename = 'objects'
+
 order by 1, 2;

@@ -42,6 +42,7 @@ function makeTaskEl(task) {
       <div class="task-text">${escHtml(task.text)}</div>
       ${subList}
       ${task.note ? `<div class="task-note-preview">${escHtml(task.note)}</div>` : ''}
+      <div class="task-files" aria-label="Файлы"></div>
       <div class="task-footer">${catTag}${dueTag}${recurTag}${subTag}${projTag}</div>
       <!-- «Да, выполнена» стоит прямо под галочкой: второе нажатие — в том же месте, что и первое -->
       <div class="done-confirm" role="group" aria-label="Отметить выполненной?">
@@ -67,6 +68,13 @@ function makeTaskEl(task) {
             <textarea class="sub-new one-line" id="sn-${task.id}" rows="1" wrap="off" maxlength="200" placeholder="Добавить шаг…" autocomplete="off"></textarea>
             <button type="button" class="sub-btn" data-sub-add aria-label="Добавить шаг">${ICON.plus}</button>
           </div>
+        </div>
+        <div class="file-edit" role="group" aria-label="Файлы">
+          <div class="sub-edit-title">Файлы <span class="file-hint">· до ${fmtSize(FILE_MAX_BYTES)}, прикрепляются сразу</span></div>
+          <div class="file-edit-list"></div>
+          <input type="file" multiple hidden data-file-input>
+          <button type="button" class="file-add" data-file-add>${ICON.clip}<span>Прикрепить файл</span></button>
+          <div class="file-status" role="status" aria-live="polite"></div>
         </div>
         <label class="sr-only" for="ni-${task.id}">Заметка</label>
         <textarea class="note-input" id="ni-${task.id}" rows="3" placeholder="Заметка…" autocomplete="off">${escHtml(task.note||'')}</textarea>
@@ -129,6 +137,59 @@ function makeTaskEl(task) {
   };
   singleLine(own('sn-'+task.id), addDraft);
   div.querySelector('[data-sub-add]').addEventListener('click', addDraft);
+  // Файлы: список в карточке (нажатие скачивает) и в форме правки — с кнопками «Прикрепить» и «Убрать».
+  // Файлы сохраняются сразу, без «Сохранить»: загруженный файл уже лежит в хранилище.
+  const cur = () => tasks.find(x => x.id === task.id) || task;
+  const fileBtn = (f, cls) => `<button type="button" class="${cls}" data-file-open="${escHtml(f.id)}" title="Скачать «${escHtml(f.name)}»">` +
+    `${ICON.file}<span class="file-name">${escHtml(f.name)}</span><span class="file-size">${fmtSize(f.size)}</span></button>`;
+  const cardFiles = div.querySelector('.task-files'), editFiles = div.querySelector('.file-edit-list');
+  const fileStatus = div.querySelector('.file-status'), addBtn = div.querySelector('[data-file-add]');
+  const paintFiles = () => {
+    const files = cur().files || [];
+    cardFiles.innerHTML = files.map(f => fileBtn(f, 'file-chip')).join('');
+    editFiles.innerHTML = files.map(f => `<div class="sub-row">${fileBtn(f, 'file-row')}` +
+      `<button type="button" class="sub-btn file-rm" data-file-rm="${escHtml(f.id)}" aria-label="Убрать файл «${escHtml(f.name)}»">${ICON.close}</button></div>`).join('');
+    addBtn.hidden = files.length >= FILES_MAX;
+  };
+  paintFiles();
+  div.addEventListener('click', e => {
+    const b = e.target.closest('[data-file-open]');
+    if (!b) return;
+    const f = (cur().files || []).find(x => x.id === b.dataset.fileOpen);
+    if (f) openTaskFile(f);
+  });
+  // Убрать файл — двумя нажатиями: первое просит подтвердить, второе стирает файл насовсем
+  editFiles.addEventListener('click', async e => {
+    const rm = e.target.closest('[data-file-rm]');
+    if (!rm) return;
+    if (!rm.classList.contains('arm')) {
+      editFiles.querySelectorAll('.file-rm.arm').forEach(x => { x.classList.remove('arm'); x.innerHTML = ICON.close; });
+      rm.classList.add('arm'); rm.textContent = 'Убрать';
+      fileStatus.textContent = 'Нажмите «Убрать» ещё раз, чтобы удалить файл';
+      setTimeout(() => { if (rm.isConnected && rm.classList.contains('arm')) { rm.classList.remove('arm'); rm.innerHTML = ICON.close; fileStatus.textContent = ''; } }, 4000);
+      return;
+    }
+    rm.disabled = true;
+    if (await removeTaskFile(task.id, rm.dataset.fileRm)) fileStatus.textContent = 'Файл удалён';
+    paintFiles();
+  });
+  const fileInput = div.querySelector('[data-file-input]');
+  addBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const picked = [...fileInput.files];
+    fileInput.value = '';
+    if (!picked.length) return;
+    addBtn.disabled = true;
+    const errors = [];
+    for (const file of picked) {
+      fileStatus.textContent = `Загрузка «${file.name}»…`;
+      const err = await uploadTaskFile(task.id, file);
+      if (err) errors.push(err);
+      paintFiles();
+    }
+    addBtn.disabled = false;
+    fileStatus.textContent = errors.length ? 'Не прикрепилось: ' + errors.join('; ') : (picked.length > 1 ? 'Файлы прикреплены' : 'Файл прикреплён');
+  });
   div.querySelector('[data-note]').addEventListener('click', () => {
     const row = own('nr-'+task.id);
     row.classList.toggle('open');
@@ -161,6 +222,9 @@ function makeTaskEl(task) {
   singleLine(own('et-'+task.id), () => div.querySelector('[data-save]').click());
   div.querySelector('[data-close]').addEventListener('click', () => {
     own('nr-'+task.id).classList.remove('open');
+    fileStatus.textContent = '';
+    // Пока форма была открыта, обновления из базы не перерисовывали список (main.js) — показываем их сейчас
+    if (renderDeferred && !document.querySelector('.note-row.open')) renderAll();
   });
   // Удаление сразу, без вопроса: вернуть задачу можно кнопкой «Отменить» в уведомлении внизу (drag.js)
   div.querySelector('[data-del]').addEventListener('click', async () => {

@@ -48,6 +48,7 @@ function subscribeRealtime() {
     await loadProjects();
     updateProjectSelect();
     await loadTasks();
+    if (document.querySelector('.note-row.open')) { renderDeferred = true; return; }
     renderAll();
   };
   const refreshProjects = async () => {

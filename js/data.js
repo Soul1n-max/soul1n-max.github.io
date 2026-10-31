@@ -132,6 +132,8 @@ async function toggleDone(id) {
     };
     // Подзадачи переходят в следующий повтор неотмеченными
     if (t.subtasks.length) row.subtasks = t.subtasks.map(x => ({ ...x, done: false }));
+    // Файлы у повторов общие: стираются, когда на них не ссылается ни одна задача (purgeFiles)
+    if (t.files.length) row.files = t.files;
     const { data, error: insErr } = await sb.from('tasks').insert([row]).select().single();
     if (insErr) { console.error('Recur insert:', insErr); alert('Задача выполнена, но следующий повтор не создался: ' + insErr.message); return; }
     tasks.unshift(fromDB(data));
@@ -171,6 +173,72 @@ async function moveTask(id, dueDate) {
   if (error) { console.error('Task move:', error); alert('Не удалось перенести задачу: ' + error.message); return; }
   const i = tasks.findIndex(t => t.id === id);
   if (i >= 0) tasks[i] = fromDB(data);
+}
+
+// ═══ ФАЙЛЫ ЗАДАЧ (Supabase Storage) ═══
+// Сначала кладём файл в бакет, потом дописываем его в список задачи; если список не сохранился —
+// стираем файл, чтобы он не занимал место. Возвращает текст ошибки или null.
+async function uploadTaskFile(taskId, file) {
+  const t = tasks.find(x => x.id === taskId);
+  if (!t) return 'задача не найдена';
+  if (!telegramId) return 'сначала привяжите Telegram';
+  if (t.files.length >= FILES_MAX) return `к задаче можно прикрепить не больше ${FILES_MAX} файлов`;
+  if (file.size > FILE_MAX_BYTES) return `«${file.name}» больше ${fmtSize(FILE_MAX_BYTES)}`;
+  const id = uid();
+  const ext = (/\.([a-z0-9]{1,10})$/i.exec(file.name) || [])[1];
+  const path = `${telegramId}/${t.id}/${id}${ext ? '.' + ext.toLowerCase() : ''}`;
+  const store = sb.storage.from(FILES_BUCKET);
+  const { error: upErr } = await store.upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+  if (upErr) { console.error('File upload:', upErr); return upErr.message || 'не удалось загрузить'; }
+  const meta = { id, name: file.name.slice(0, 120) || 'файл', path, size: file.size, type: file.type || '' };
+  const list = [...t.files, meta];
+  const { data, error } = await sb.from('tasks').update({ files: list }).eq('id', t.id).select().single();
+  if (error) {
+    console.error('File attach:', error);
+    await store.remove([path]);
+    return error.message;
+  }
+  const i = tasks.findIndex(x => x.id === t.id);
+  if (i >= 0) tasks[i] = fromDB(data);
+  return null;
+}
+async function removeTaskFile(taskId, fileId) {
+  const t = tasks.find(x => x.id === taskId);
+  const f = t && t.files.find(x => x.id === fileId);
+  if (!f) return false;
+  const list = t.files.filter(x => x.id !== fileId);
+  const { data, error } = await sb.from('tasks').update({ files: list }).eq('id', t.id).select().single();
+  if (error) { console.error('File detach:', error); alert('Не удалось убрать файл: ' + error.message); return false; }
+  const i = tasks.findIndex(x => x.id === t.id);
+  if (i >= 0) tasks[i] = fromDB(data);
+  await purgeFiles([f]);
+  return true;
+}
+// Стираем из бакета файлы, на которые больше не ссылается ни одна задача (у повторов файлы общие)
+async function purgeFiles(files) {
+  const used = new Set(tasks.flatMap(t => t.files.map(f => f.path)));
+  const paths = cleanFiles(files).map(f => f.path).filter(p => !used.has(p));
+  if (!paths.length) return;
+  const { error } = await sb.storage.from(FILES_BUCKET).remove(paths);
+  if (error) console.error('File purge:', error);
+}
+// Скачиваем файл с проверкой доступа (политики бакета) и отдаём браузеру под настоящим именем
+async function fileBlob(f) {
+  const { data, error } = await sb.storage.from(FILES_BUCKET).download(f.path);
+  if (error) throw error;
+  return data;
+}
+async function openTaskFile(f) {
+  let blob;
+  try { blob = await fileBlob(f); }
+  catch (e) { console.error('File download:', e); alert('Не удалось скачать файл: ' + (e.message || 'нет связи')); return; }
+  // Страницы и картинки SVG не открываем в браузере — только скачиваем: в них может быть код
+  if (/htm|svg|xml|javascript/i.test(blob.type + f.type + f.name.slice(-5))) blob = new Blob([blob], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = f.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 // ═══ PROJECT OPS ═══
