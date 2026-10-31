@@ -316,12 +316,24 @@ function projFilterName() {
   return projFilter === 'none' ? 'Без проекта' : (getProject(projFilter) || {}).name || '';
 }
 
+// Карточку «Привяжите Telegram» закрыли крестиком — до конца сеанса в этой вкладке
+function linkLater() { try { return !!sessionStorage.getItem('spm2_link_later'); } catch (_) { return false; } }
+function setLinkLater(on) {
+  try { on ? sessionStorage.setItem('spm2_link_later', '1') : sessionStorage.removeItem('spm2_link_later'); } catch (_) {}
+}
+function showLinkCard() {
+  setLinkLater(false);
+  renderTasks();
+  const card = document.getElementById('link-card');
+  if (card) { card.scrollIntoView({ block: 'center', behavior: 'smooth' }); document.getElementById('btn-link-tg').focus({ preventScroll: true }); }
+}
+
 // ═══ RENDER TASKS ═══
 function renderTasks() {
   const list  = document.getElementById('tasks-list');
   const dlist = document.getElementById('done-list');
   // Не перерисовываем форму привязки, пока в неё вводят код (realtime и таймер зовут renderAll)
-  if (currentUser && !telegramId && document.getElementById('link-card')) return;
+  if (currentUser && !telegramId && !linkLater() && document.getElementById('link-card')) return;
   list.innerHTML = ''; dlist.innerHTML = '';
 
   if (projFilter && projFilter !== 'none' && !getProject(projFilter)) projFilter = null; // проект удалили
@@ -344,15 +356,16 @@ function renderTasks() {
   });
   document.getElementById('done-count').textContent = allDone.length;
 
-  if (currentUser && !telegramId) {
+  if (currentUser && !telegramId && !linkLater()) {
     list.innerHTML = `<div class="tasks-empty link-card" id="link-card">
+      <button class="link-close" id="btn-link-later" type="button" aria-label="Привязать позже"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <div class="empty-title">Привяжите Telegram</div>
       <p>Нажмите кнопку и подтвердите вход в окне Telegram — задачи из бота появятся на сайте.</p>
       <div class="auth-error" id="link-error" role="alert"></div>
       <button class="auth-tg" id="btn-link-tg" type="button">${TG_ICON}Привязать через Telegram</button>
       <details class="link-manual">
         <summary>Telegram не открывается? Привязать по коду</summary>
-        <p>Отправьте боту команду /link — он пришлёт код из 8 символов. Введите его здесь.</p>
+        <p>Отправьте боту <a href="https://t.me/synergyplanerbot" target="_blank" rel="noopener">@synergyplanerbot</a> команду /link — он пришлёт код из 8 символов. Введите его здесь.</p>
         <div class="link-row">
           <input class="auth-input" id="link-code" type="text" maxlength="8" placeholder="Код из бота" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" aria-label="Код из бота">
           <button class="auth-btn" id="btn-link">Привязать</button>
@@ -363,7 +376,21 @@ function renderTasks() {
     document.getElementById('btn-link-tg').addEventListener('click', tgLinkClick);
     document.getElementById('btn-link').addEventListener('click', linkTelegram);
     document.getElementById('link-code').addEventListener('keydown', e => { if (e.key==='Enter') linkTelegram(); });
+    document.getElementById('btn-link-later').addEventListener('click', () => {
+      setLinkLater(true);
+      renderTasks();
+      announce('Привязку Telegram можно сделать позже — кнопка «Подключить» над списком задач.');
+    });
   } else {
+    // Привязку отложили крестиком: короткое напоминание над списком, «Подключить» возвращает карточку
+    if (currentUser && !telegramId) {
+      const nudge = document.createElement('div');
+      nudge.className = 'link-nudge';
+      nudge.innerHTML = `${TG_ICON}<div class="nudge-text"><b>Подключите Telegram</b>Чтобы сохранять задачи и получать уведомления в бот</div>
+        <button class="btn-sm" type="button">Подключить</button>`;
+      nudge.querySelector('button').addEventListener('click', showLinkCard);
+      list.appendChild(nudge);
+    }
     // Полосы выбранного проекта и дня: что сейчас показано и как вернуться ко всей ленте
     const filterBar = (small, title, onBack) => {
       const bar = document.createElement('div');
