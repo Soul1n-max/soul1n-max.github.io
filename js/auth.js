@@ -382,3 +382,28 @@ document.querySelectorAll('#auth-overlay input[type="password"]').forEach(input 
   wrap.appendChild(btn);
 });
 
+
+// Объём на экране входа: Иван и заголовок слегка наклоняются за курсором.
+// Только мышь (на телефоне нет курсора) и не при «уменьшить движение»; пишет в .auth-hero-head --tx/--ty от -1 до 1.
+(() => {
+  const head = document.querySelector('.auth-hero-head');
+  if (!head || !matchMedia('(pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const hero = head.closest('.auth-hero') || head;
+  const clamp = v => Math.max(-1, Math.min(1, v));
+  let px = 0, py = 0, raf = 0;
+  const paint = () => {
+    raf = 0;
+    const r = head.getBoundingClientRect();
+    if (!r.width) return;
+    head.style.setProperty('--tx', clamp((px - (r.left + r.width / 2)) / (r.width / 2)).toFixed(3));
+    head.style.setProperty('--ty', clamp((py - (r.top + r.height / 2)) / (r.height * 1.5)).toFixed(3));
+  };
+  hero.addEventListener('pointermove', e => {
+    px = e.clientX; py = e.clientY;
+    if (!raf) raf = requestAnimationFrame(paint);
+  });
+  hero.addEventListener('pointerleave', () => {
+    head.style.setProperty('--tx', '0');
+    head.style.setProperty('--ty', '0');
+  });
+})();
