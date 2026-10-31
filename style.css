@@ -109,6 +109,34 @@ svg{flex-shrink:0}
 .btn-icon:hover{background:var(--side-3)}
 .btn-logout{flex:1;height:44px;border-radius:12px;border:1px solid var(--side-3);background:var(--side-2);color:var(--side-fg);font-size:13px;font-weight:600;transition:background .15s,color .15s}
 .btn-logout:hover{background:#4A1A1C;color:#FFD4D6}
+/* Аватар (js/avatar.js) */
+.btn-avatar{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:4px 10px 4px 4px;border-radius:14px;border:1px solid var(--side-3);background:var(--side-2);color:var(--side-fg);text-align:left;transition:background .15s}
+.btn-avatar:hover{background:var(--side-3)}
+.btn-avatar[hidden]{display:none}
+.av{position:relative;display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--accent);color:var(--on-accent)}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.av-letter{font-family:'Unbounded','Onest',sans-serif;font-size:17px;font-weight:600;line-height:1}
+.av-who{display:flex;flex-direction:column;min-width:0;gap:2px}
+.av-name{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av-sub{font-size:12px;color:var(--side-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avatar-menu .av-sub{color:var(--fg-muted)}
+.av-head{display:flex;align-items:center;gap:12px;padding:6px 6px 12px}
+.av-big{width:64px;height:64px}
+.av-big .av-letter{font-size:24px}
+.av-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:4px 4px 10px}
+.av-opt{position:relative;display:grid;place-items:center;aspect-ratio:1;min-height:44px;padding:0;border:0;border-radius:50%;background:transparent}
+.av-opt .av{width:100%;height:100%;box-shadow:0 0 0 2px var(--surface),0 0 0 2px var(--border)}
+.av-opt[aria-pressed="true"] .av{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
+.av-opt:hover .av{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--border)}
+.av-opt[aria-pressed="true"]:hover .av{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
+.av-tick{position:absolute;right:-2px;bottom:-2px;display:none;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);border:2px solid var(--surface)}
+.av-tick svg{width:10px;height:10px}
+.av-opt[aria-pressed="true"] .av-tick{display:grid}
+.av-upload{width:100%}
+.av-upload:disabled{opacity:.6}
+.av-logout{display:none;width:100%;margin-top:6px}
+.avatar-menu.sheet .av-logout{display:flex}
+.av-msg{margin:6px 8px 4px;font-size:13px;color:var(--accent-ink)}
 
 /* ─── PAGE HEAD ─── */
 .page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px}
@@ -705,6 +733,11 @@ body.auth-locked .app{display:none}
   .sync-indicator{width:28px;padding:0;justify-content:center;align-self:center}
   .sync-indicator #sync-label{display:none}
   .btn-logout{flex:none;padding:0 12px}
+  .btn-avatar{order:5;width:44px;min-height:44px;padding:0;border:0;background:transparent;border-radius:50%}
+  .btn-avatar .av-who{display:none}
+  .btn-avatar .av{width:40px;height:40px}
+  /* В шапке телефона мало места: «Выйти» переезжает в окно аватара */
+  .btn-avatar:not([hidden]) ~ .side-actions .btn-logout{display:none}
   .tabs-nav{
     position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:30;
     flex-direction:row;gap:4px;padding:6px;background:var(--side);border-radius:22px;box-shadow:0 10px 30px rgba(var(--shade),.25);

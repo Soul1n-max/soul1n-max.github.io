@@ -1,0 +1,255 @@
+// Аватар пользователя: кнопка в боковом меню (на телефоне — в шапке) и окно выбора.
+// Выбор хранится в user_metadata аккаунта (avatar). Это только оформление: доступа к данным
+// оно не даёт, поэтому user_metadata здесь можно (для RLS и telegramId ему по-прежнему не верим).
+//   avatar = 'tg'            — фото из Telegram (tg_photo, его запоминает вход через Telegram)
+//          | 'ivan:<образ>'  — готовый Иван из img/avatars/
+//          | 'photo:<время>' — своё фото в хранилище Supabase: avatars/<id аккаунта>/avatar.jpg
+//          | 'letter'        — первая буква имени
+// Без выбора: фото из Telegram, если есть, иначе буква.
+
+const AVATAR_IVANS = [
+  ['cap', 'В кепке'], ['graduate', 'Выпускник'], ['heart', 'С сердечком'], ['robot', 'С роботом'],
+  ['hoodie', 'В худи'], ['tongue', 'С языком'], ['idea', 'С идеей'], ['think', 'Задумался'],
+];
+const AVATAR_BUCKET = 'avatars';
+const TG_PHOTO_RE = /^https:\/\/t\.me\/i\/userpic\/[\w\/.-]+$/;
+// В демо-режиме аккаунта нет: выбор живёт в памяти страницы (js/demo.js включает demo)
+const avatarDemo = { on: false, meta: {} };
+
+function avatarMeta() {
+  return avatarDemo.on ? avatarDemo.meta : (currentUser?.user_metadata || {});
+}
+function avatarName() {
+  if (avatarDemo.on) return 'Гость';
+  const m = avatarMeta(), email = currentUser?.email || '';
+  if (m.tg_name) return String(m.tg_name).slice(0, 60);
+  // Аккаунт, созданный входом через Telegram, получает служебную почту tg<ID>@…
+  if (/^tg\d+@/.test(email)) return 'Telegram';
+  return email.split('@')[0] || 'Профиль';
+}
+function avatarSub() {
+  if (avatarDemo.on) return 'Демо-режим';
+  const email = currentUser?.email || '';
+  return /^tg\d+@/.test(email) ? 'Вход через Telegram' : email;
+}
+function tgPhoto() {
+  const p = avatarMeta().tg_photo;
+  return typeof p === 'string' && TG_PHOTO_RE.test(p) ? p : '';
+}
+function photoUrl(stamp) {
+  if (avatarDemo.on) return avatarDemo.photo || '';
+  if (!currentUser) return '';
+  return `${SUPABASE_URL}/storage/v1/object/public/${AVATAR_BUCKET}/${currentUser.id}/avatar.jpg?v=${encodeURIComponent(stamp)}`;
+}
+// Что сейчас выбрано: { kind, src }
+function avatarCurrent() {
+  const a = String(avatarMeta().avatar || '');
+  if (a.startsWith('ivan:') && AVATAR_IVANS.some(([k]) => k === a.slice(5))) return { kind: a, src: `img/avatars/${a.slice(5)}.webp` };
+  if (a.startsWith('photo:') && photoUrl(a.slice(6))) return { kind: 'photo', src: photoUrl(a.slice(6)) };
+  if (a === 'letter') return { kind: 'letter', src: '' };
+  if (tgPhoto()) return { kind: 'tg', src: tgPhoto() };
+  return { kind: 'letter', src: '' };
+}
+function avatarLetter() {
+  const ch = [...avatarName().trim()][0] || '?';
+  return escHtml(ch.toUpperCase());
+}
+// Круглый аватар: картинка, а если не загрузилась (фото из Telegram устарело) — буква
+function avatarFace(src, cls) {
+  const letter = `<span class="av-letter">${avatarLetter()}</span>`;
+  return `<span class="av ${cls || ''}">${letter}${src ? `<img src="${escHtml(src)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}</span>`;
+}
+function hideBrokenAvatars(root) {
+  root.querySelectorAll('.av img').forEach(img => {
+    img.addEventListener('error', () => img.remove(), { once: true });
+  });
+}
+
+function renderAvatar() {
+  const btn = document.getElementById('btn-avatar');
+  if (!btn) return;
+  const show = avatarDemo.on || !!currentUser;
+  btn.hidden = !show;
+  if (!show) { closeAvatarMenu(false); return; }
+  btn.innerHTML = avatarFace(avatarCurrent().src, 'av-btn') +
+    `<span class="av-who"><span class="av-name">${escHtml(avatarName())}</span><span class="av-sub">Сменить аватар</span></span>`;
+  btn.setAttribute('aria-label', `Аватар: ${avatarName()}. Сменить`);
+  hideBrokenAvatars(btn);
+  if (avatarMenu.box) paintAvatarMenu();
+}
+
+// Запись выбора. В демо подменяется (js/demo.js)
+async function saveAvatarMeta(patch) {
+  if (avatarDemo.on) { Object.assign(avatarDemo.meta, patch); return null; }
+  // currentUser обновит onAuthStateChange (USER_UPDATED) в core.js ещё до ответа updateUser
+  const { error } = await sb.auth.updateUser({ data: patch });
+  return error;
+}
+
+// Вход или привязка через Telegram: запоминаем имя и фото оттуда (если фото не скрыто настройками Telegram)
+function rememberTgProfile(user) {
+  if (!user) return;
+  const name = [user.first_name, user.last_name].filter(Boolean).join(' ').trim().slice(0, 60);
+  const photo = TG_PHOTO_RE.test(user.photo_url || '') ? user.photo_url : null;
+  const m = currentUser?.user_metadata || {};
+  if ((m.tg_name || '') === name && (m.tg_photo || null) === photo) return;
+  setTimeout(async () => {
+    await saveAvatarMeta({ tg_name: name || null, tg_photo: photo });
+    renderAvatar();
+  }, 0);
+}
+
+// Своё фото: обрезаем по центру в квадрат 256×256 и сохраняем в JPEG — так файл весит 20–40 КБ
+function readDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result);
+    fr.onerror = () => reject(new Error('не удалось прочитать файл'));
+    fr.readAsDataURL(blob);
+  });
+}
+// Картинку открываем через data: — blob: адреса запрещает Content-Security-Policy
+async function squareJpeg(file) {
+  const src = await readDataUrl(file);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.naturalWidth, img.naturalHeight), size = 256;
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, size, size); // прозрачный PNG — на белом
+      ctx.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, size, size);
+      c.toBlob(b => b ? resolve(b) : reject(new Error('не удалось обработать фото')), 'image/jpeg', 0.88);
+    };
+    img.onerror = () => reject(new Error('этот формат не открывается, выберите JPG или PNG'));
+    img.src = src;
+  });
+}
+// Загрузка в хранилище. В демо подменяется: фото остаётся только на странице
+async function uploadAvatarBlob(blob) {
+  if (avatarDemo.on) {
+    avatarDemo.photo = await readDataUrl(blob);
+    return null;
+  }
+  const { error } = await sb.storage.from(AVATAR_BUCKET)
+    .upload(`${currentUser.id}/avatar.jpg`, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
+  return error;
+}
+async function removeAvatarPhoto() {
+  if (avatarDemo.on) { avatarDemo.photo = ''; return; }
+  try { await sb.storage.from(AVATAR_BUCKET).remove([`${currentUser.id}/avatar.jpg`]); } catch (_) {}
+}
+
+// ═══ Окно выбора ═══
+const avatarMenu = { box: null, back: null, busy: false, msg: '' };
+function closeAvatarMenu(returnFocus) {
+  if (!avatarMenu.box) return;
+  avatarMenu.box.remove();
+  if (avatarMenu.back) avatarMenu.back.remove();
+  avatarMenu.box = avatarMenu.back = null;
+  avatarMenu.msg = '';
+  const btn = document.getElementById('btn-avatar');
+  btn.setAttribute('aria-expanded', 'false');
+  if (returnFocus) btn.focus();
+}
+function paintAvatarMenu() {
+  const box = avatarMenu.box, cur = avatarCurrent();
+  const hasPhoto = String(avatarMeta().avatar || '').startsWith('photo:');
+  const opt = (kind, src, label) =>
+    `<button type="button" class="av-opt" data-av="${escHtml(kind)}" aria-pressed="${cur.kind === kind}" aria-label="${escHtml(label)}" title="${escHtml(label)}">` +
+    avatarFace(src, 'av-pick') + `<span class="av-tick">${ICON.check}</span></button>`;
+  const opts = [];
+  if (tgPhoto()) opts.push(opt('tg', tgPhoto(), 'Фото из Telegram'));
+  if (hasPhoto) opts.push(opt('photo', photoUrl(String(avatarMeta().avatar).slice(6)), 'Своё фото'));
+  opts.push(opt('letter', '', 'Буква имени'));
+  AVATAR_IVANS.forEach(([k, label]) => opts.push(opt('ivan:' + k, `img/avatars/${k}.webp`, 'Иван: ' + label.toLowerCase())));
+  box.innerHTML = `<div class="ui-pop-title">Аватар</div>
+    <div class="av-head">${avatarFace(cur.src, 'av-big')}<div class="av-who"><span class="av-name">${escHtml(avatarName())}</span><span class="av-sub">${escHtml(avatarSub())}</span></div></div>
+    <div class="av-grid" role="group" aria-label="Выберите аватар">${opts.join('')}</div>
+    <button type="button" class="ui-opt backup-opt av-upload" data-av-upload ${avatarMenu.busy ? 'disabled' : ''}>
+      <span class="backup-ico">${ICON.up}</span><span class="opt-text">${avatarMenu.busy ? 'Загружаем…' : 'Загрузить своё фото'}<small>JPG или PNG, обрежем в квадрат</small></span></button>
+    ${avatarDemo.on ? '' : `<button type="button" class="ui-opt backup-opt av-logout" data-av-logout><span class="backup-ico">${ICON.exit}</span><span class="opt-text">Выйти</span></button>`}
+    ${avatarMenu.msg ? `<p class="av-msg" role="alert">${escHtml(avatarMenu.msg)}</p>` : ''}`;
+  hideBrokenAvatars(box);
+}
+function openAvatarMenu() {
+  const btn = document.getElementById('btn-avatar');
+  const sheet = isSheet();
+  if (sheet) {
+    avatarMenu.back = document.createElement('div');
+    avatarMenu.back.className = 'ui-backdrop';
+    avatarMenu.back.addEventListener('click', () => closeAvatarMenu(true));
+    document.body.appendChild(avatarMenu.back);
+  }
+  const box = document.createElement('div');
+  box.className = 'ui-pop avatar-menu' + (sheet ? ' sheet' : '');
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-label', 'Аватар');
+  box.addEventListener('click', onAvatarMenuClick);
+  box.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closeAvatarMenu(true); } });
+  avatarMenu.box = box;
+  paintAvatarMenu();
+  document.body.appendChild(box);
+  btn.setAttribute('aria-expanded', 'true');
+  if (!sheet) {
+    // Внизу бокового меню — окно над кнопкой, в шапке — под ней
+    const r = btn.getBoundingClientRect(), w = 320;
+    box.style.width = w + 'px';
+    box.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+    if (r.top > innerHeight / 2) box.style.bottom = (innerHeight - r.top + 8) + 'px';
+    else box.style.top = (r.bottom + 8) + 'px';
+  }
+  (box.querySelector('.av-opt[aria-pressed="true"]') || box.querySelector('.av-opt')).focus();
+}
+async function onAvatarMenuClick(e) {
+  if (avatarMenu.busy) return;
+  if (e.target.closest('[data-av-logout]')) { closeAvatarMenu(false); document.getElementById('btn-logout').click(); return; }
+  if (e.target.closest('[data-av-upload]')) { document.getElementById('avatar-file').click(); return; }
+  const b = e.target.closest('[data-av]');
+  if (!b) return;
+  const kind = b.dataset.av;
+  const meta = avatarMeta();
+  const prev = String(meta.avatar || '');
+  const next = kind === 'photo' ? prev : kind;
+  if (next === prev && prev) return;
+  avatarMenu.busy = true; avatarMenu.msg = '';
+  const err = await saveAvatarMeta({ avatar: next });
+  avatarMenu.busy = false;
+  if (err) { avatarMenu.msg = 'Не сохранилось: ' + err.message; paintAvatarMenu(); return; }
+  // Своё фото заменили на другое — удаляем файл из хранилища, чтобы оно там не лежало
+  if (prev.startsWith('photo:') && !next.startsWith('photo:')) removeAvatarPhoto();
+  renderAvatar();
+  avatarMenu.box?.querySelector(`.av-opt[data-av="${CSS.escape(kind)}"]`)?.focus();
+}
+async function uploadAvatarFile(file) {
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { avatarMenu.msg = 'Это не картинка. Выберите фото JPG или PNG.'; renderAvatar(); return; }
+  if (file.size > 15 * 1024 * 1024) { avatarMenu.msg = 'Фото больше 15 МБ, выберите поменьше.'; renderAvatar(); return; }
+  avatarMenu.busy = true; avatarMenu.msg = ''; renderAvatar();
+  try {
+    const blob = await squareJpeg(file);
+    const upErr = await uploadAvatarBlob(blob);
+    if (upErr) throw new Error(/bucket|not found/i.test(upErr.message) ? 'хранилище фото ещё не настроено' : upErr.message);
+    const err = await saveAvatarMeta({ avatar: 'photo:' + Date.now() });
+    if (err) throw err;
+  } catch (e) {
+    avatarMenu.msg = 'Не удалось загрузить фото: ' + e.message;
+  }
+  avatarMenu.busy = false;
+  renderAvatar();
+}
+
+document.getElementById('btn-avatar').addEventListener('click', () => {
+  if (avatarMenu.box) closeAvatarMenu(false); else openAvatarMenu();
+});
+document.addEventListener('mousedown', e => {
+  if (avatarMenu.box && !avatarMenu.box.contains(e.target) && !e.target.closest('#btn-avatar')) closeAvatarMenu(false);
+});
+document.getElementById('avatar-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  uploadAvatarFile(file);
+});
+// Вход, выход и обновление аккаунта (в том числе после смены аватара на другом устройстве)
+sb.auth.onAuthStateChange(() => { setTimeout(renderAvatar, 0); });
