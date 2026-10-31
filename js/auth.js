@@ -407,3 +407,14 @@ document.querySelectorAll('#auth-overlay input[type="password"]').forEach(input 
     head.style.setProperty('--ty', '0');
   });
 })();
+
+// 3D-Иван: модель и библиотека (около 1,2 МБ + 0,6 МБ) грузятся только на компьютере, где виден блок приветствия,
+// и уже после загрузки страницы. На телефоне, без WebGL или при ошибке остаётся обычная картинка.
+window.addEventListener('load', () => {
+  const box = document.querySelector('.auth-ivan-3d');
+  if (!box || box.offsetParent === null || !matchMedia('(min-width: 861px)').matches) return;
+  const s = document.createElement('script');
+  s.src = 'js/vendor/ivan3d.js?v=26';
+  s.onload = () => window.mountIvan3D && window.mountIvan3D(box, 'img/ivan/ivan.glb?v=26');
+  document.body.appendChild(s);
+});
