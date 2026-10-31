@@ -15,12 +15,18 @@ const AVATAR_BUCKET = 'avatars';
 const TG_PHOTO_RE = /^https:\/\/t\.me\/i\/userpic\/[\w\/.-]+$/;
 // В демо-режиме аккаунта нет: выбор живёт в памяти страницы (js/demo.js включает demo)
 const avatarDemo = { on: false, meta: {} };
+// Аккаунт берём и из своего onAuthStateChange: первое событие сессии приходит сюда раньше,
+// чем core.js успевает заполнить currentUser
+let avatarSession = null;
+function avUser() {
+  return passwordRecovery ? null : (currentUser || avatarSession);
+}
 
 function avatarMeta() {
-  return avatarDemo.on ? avatarDemo.meta : (currentUser?.user_metadata || {});
+  return avatarDemo.on ? avatarDemo.meta : (avUser()?.user_metadata || {});
 }
 function avatarName() {
-  const m = avatarMeta(), email = currentUser?.email || '';
+  const m = avatarMeta(), email = avUser()?.email || '';
   if (typeof m.full_name === 'string' && m.full_name.trim()) return m.full_name.trim().slice(0, 60);
   if (avatarDemo.on) return 'Гость';
   if (m.tg_name) return String(m.tg_name).slice(0, 60);
@@ -30,7 +36,7 @@ function avatarName() {
 }
 function avatarSub() {
   if (avatarDemo.on) return 'Демо-режим';
-  const email = currentUser?.email || '';
+  const email = avUser()?.email || '';
   if (!/^tg\d+@/.test(email)) return email;
   // Аккаунт создан входом через Telegram: настоящей почты нет, показываем ник в Telegram
   const u = String(avatarMeta().tg_username || '');
@@ -42,8 +48,8 @@ function tgPhoto() {
 }
 function photoUrl(stamp) {
   if (avatarDemo.on) return avatarDemo.photo || '';
-  if (!currentUser) return '';
-  return `${SUPABASE_URL}/storage/v1/object/public/${AVATAR_BUCKET}/${currentUser.id}/avatar.jpg?v=${encodeURIComponent(stamp)}`;
+  if (!avUser()) return '';
+  return `${SUPABASE_URL}/storage/v1/object/public/${AVATAR_BUCKET}/${avUser().id}/avatar.jpg?v=${encodeURIComponent(stamp)}`;
 }
 // Что сейчас выбрано: { kind, src }
 function avatarCurrent() {
@@ -72,7 +78,7 @@ function hideBrokenAvatars(root) {
 function renderAvatar() {
   const btn = document.getElementById('btn-avatar');
   if (!btn) return;
-  const show = avatarDemo.on || !!currentUser;
+  const show = avatarDemo.on || !!avUser();
   btn.hidden = !show;
   if (!show) { closeAvatarMenu(false); return; }
   btn.innerHTML = avatarFace(avatarCurrent().src, 'av-btn') +
@@ -96,7 +102,7 @@ function rememberTgProfile(user) {
   const name = [user.first_name, user.last_name].filter(Boolean).join(' ').trim().slice(0, 60);
   const photo = TG_PHOTO_RE.test(user.photo_url || '') ? user.photo_url : null;
   const username = /^\w{4,32}$/.test(user.username || '') ? user.username : null;
-  const m = currentUser?.user_metadata || {};
+  const m = avUser()?.user_metadata || {};
   if ((m.tg_name || '') === name && (m.tg_photo || null) === photo && (m.tg_username || null) === username) return;
   setTimeout(async () => {
     await saveAvatarMeta({ tg_name: name || null, tg_photo: photo, tg_username: username });
@@ -138,12 +144,12 @@ async function uploadAvatarBlob(blob) {
     return null;
   }
   const { error } = await sb.storage.from(AVATAR_BUCKET)
-    .upload(`${currentUser.id}/avatar.jpg`, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
+    .upload(`${avUser().id}/avatar.jpg`, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
   return error;
 }
 async function removeAvatarPhoto() {
   if (avatarDemo.on) { avatarDemo.photo = ''; return; }
-  try { await sb.storage.from(AVATAR_BUCKET).remove([`${currentUser.id}/avatar.jpg`]); } catch (_) {}
+  try { await sb.storage.from(AVATAR_BUCKET).remove([`${avUser().id}/avatar.jpg`]); } catch (_) {}
 }
 
 // ═══ Окно выбора ═══
@@ -289,4 +295,7 @@ document.getElementById('avatar-file').addEventListener('change', e => {
   uploadAvatarFile(file);
 });
 // Вход, выход и обновление аккаунта (в том числе после смены аватара на другом устройстве)
-sb.auth.onAuthStateChange(() => { setTimeout(renderAvatar, 0); });
+sb.auth.onAuthStateChange((event, session) => {
+  avatarSession = session?.user || null;
+  setTimeout(renderAvatar, 0);
+});
