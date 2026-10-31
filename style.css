@@ -640,6 +640,14 @@ body.auth-locked .app{display:none}
 .welcome-steps li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.45}
 .welcome-steps span{flex:none;width:26px;height:26px;border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-size:13px;display:grid;place-items:center}
 .welcome-ok{margin-top:20px}
+/* Окно согласий после входа: поверх всплывающих полей, почти непрозрачное — планер под ним не читается */
+.consent-gate{z-index:210;background:rgba(0,0,0,.82)}
+.consent-gate .welcome{text-align:left}
+.consent-gate .welcome-ivan,.consent-gate .welcome-title,.consent-gate .welcome-text{text-align:center}
+.gate-checks{margin:18px 0 6px}
+.consent-gate .auth-error{margin:14px 0 0}
+.gate-logout{display:block;width:100%;min-height:44px;margin-top:8px;border:0;background:transparent;color:var(--fg-muted);font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.gate-logout:hover{color:var(--fg)}
 @keyframes welcomeFade{from{opacity:0}}
 @keyframes welcomeIn{from{opacity:0;transform:translateY(16px) scale(.96)}}
 
