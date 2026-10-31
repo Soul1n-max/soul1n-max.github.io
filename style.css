@@ -605,13 +605,10 @@ body.auth-locked .app{display:none}
 .auth-hero{flex:1 1 480px;align-self:flex-start;min-height:100%;background:var(--side);color:var(--side-fg);border-radius:28px;padding:clamp(28px,4vw,52px);display:flex;flex-direction:column;justify-content:space-between;gap:36px}
 /* Блок приветствия — по центру тёмной панели (по горизонтали и вертикали) */
 .auth-hero-body{margin:auto;width:100%;max-width:800px}
-/* Объём: --tx/--ty от -1 до 1 ставит auth.js по положению курсора (на телефоне и без курсора — 0) */
+/* Наклон Ивана: --tx/--ty от -1 до 1 ставит auth.js по положению курсора (на телефоне и без курсора — 0) */
 .auth-hero-head{display:flex;align-items:flex-end;gap:24px;perspective:900px;--tx:0;--ty:0}
-/* Буквы с «боковиной»: стопка теней на 1px вниз-вправо темнеет к низу, затем мягкая тень на панель */
-.auth-hero h1{font-family:'Unbounded','Onest',sans-serif;font-size:clamp(30px,min(3.6vw,6.2vh),56px);line-height:1.12;font-weight:600;letter-spacing:-.035em;color:#FFFFFF;
-  text-shadow:1px 1px 0 #C9C9C9,2px 2px 0 #A8A8A8,3px 3px 0 #8C8C8C,4px 4px 0 #727272,5px 5px 0 #5C5C5C,6px 6px 0 #4A4A4A,8px 10px 6px rgba(0,0,0,.55),12px 18px 24px rgba(0,0,0,.5)}
-.auth-hero h1 span{color:var(--accent);text-shadow:1px 1px 0 #D0101A,2px 2px 0 #B80E17,3px 3px 0 #A00C14,4px 4px 0 #880A11,5px 5px 0 #70080E,6px 6px 0 #58060B,8px 10px 6px rgba(0,0,0,.55),12px 18px 24px rgba(0,0,0,.5)}
-.auth-title-3d{transform:rotateY(calc(var(--tx) * 5deg)) rotateX(calc(var(--ty) * -4deg));transform-origin:0 50%;transition:transform .35s ease-out}
+.auth-hero h1{font-family:'Unbounded','Onest',sans-serif;font-size:clamp(30px,min(3.6vw,6.2vh),56px);line-height:1.08;font-weight:600;letter-spacing:-.035em}
+.auth-hero h1 span{color:var(--side-accent)}
 .auth-lead{margin-top:16px;font-size:19px;line-height:1.5;color:var(--side-text);max-width:620px}
 /* Иван: покачивается вверх-вниз, наклоняется за курсором, под ним тень на «полу» и красное свечение сзади */
 .auth-ivan-3d{position:relative;flex:none;width:132px;height:182px;transform:rotateY(calc(var(--tx) * 16deg)) rotateX(calc(var(--ty) * -10deg));transition:transform .35s ease-out}
@@ -621,7 +618,7 @@ body.auth-locked .app{display:none}
   filter:drop-shadow(calc(var(--tx) * -6px) 4px 0 rgba(0,0,0,.35)) drop-shadow(0 18px 22px rgba(0,0,0,.55));animation:ivanFloat 3.6s ease-in-out infinite}
 @keyframes ivanFloat{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-12px) rotate(1.5deg)}}
 @keyframes ivanShadow{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.78);opacity:.55}}
-@media (prefers-reduced-motion: reduce){.auth-ivan,.auth-ivan-3d::after{animation:none}.auth-ivan-3d,.auth-title-3d{transition:none}}
+@media (prefers-reduced-motion: reduce){.auth-ivan,.auth-ivan-3d::after{animation:none}.auth-ivan-3d{transition:none}}
 .auth-points{list-style:none;padding:0;display:flex;flex-direction:column;gap:16px;max-width:680px;margin-top:36px}
 .auth-points li{display:flex;gap:16px;align-items:center;font-size:17px;line-height:1.45;color:var(--side-text)}
 .auth-points .tick{flex-shrink:0;width:34px;height:34px;border-radius:11px;background:var(--side-3);display:grid;place-items:center;color:var(--side-accent)}
@@ -728,7 +725,6 @@ body.auth-locked .app{display:none}
   .auth-pitch-ivan,.auth-pitch-ivan .ivan-bulb,.auth-pitch-ivan::before{animation:none}
 }
 .auth-pitch-title{font-family:'Unbounded','Onest',sans-serif;font-size:15px;font-weight:600;line-height:1.25;letter-spacing:-.02em}
-.auth-pitch-title{text-shadow:1px 1px 0 #9A9A9A,2px 3px 4px rgba(0,0,0,.55)}
 .auth-pitch-text{margin-top:4px;font-size:13px;line-height:1.45;color:var(--side-text)}
 @media (max-width: 860px) {
   .auth-pitch{display:flex}

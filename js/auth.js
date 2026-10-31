@@ -383,7 +383,7 @@ document.querySelectorAll('#auth-overlay input[type="password"]').forEach(input 
 });
 
 
-// Объём на экране входа: Иван и заголовок слегка наклоняются за курсором.
+// Объём на экране входа: Иван слегка наклоняется за курсором.
 // Только мышь (на телефоне нет курсора) и не при «уменьшить движение»; пишет в .auth-hero-head --tx/--ty от -1 до 1.
 (() => {
   const head = document.querySelector('.auth-hero-head');
