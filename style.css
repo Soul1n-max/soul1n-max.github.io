@@ -166,6 +166,11 @@ svg{flex-shrink:0}
 .mascot-card{flex:0 1 400px;flex-direction:row;align-items:center;gap:14px;padding:12px 18px 14px 12px}
 .mascot-img{flex:none;width:84px;height:116px;object-fit:contain;object-position:bottom;filter:drop-shadow(0 6px 10px rgba(var(--shade),.12))}
 .mascot-img.pop{animation:mascot-pop .45s cubic-bezier(.3,1.6,.5,1)}
+.mascot-fig{position:relative;flex:none;display:block}
+.mascot-fig .mascot-img{display:block}
+/* Кадр ролика квадратный, с запасом под машущую лапу: шире места под образ, по низу совпадает с ним */
+.mascot-wave{position:absolute;left:50%;bottom:0;width:116px;height:116px;margin-left:-58px;object-fit:contain;object-position:bottom;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(var(--shade),.12))}
+.mascot-fig.waving .mascot-img{visibility:hidden}
 @keyframes mascot-pop{0%{transform:scale(.85) translateY(6px)}100%{transform:none}}
 .mascot-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
 .mascot-say{font-size:14px;font-weight:600;line-height:1.35;color:var(--fg)}
@@ -611,10 +616,11 @@ body.auth-locked .app{display:none}
 .auth-hero h1 span{color:var(--side-accent)}
 .auth-lead{margin-top:16px;font-size:19px;line-height:1.5;color:var(--side-text);max-width:620px}
 /* Иван: покачивается вверх-вниз, наклоняется за курсором, под ним тень на «полу» и красное свечение сзади */
-.auth-ivan-3d{position:relative;flex:none;width:132px;height:182px;transform:rotateY(calc(var(--tx) * 16deg)) rotateX(calc(var(--ty) * -10deg));transition:transform .35s ease-out}
+.auth-ivan-3d{position:relative;flex:none;width:136px;height:190px;transform:rotateY(calc(var(--tx) * 16deg)) rotateX(calc(var(--ty) * -10deg));transition:transform .35s ease-out}
 .auth-ivan-3d::before{content:'';position:absolute;left:50%;top:44%;width:190px;height:190px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(237,19,28,.42),rgba(237,19,28,0) 68%);pointer-events:none}
 .auth-ivan-3d::after{content:'';position:absolute;left:50%;bottom:-8px;width:112px;height:16px;margin-left:-56px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.75),rgba(0,0,0,0) 70%);animation:ivanShadow 3.6s ease-in-out infinite}
-.auth-ivan{position:relative;display:block;width:100%;height:100%;object-fit:contain;object-position:bottom center;
+/* Кадр ролика квадратный и с запасом под машущую лапу — картинка шире места под неё */
+.auth-ivan{position:absolute;left:50%;bottom:0;display:block;width:206px;height:206px;margin-left:-103px;object-fit:contain;object-position:bottom center;
   filter:drop-shadow(calc(var(--tx) * -6px) 4px 0 rgba(0,0,0,.35)) drop-shadow(0 18px 22px rgba(0,0,0,.55));animation:ivanFloat 3.6s ease-in-out infinite}
 @keyframes ivanFloat{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-12px) rotate(1.5deg)}}
 @keyframes ivanShadow{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.78);opacity:.55}}
@@ -712,17 +718,12 @@ body.auth-locked .app{display:none}
 /* Иван с лампочкой: в idea.webp лампочка отделена от пальца прозрачной щелью (левый верхний угол,
    до 21.5% ширины и 28.7% высоты картинки 209×300). Нижняя копия картинки показывает всё, кроме этого угла,
    верхняя — только его. Лампочка плавно ходит вверх-вниз и светится, Иван чуть покачивается. */
-.auth-pitch-ivan{position:relative;flex:none;width:46px;height:66px;transform-origin:50% 100%;animation:ivanSway 2.8s ease-in-out infinite}
-.auth-pitch-ivan img{position:absolute;inset:0;width:100%;height:100%;display:block}
-.auth-pitch-ivan .ivan-body{clip-path:polygon(21.5% 0,100% 0,100% 100%,0 100%,0 28.7%,21.5% 28.7%)}
-.auth-pitch-ivan .ivan-bulb{clip-path:inset(0 78.5% 71.3% 0);transform-origin:10% 27%;animation:ivanBulb 1.4s ease-in-out infinite alternate}
+.auth-pitch-ivan{position:relative;flex:none;width:64px;height:64px;transform-origin:50% 100%;animation:ivanSway 2.8s ease-in-out infinite}
+.auth-pitch-ivan img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain}
 /* Свечение за лампочкой */
-.auth-pitch-ivan::before{content:'';position:absolute;left:-9px;top:-10px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,102,.75),rgba(255,214,102,0) 70%);animation:ivanGlow 1.4s ease-in-out infinite alternate}
-@keyframes ivanBulb{from{transform:translateY(1px) rotate(4deg)} to{transform:translateY(-5px) rotate(-6deg)}}
-@keyframes ivanGlow{from{opacity:.25;transform:translateY(1px) scale(.8)} to{opacity:1;transform:translateY(-5px) scale(1.1)}}
 @keyframes ivanSway{0%,100%{transform:rotate(0)} 50%{transform:rotate(-2deg)}}
 @media (prefers-reduced-motion: reduce) {
-  .auth-pitch-ivan,.auth-pitch-ivan .ivan-bulb,.auth-pitch-ivan::before{animation:none}
+  .auth-pitch-ivan{animation:none}
 }
 .auth-pitch-title{font-family:'Unbounded','Onest',sans-serif;font-size:15px;font-weight:600;line-height:1.25;letter-spacing:-.02em}
 .auth-pitch-text{margin-top:4px;font-size:13px;line-height:1.45;color:var(--side-text)}
@@ -813,6 +814,7 @@ body.auth-locked .app{display:none}
   /* Компактный Иван: одна строка с фразой, серией и прогрессом */
   .mascot-card{padding:8px 14px 12px 6px;gap:8px}
   .mascot-img{width:52px;height:72px}
+  .mascot-wave{width:72px;height:72px;margin-left:-36px}
   .mascot-body{gap:6px}
   .mascot-say{font-size:13px}
   .streak{height:24px;font-size:11px}

@@ -407,3 +407,18 @@ document.querySelectorAll('#auth-overlay input[type="password"]').forEach(input 
     head.style.setProperty('--ty', '0');
   });
 })();
+
+// Иван на экране входа машет один раз после загрузки страницы (img/ivan/wave.webp, 5 с), потом снова стоит
+// (wave-still.webp — первый кадр того же ролика). При «уменьшить движение» не машет.
+window.addEventListener('load', () => {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const imgs = [...document.querySelectorAll('#auth-overlay .ivan-wave')].filter(i => i.offsetParent !== null);
+  if (!imgs.length) return;
+  const wave = new Image();
+  wave.onload = () => {
+    const still = imgs.map(i => i.src);
+    imgs.forEach(i => { i.src = wave.src; });
+    setTimeout(() => imgs.forEach((i, n) => { i.src = still[n]; }), 5100);
+  };
+  wave.src = 'img/ivan/wave.webp?v=27';
+});

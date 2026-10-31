@@ -38,7 +38,7 @@
      Обновлять версию — вместе с новым хешем. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=26">
+<link rel="stylesheet" href="style.css?v=27">
 </head>
 <body class="auth-locked">
 
@@ -99,7 +99,11 @@
           <div class="h1" id="hdr-date">—</div>
         </div>
         <div class="progress-card mascot-card">
-          <img class="mascot-img" id="mascot-img" src="img/ivan/idea.webp" width="84" height="116" alt="Маскот Иван">
+          <!-- Поверх образа при открытии планера Иван машет (waveMascot() в render.js) -->
+          <span class="mascot-fig">
+            <img class="mascot-img" id="mascot-img" src="img/ivan/idea.webp" width="84" height="116" alt="Маскот Иван">
+            <img class="mascot-wave" id="mascot-wave" width="116" height="116" alt="" aria-hidden="true" hidden>
+          </span>
           <div class="mascot-body">
             <p class="mascot-say" id="mascot-say" aria-live="polite">Привет! Я Иван.</p>
             <div class="streak" id="streak" title="Дни подряд, в которые выполнена хотя бы одна задача">
@@ -244,9 +248,9 @@
     </div>
     <div class="auth-hero-body">
       <div class="auth-hero-head">
-        <!-- Объём: Иван покачивается, под ним тень, наклоняется за курсором (auth.js) -->
+        <!-- Иван машет один раз после загрузки, покачивается, под ним тень, наклоняется за курсором (auth.js) -->
         <div class="auth-ivan-3d">
-          <img class="auth-ivan" src="img/ivan/thumb.webp" width="120" height="166" alt="Маскот Иван">
+          <img class="auth-ivan ivan-wave" src="img/ivan/wave-still.webp" width="182" height="182" alt="Маскот Иван машет">
         </div>
         <div>
           <h1>Планер задач в&nbsp;Telegram <span>и&nbsp;на&nbsp;сайте</span></h1>
@@ -290,10 +294,9 @@
       </div>
       <!-- Короткое УТП для телефона: там .auth-hero скрыт -->
       <div class="auth-pitch">
-        <!-- Две копии одной картинки: Иван без лампочки и отдельно лампочка, которая подпрыгивает (стили в разделе AUTH) -->
+        <!-- Иван машет один раз после загрузки (auth.js, img/ivan/wave.webp), потом стоит -->
         <span class="auth-pitch-ivan" aria-hidden="true">
-          <img class="ivan-body" src="img/ivan/idea.webp" width="46" height="66" alt="">
-          <img class="ivan-bulb" src="img/ivan/idea.webp" width="46" height="66" alt="">
+          <img class="ivan-wave" src="img/ivan/wave-still.webp" width="64" height="64" alt="">
         </span>
         <div>
           <p class="auth-pitch-title">Планер задач в&nbsp;Telegram и&nbsp;на&nbsp;сайте</p>
@@ -374,17 +377,17 @@
 </div>
 
 <!-- Скрипты подключаются по порядку: каждый следующий пользуется функциями предыдущих -->
-<script src="js/core.js?v=26"></script>
-<script src="js/phrase.js?v=26"></script>
-<script src="js/data.js?v=26"></script>
-<script src="js/render.js?v=26"></script>
-<script src="js/drag.js?v=26"></script>
-<script src="js/fields.js?v=26"></script>
-<script src="js/ui.js?v=26"></script>
-<script src="js/auth.js?v=26"></script>
-<script src="js/avatar.js?v=26"></script>
-<script src="js/onboarding.js?v=26"></script>
-<script src="js/main.js?v=26"></script>
-<script src="js/demo.js?v=26"></script>
+<script src="js/core.js?v=27"></script>
+<script src="js/phrase.js?v=27"></script>
+<script src="js/data.js?v=27"></script>
+<script src="js/render.js?v=27"></script>
+<script src="js/drag.js?v=27"></script>
+<script src="js/fields.js?v=27"></script>
+<script src="js/ui.js?v=27"></script>
+<script src="js/auth.js?v=27"></script>
+<script src="js/avatar.js?v=27"></script>
+<script src="js/onboarding.js?v=27"></script>
+<script src="js/main.js?v=27"></script>
+<script src="js/demo.js?v=27"></script>
 </body>
 </html>

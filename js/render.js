@@ -351,6 +351,29 @@ function renderMascot() {
   document.getElementById('streak').classList.toggle('on', st.streak > 0);
 }
 
+// Иван машет один раз, когда открывается планер (после входа или при загрузке уже вошедшего).
+// Ролик img/ivan/wave.webp на 5 с лежит поверх образа, потом образ возвращается. При «уменьшить движение» не машет.
+let mascotWaved = false;
+function waveMascot() {
+  if (mascotWaved || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  mascotWaved = true;
+  const fig = document.querySelector('.mascot-fig'), wave = document.getElementById('mascot-wave');
+  if (!fig || !wave) return;
+  wave.onload = () => {
+    wave.onload = null;
+    wave.hidden = false;
+    fig.classList.add('waving');
+    setTimeout(() => {
+      fig.classList.remove('waving');
+      wave.hidden = true;
+      wave.removeAttribute('src');
+      const img = document.getElementById('mascot-img');
+      img.classList.remove('pop'); void img.offsetWidth; img.classList.add('pop');
+    }, 5100);
+  };
+  wave.src = 'img/ivan/wave.webp?v=27';
+}
+
 function renderSideProjects() {
   const box = document.getElementById('side-projects');
   box.innerHTML = '';
