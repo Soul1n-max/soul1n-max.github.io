@@ -136,6 +136,16 @@ svg{flex-shrink:0}
 .av-upload:disabled{opacity:.6}
 .av-logout{display:none;width:100%;margin-top:6px}
 .avatar-menu.sheet .av-logout{display:flex}
+.avatar-menu .av-who{flex:1}
+.av-name-row{display:flex;align-items:center;gap:4px;min-width:0}
+.av-name-edit{display:grid;place-items:center;flex:none;width:44px;height:44px;border:0;border-radius:10px;background:transparent;color:var(--fg-muted)}
+.av-name-edit:hover{background:var(--surface-2);color:var(--fg)}
+.av-name-input{width:100%;min-height:44px;line-height:24px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);color:var(--fg);font:inherit;font-size:15px;font-weight:600;resize:none;overflow:hidden}
+.av-name-input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.av-name-btns{display:flex;gap:6px;margin:6px 0 2px}
+.av-name-btns button{min-height:44px;padding:0 12px;border-radius:10px;border:0;font-size:13px;font-weight:600}
+.av-name-save{background:var(--accent);color:var(--on-accent)}
+.av-name-cancel{background:var(--surface-2);color:var(--fg)}
 .av-msg{margin:6px 8px 4px;font-size:13px;color:var(--accent-ink)}
 
 /* ─── PAGE HEAD ─── */
