@@ -12,11 +12,19 @@ if (new URLSearchParams(location.search).has('demo')) {
   ];
   const T = (text, cat, due, time, projectId, extra) => ({
     id: uid(), text, cat, note: '', done: false, created: Date.now(), dueDate: due, dueTime: time,
-    projectId, recur: null, subtasks: [], doneAt: null, ...extra,
+    projectId, recur: null, subtasks: [], files: [], doneAt: null, ...extra,
   });
+  // Файлы демо живут только в памяти страницы: id файла → Blob
+  const demoBlobs = {};
+  const demoFile = (name, text) => {
+    const id = uid(), blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    demoBlobs[id] = blob;
+    return { id, name, path: 'demo/' + id, size: blob.size, type: blob.type };
+  };
   const demoTasks = () => [
     T('Отправить коммерческое предложение', 'contact',  off(-1), null,       'demo-p1'),
     T('Утвердить макет главной страницы',   'project',  off(0),  '11:00:00', 'demo-p2', { note: 'Проверить мобильную версию и цвета кнопок',
+      files: [demoFile('ТЗ на главную страницу.txt', 'Главная страница студии\n\n1. Шапка и меню\n2. Карточки услуг\n3. Форма заявки\n')],
       subtasks: [{ id: 's1', text: 'Шапка и меню', done: true }, { id: 's2', text: 'Карточки услуг', done: false }, { id: 's3', text: 'Форма заявки', done: false }] }),
     T('Созвон с подрядчиком по сайту',      'contact',  off(0),  '14:30:00', 'demo-p2'),
     T('Оплатить хостинг',                   'remind',   off(0),  null,       null,      { recur: 'monthly' }),
@@ -59,7 +67,7 @@ if (new URLSearchParams(location.search).has('demo')) {
     if (!t.recur) return;
     const copy = nextCopyOf(t);
     if (t.done && !copy) tasks.unshift(T(t.text, t.cat, nextDue(t.dueDate, t.recur), t.dueTime, t.projectId,
-      { recur: t.recur, note: t.note, subtasks: t.subtasks.map(x => ({ ...x, done: false })) }));
+      { recur: t.recur, note: t.note, subtasks: t.subtasks.map(x => ({ ...x, done: false })), files: t.files }));
     else if (!t.done && copy) tasks = tasks.filter(x => x.id !== copy.id);
   };
   // Удалённая задача возвращается «Отменить» как есть: в демо «строка базы» — сама задача
@@ -72,6 +80,24 @@ if (new URLSearchParams(location.search).has('demo')) {
                   project_id: 'projectId', recur: 'recur', subtasks: 'subtasks' };
     for (const k in f) if (map[k]) t[map[k]] = f[k];
   };
+  uploadTaskFile = async (taskId, file) => {
+    const t = tasks.find(x => x.id === taskId);
+    if (!t) return 'задача не найдена';
+    if (t.files.length >= FILES_MAX) return `к задаче можно прикрепить не больше ${FILES_MAX} файлов`;
+    if (file.size > FILE_MAX_BYTES) return `«${file.name}» больше ${fmtSize(FILE_MAX_BYTES)}`;
+    const id = uid();
+    demoBlobs[id] = file;
+    t.files = [...t.files, { id, name: file.name, path: 'demo/' + id, size: file.size, type: file.type || '' }];
+    return null;
+  };
+  removeTaskFile = async (taskId, fileId) => {
+    const t = tasks.find(x => x.id === taskId);
+    if (!t) return false;
+    t.files = t.files.filter(f => f.id !== fileId);
+    return true;
+  };
+  purgeFiles = async () => {};
+  fileBlob   = async f => { const b = demoBlobs[f.id]; if (!b) throw new Error('файла нет'); return b; };
   moveTask   = async (id, due) => { const t = tasks.find(t => t.id === id); if (t) t.dueDate = due; };
   importBackup = async (projRows, taskRows) => {
     const fresh = (list, rows) => rows.filter(r => !list.some(x => x.id === r.id));
