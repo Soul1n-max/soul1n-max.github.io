@@ -80,6 +80,8 @@ async function loadTasks() {
 }
 
 async function addTask(text, cat, due, dueTime, projId, recur) {
+  text = String(text || '').trim();
+  if (!text) return false; // задачу без текста не сохраняем (база тоже не примет, см. 10_task_text_check.sql)
   // Задачи хранятся по Telegram ID (так их видит и бот), без привязки база их не примет
   if (!telegramId) {
     showLinkCard();
