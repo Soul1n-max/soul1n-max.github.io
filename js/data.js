@@ -123,6 +123,8 @@ async function toggleDone(id) {
       project_id: t.projectId || null, recur: t.recur,
       user_id: telegramId || null,
     };
+    // Подзадачи переходят в следующий повтор неотмеченными
+    if (t.subtasks.length) row.subtasks = t.subtasks.map(x => ({ ...x, done: false }));
     const { data, error: insErr } = await sb.from('tasks').insert([row]).select().single();
     if (insErr) { console.error('Recur insert:', insErr); alert('Задача выполнена, но следующий повтор не создался: ' + insErr.message); return; }
     tasks.unshift(fromDB(data));
@@ -134,10 +136,19 @@ async function toggleDone(id) {
   }
 }
 
+// Возвращает удалённую строку целиком — по ней restoreTask() вернёт задачу кнопкой «Отменить»
 async function deleteTask(id) {
-  const { error } = await sb.from('tasks').delete().eq('id', id);
-  if (error) { console.error('Delete:', error); alert('Не удалось удалить задачу: ' + error.message); return; }
+  const { data, error } = await sb.from('tasks').delete().eq('id', id).select();
+  if (error) { console.error('Delete:', error); alert('Не удалось удалить задачу: ' + error.message); return null; }
   tasks = tasks.filter(t => t.id !== id);
+  return (data && data[0]) || null;
+}
+// Та же строка с тем же id, датой создания и отметкой о напоминании — задача возвращается как была
+async function restoreTask(row) {
+  const { data, error } = await sb.from('tasks').insert([row]).select().single();
+  if (error) { console.error('Restore:', error); alert('Не удалось вернуть задачу: ' + error.message); return false; }
+  if (!tasks.some(t => t.id === data.id)) tasks.unshift(fromDB(data));
+  return true;
 }
 
 async function saveTask(id, fields) {

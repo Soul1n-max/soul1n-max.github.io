@@ -223,41 +223,60 @@ function announce(text) {
   setTimeout(() => { dragLive.textContent = text; }, 50);
 }
 
+// Уведомление внизу экрана с кнопкой «Отменить»: после переноса задачи на другой день и после удаления
 const moveToast = document.createElement('div');
 moveToast.className = 'move-toast';
 moveToast.innerHTML = `<span class="mt-text"></span><button type="button" class="mt-undo">Отменить</button>`;
 document.body.appendChild(moveToast);
-let lastMove = null, toastTimer = null;
+let toastUndo = null, toastTimer = null;
 
 function hideMoveToast() {
   clearTimeout(toastTimer);
   moveToast.classList.remove('show');
-  lastMove = null;
+  toastUndo = null;
 }
 function armMoveToast(ms) { clearTimeout(toastTimer); toastTimer = setTimeout(hideMoveToast, ms); }
 
-function showMoveToast(task, from, to) {
-  lastMove = { id: task.id, from, to };
-  moveToast.querySelector('.mt-text').textContent = `Перенесено на ${moveDayLabel(to)}`;
+// text — на уведомлении, say — для скринридера, onUndo — что сделать по «Отменить»
+function showUndoToast(text, say, onUndo) {
+  toastUndo = onUndo;
+  moveToast.querySelector('.mt-text').textContent = text;
   moveToast.classList.add('show');
   armMoveToast(7000);
-  announce(`Задача «${task.text}» перенесена на ${moveDayLabel(to)}. Отменить можно в уведомлении внизу экрана.`);
+  announce(say);
+}
+
+function showMoveToast(task, from, to) {
+  showUndoToast(`Перенесено на ${moveDayLabel(to)}`,
+    `Задача «${task.text}» перенесена на ${moveDayLabel(to)}. Отменить можно в уведомлении внизу экрана.`,
+    async () => {
+      await moveTask(task.id, from);
+      const t = tasks.find(x => x.id === task.id);
+      if (!t || t.dueDate !== from) return;
+      renderAll();
+      if (from) flashDrop(from);
+      announce(`Перенос отменён: задача снова на ${moveDayLabel(from)}.`);
+    });
+}
+
+function showDeleteToast(row) {
+  showUndoToast('Задача удалена',
+    `Задача «${row.text}» удалена. Вернуть её можно кнопкой «Отменить» внизу экрана.`,
+    async () => {
+      if (!await restoreTask(row)) return;
+      renderAll();
+      announce(`Задача «${row.text}» возвращена.`);
+    });
 }
 
 // Пока на уведомлении курсор или фокус, оно не исчезает
 moveToast.addEventListener('mouseenter', () => clearTimeout(toastTimer));
-moveToast.addEventListener('mouseleave', () => { if (lastMove) armMoveToast(3000); });
+moveToast.addEventListener('mouseleave', () => { if (toastUndo) armMoveToast(3000); });
 moveToast.addEventListener('focusin',    () => clearTimeout(toastTimer));
-moveToast.addEventListener('focusout',   () => { if (lastMove) armMoveToast(3000); });
+moveToast.addEventListener('focusout',   () => { if (toastUndo) armMoveToast(3000); });
 
 moveToast.querySelector('.mt-undo').addEventListener('click', async () => {
-  const m = lastMove;
+  const undo = toastUndo;
   hideMoveToast();
-  if (!m) return;
-  await moveTask(m.id, m.from);
-  const t = tasks.find(x => x.id === m.id);
-  if (!t || t.dueDate !== m.from) return;
-  renderAll();
-  if (m.from) flashDrop(m.from);
-  announce(`Перенос отменён: задача снова на ${moveDayLabel(m.from)}.`);
+  if (undo) await undo();
 });

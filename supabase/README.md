@@ -99,3 +99,13 @@ GitHub Actions по расписанию не подошёл: запуски т�
 ```
 
 Ссылка возвращает на адрес сайта — он должен быть в **Authentication → URL Configuration → Redirect URLs**.
+
+# Подзадачи, новые повторы и копия задач раз в неделю
+
+`07_subtasks_backup.sql` добавляет в `tasks` столбец `subtasks` (массив `{id, text, done}`), проверки вида
+`subtasks` и `recur` (новые повторы: `weekdays`, `yearly`, `days:N`, `weeks:N`, `months:N`) и задание `pg_cron`
+`weekly-backup`: по воскресеньям в 17:00 UTC (20:00 МСК) база вызывает `/weekly-backup` бота, бот присылает
+каждому пользователю с задачами файл копии. Заголовок `X-Cron-Secret` = hmac-sha256(токен бота, `weekly-backup`),
+токен база берёт из Vault (`telegram_bot_token`).
+
+Порядок: выполнить `07_subtasks_backup.sql` → выложить бота → влить сайт.

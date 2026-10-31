@@ -51,11 +51,37 @@ document.getElementById('btn-theme').addEventListener('click', () => {
 });
 
 // ═══ QUICK ADD ═══
+// Подсказка под полем: что поймёт ввод фразой (phrase.js)
+function paintPhrasePreview() {
+  const box = document.getElementById('qa-preview');
+  const p = parsePhrase(document.getElementById('task-input').value);
+  box.hidden = !p.found.length;
+  box.innerHTML = p.found.length ? '<span class="qa-preview-k">Поставлю:</span>' +
+    p.found.map(f => `<span class="chip">${escHtml(f)}</span>`).join('') : '';
+}
+// Распознанное во фразе переносим в поля под строкой ввода; остальные поля не трогаем
+function applyPhrase(p) {
+  const dueEl = document.getElementById('task-due');
+  if (p.due) dueEl.value = p.due;
+  if (p.time) {
+    document.getElementById('task-time').value = p.time;
+    // Только время, и оно сегодня уже прошло — значит, завтра (как в боте)
+    const now = new Date();
+    if (!p.due && dueEl.value === todayKey() && p.time <= `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`)
+      dueEl.value = addDays(todayKey(), 1);
+  }
+  if (p.projectId) document.getElementById('task-project').value = p.projectId;
+  if (p.recur) setRecurField(document.getElementById('task-recur'), p.recur);
+  if (p.cat) selectedCat = p.cat;
+}
+
 async function doAddTask() {
   clearAuthInputs(); // браузер мог снова подставить сохранённый пароль в скрытую форму
   const input = document.getElementById('task-input');
-  const text  = input.value.trim();
-  if (!text) { input.focus(); return; }
+  if (!input.value.trim()) { input.focus(); return; }
+  const phrase = parsePhrase(input.value);
+  const text   = phrase.text;
+  applyPhrase(phrase);
   const dueEl   = document.getElementById('task-due');
   if (!dueEl.value) dueEl.value = todayKey(); // дата обязательна; без неё задачи приходят только из бота
   const due     = dueEl.value;
@@ -70,7 +96,12 @@ async function doAddTask() {
   btn.textContent = 'Добавить';
   if (!ok) return; // текст остаётся в поле, чтобы не набирать заново
   input.value = '';
+  paintPhrasePreview();
   document.getElementById('task-time').value = '';
+  // Повтор, проект и дата из фразы относились только к этой задаче
+  if (phrase.recur) document.getElementById('task-recur').value = '';
+  if (phrase.projectId) document.getElementById('task-project').value = '';
+  if (phrase.due) dueEl.value = dayFilter || todayKey();
   document.querySelectorAll('.tag-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
   selectedCat = null;
   input.focus();
@@ -78,6 +109,7 @@ async function doAddTask() {
 }
 document.getElementById('btn-add').addEventListener('click', doAddTask);
 singleLine(document.getElementById('task-input'), doAddTask);
+document.getElementById('task-input').addEventListener('input', paintPhrasePreview);
 document.getElementById('task-due').value = todayKey();
 
 // ═══ ПОИСК ПО ЛЕНТЕ ═══
@@ -191,7 +223,7 @@ function exportJSON() {
     tasks: tasks.map(t => ({
       id: t.id, text: t.text, cat: t.cat, note: t.note || '', done: !!t.done,
       created_at: new Date(t.created).toISOString(), due_date: t.dueDate, due_time: t.dueTime,
-      project_id: t.projectId, recur: t.recur, done_at: t.doneAt ? new Date(t.doneAt).toISOString() : null,
+      project_id: t.projectId, recur: t.recur, subtasks: t.subtasks || [], done_at: t.doneAt ? new Date(t.doneAt).toISOString() : null,
     })),
   };
   downloadFile(`sinergia-kopiya-${todayKey()}.json`, JSON.stringify(data, null, 2), 'application/json');
@@ -206,10 +238,11 @@ function exportCSV() {
     if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // текст задачи не должен стать формулой в таблице
     return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
-  const head = ['Задача','Тип','Проект','Дата','Время','Повтор','Выполнена','Когда выполнена','Заметка','Создана'];
+  const head = ['Задача','Тип','Проект','Дата','Время','Повтор','Выполнена','Когда выполнена','Заметка','Подзадачи','Создана'];
   const rows = [...tasks].sort((a, b) => (a.done - b.done) || byDue(a, b)).map(t => [
     t.text, CATS[t.cat]?.label || '', getProject(t.projectId)?.name || '', fmtDate(t.dueDate), fmtTime(t.dueTime),
-    RECUR_LABELS[t.recur] || '', t.done ? 'да' : 'нет', fmtStamp(t.doneAt), t.note || '', fmtStamp(t.created),
+    recurLabel(t.recur), t.done ? 'да' : 'нет', fmtStamp(t.doneAt), t.note || '',
+    (t.subtasks || []).map(x => (x.done ? '[x] ' : '[ ] ') + x.text).join('\n'), fmtStamp(t.created),
   ]);
   const text = [head, ...rows].map(r => r.map(cell).join(';')).join('\r\n');
   downloadFile(`sinergia-zadachi-${todayKey()}.csv`, '﻿' + text, 'text/csv;charset=utf-8');
@@ -242,7 +275,8 @@ function backupRows(data) {
       due_date:   /^\d{4}-\d{2}-\d{2}$/.test(t.due_date || '') ? t.due_date : null,
       due_time:   time,
       project_id: known.has(pid) ? pid : null,
-      recur:      RECUR_LABELS[t.recur] ? t.recur : null,
+      recur:      isRecur(t.recur) ? t.recur : null,
+      subtasks:   cleanSubtasks(t.subtasks),
       done_at:    t.done === true ? isoOrNull(t.done_at) : null,
     }];
   });

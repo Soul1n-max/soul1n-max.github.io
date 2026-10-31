@@ -223,7 +223,17 @@ document.addEventListener('pointerdown', e => {
 }, true);
 window.addEventListener('scroll', e => { if (uiPop.el && !uiPop.box.contains(e.target)) placePop(); }, true);
 window.addEventListener('resize', () => closePop(false));
+document.getElementById('task-recur').insertAdjacentHTML('beforeend', recurOptionsHTML(''));
 document.querySelectorAll('#tab-tasks .quick-add .ui-field').forEach(uiField);
+// Повтор, заданный фразой («каждые 5 дней»), может не быть в списке — добавляем его
+function setRecurField(el, v) {
+  if (v && ![...el.options].some(o => o.value === v)) {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = recurLabel(v);
+    el.appendChild(o);
+  }
+  el.value = v || '';
+}
 
 // ═══ PROJECT SELECT ═══
 function updateProjectSelect() {

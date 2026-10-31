@@ -12,14 +12,16 @@ if (new URLSearchParams(location.search).has('demo')) {
   ];
   const T = (text, cat, due, time, projectId, extra) => ({
     id: uid(), text, cat, note: '', done: false, created: Date.now(), dueDate: due, dueTime: time,
-    projectId, recur: null, doneAt: null, ...extra,
+    projectId, recur: null, subtasks: [], doneAt: null, ...extra,
   });
   const demoTasks = () => [
     T('Отправить коммерческое предложение', 'contact',  off(-1), null,       'demo-p1'),
-    T('Утвердить макет главной страницы',   'project',  off(0),  '11:00:00', 'demo-p2', { note: 'Проверить мобильную версию и цвета кнопок' }),
+    T('Утвердить макет главной страницы',   'project',  off(0),  '11:00:00', 'demo-p2', { note: 'Проверить мобильную версию и цвета кнопок',
+      subtasks: [{ id: 's1', text: 'Шапка и меню', done: true }, { id: 's2', text: 'Карточки услуг', done: false }, { id: 's3', text: 'Форма заявки', done: false }] }),
     T('Созвон с подрядчиком по сайту',      'contact',  off(0),  '14:30:00', 'demo-p2'),
     T('Оплатить хостинг',                   'remind',   off(0),  null,       null,      { recur: 'monthly' }),
-    T('Пробежка 5 км',                      'personal', off(1),  '07:30:00', 'demo-p3', { recur: 'daily' }),
+    T('Пробежка 5 км',                      'personal', off(1),  '07:30:00', 'demo-p3', { recur: 'days:2' }),
+    T('Планёрка с командой',                'project',  off(1),  '10:00:00', 'demo-p2', { recur: 'weekdays' }),
     T('Подготовить отчёт за квартал',       'urgent',   off(3),  null,       null),
     T('Собрать референсы для логотипа',     'project',  off(5),  null,       'demo-p1'),
     T('Записаться к стоматологу',           'personal', off(12), null,       'demo-p3'),
@@ -56,14 +58,19 @@ if (new URLSearchParams(location.search).has('demo')) {
     t.done = !t.done; t.doneAt = t.done ? Date.now() : null;
     if (!t.recur) return;
     const copy = nextCopyOf(t);
-    if (t.done && !copy) tasks.unshift(T(t.text, t.cat, nextDue(t.dueDate, t.recur), t.dueTime, t.projectId, { recur: t.recur, note: t.note }));
+    if (t.done && !copy) tasks.unshift(T(t.text, t.cat, nextDue(t.dueDate, t.recur), t.dueTime, t.projectId,
+      { recur: t.recur, note: t.note, subtasks: t.subtasks.map(x => ({ ...x, done: false })) }));
     else if (!t.done && copy) tasks = tasks.filter(x => x.id !== copy.id);
   };
-  deleteTask = async id => { tasks = tasks.filter(t => t.id !== id); };
-  saveTask   = async (id, f) => {
+  // Удалённая задача возвращается «Отменить» как есть: в демо «строка базы» — сама задача
+  deleteTask  = async id => { const t = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id); return t || null; };
+  restoreTask = async t => { if (!tasks.some(x => x.id === t.id)) tasks.unshift(t); return true; };
+  saveTask    = async (id, f) => {
     const t = tasks.find(t => t.id === id);
-    if (t) Object.assign(t, { text: f.text, cat: f.cat, note: f.note, dueDate: f.due_date,
-      dueTime: f.due_time, projectId: f.project_id, recur: f.recur });
+    if (!t) return;
+    const map = { text: 'text', cat: 'cat', note: 'note', due_date: 'dueDate', due_time: 'dueTime',
+                  project_id: 'projectId', recur: 'recur', subtasks: 'subtasks' };
+    for (const k in f) if (map[k]) t[map[k]] = f[k];
   };
   moveTask   = async (id, due) => { const t = tasks.find(t => t.id === id); if (t) t.dueDate = due; };
   importBackup = async (projRows, taskRows) => {

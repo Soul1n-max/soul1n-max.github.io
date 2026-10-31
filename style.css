@@ -144,6 +144,10 @@ svg{flex-shrink:0}
 .quick-add-row{display:flex;gap:8px;align-items:center}
 .quick-input{flex:1;min-width:0;height:56px;padding:16px;line-height:24px;border:0;outline:none;background:transparent;font-size:18px;font-weight:500}
 .quick-input::placeholder{color:var(--fg-dim)}
+.qa-preview{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 8px}
+.qa-preview[hidden]{display:none}
+.qa-preview-k{font-size:12px;font-weight:600;color:var(--fg-muted)}
+.qa-preview .chip{color:var(--accent-ink);background:var(--accent-soft)}
 .btn-add{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s,transform .1s}
 .qa-more{display:none;flex-shrink:0;width:44px;height:44px;border:0;border-radius:12px;background:var(--surface-2);color:var(--fg-muted);place-items:center;transition:background .15s,color .15s}
 .qa-more:hover{color:var(--fg)}
@@ -339,8 +343,10 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .task-check{grid-column:1;grid-row:1}
 .task-text{grid-column:2;grid-row:1;padding-top:11px;font-size:15px;font-weight:500;line-height:1.4;word-break:break-word}
 .task-actions{grid-column:3;grid-row:1}
-.task-note-preview,.task-footer,.note-row,.done-confirm{grid-column:2 / 4;margin-right:4px}
-.done-confirm{display:none;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);font-size:13px;font-weight:600;color:var(--accent-ink)}
+.task-note-preview,.task-footer,.note-row,.subtasks{grid-column:2 / 4;margin-right:4px}
+/* Подтверждение начинается под галочкой: «Да, выполнена» — первая кнопка слева */
+.done-confirm{grid-column:1 / 4;margin:0 4px 0 4px}
+.done-confirm{display:none;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px 8px 8px;border-radius:12px;background:var(--accent-soft);font-size:13px;font-weight:600;color:var(--accent-ink)}
 .done-confirm span{flex:1 1 auto;min-width:0}
 .task-item.confirming .done-confirm{display:flex}
 .task-item.confirming .task-check .box{border-color:var(--accent)}
@@ -368,7 +374,30 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .task-actions button{width:40px;height:40px;border:0;border-radius:12px;background:transparent;color:var(--fg-muted);display:grid;place-items:center;transition:background .12s,color .12s}
 .task-actions button:hover{background:var(--surface-2);color:var(--fg)}
 .task-actions .btn-delete:hover{color:var(--c-urgent);background:var(--b-urgent)}
-.task-actions .btn-delete.confirm{width:auto;padding:0 12px;font-size:13px;font-weight:600;color:var(--c-urgent);background:var(--b-urgent)}
+/* Подзадачи в карточке */
+.subtasks{list-style:none;margin:-4px 4px 0 0;padding:0;display:flex;flex-direction:column}
+.sub-item{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0 8px 0 0;border:0;border-radius:10px;background:transparent;color:var(--fg);font-size:14px;line-height:1.35;text-align:left}
+.sub-item:hover{background:var(--surface-2)}
+.sub-item .box{width:18px;height:18px;flex-shrink:0;border-radius:6px;border:1.5px solid var(--fg-dim);display:grid;place-items:center;color:#fff;transition:background .15s,border-color .15s}
+.sub-item .box svg{display:none;width:11px;height:11px}
+.sub-item.done .box{background:var(--accent);border-color:var(--accent)}
+.sub-item.done .box svg{display:block}
+.sub-item.done .sub-text{text-decoration:line-through;color:var(--fg-muted)}
+.sub-text{min-width:0;padding:8px 0;word-break:break-word}
+.task-sub-tag{gap:5px;color:var(--fg-muted);background:var(--surface-2)}
+.task-sub-tag.all{color:var(--c-personal);background:var(--b-personal)}
+/* Подзадачи в форме правки */
+.sub-edit{display:flex;flex-direction:column;gap:6px}
+.sub-edit-title{font-size:12px;font-weight:600;color:var(--fg-muted)}
+.sub-edit-list{display:flex;flex-direction:column;gap:6px}
+.sub-edit-list:empty{display:none}
+.sub-row{display:flex;gap:6px;align-items:center}
+.sub-in,.sub-new{flex:1;min-width:0;height:44px;padding:11px 12px;line-height:20px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);font-size:14px;outline:none;transition:border-color .15s}
+.sub-new{border-style:dashed}
+.sub-in:focus,.sub-new:focus{border-color:var(--accent);border-style:solid}
+.sub-new::placeholder{color:var(--fg-dim)}
+.sub-btn{flex:none;width:44px;height:44px;border:0;border-radius:12px;background:transparent;color:var(--fg-muted);display:grid;place-items:center}
+.sub-btn:hover{background:var(--surface-2);color:var(--fg)}
 .note-row{display:none;padding-top:10px;border-top:1px solid var(--border);margin-top:2px}
 .note-row.open{display:flex;flex-direction:column;gap:10px}
 .edit-text{width:100%;height:44px;padding:11px 12px;line-height:20px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);font-size:15px;font-weight:500;outline:none;transition:border-color .15s}
@@ -444,6 +473,9 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .day-panel .task-item .task-check .box{border-color:var(--side-muted)}
 .day-panel .chip.task-due-tag.future,.day-panel .task-recur-tag,.day-panel .task-proj-tag{background:var(--side-3);color:var(--side-fg);border-color:var(--side-3)}
 .day-panel .task-actions button{color:var(--side-muted)}
+.day-panel .sub-item{color:var(--side-fg)}
+.day-panel .sub-item:hover{background:var(--side-3)}
+.day-panel .task-sub-tag{background:var(--side-3);color:var(--side-fg)}
 .day-panel .task-actions button:hover{background:var(--side-3);color:#fff}
 .day-panel .section-head{color:var(--side-muted)}
 .day-list{display:flex;flex-direction:column;gap:8px}

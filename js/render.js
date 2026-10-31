@@ -21,12 +21,18 @@ function makeTaskEl(task) {
 
   const catTag   = cat  ? `<span class="chip task-tag ${cat.cls}">${cat.label}</span>` : '';
   const dueTag   = due  ? `<span class="chip task-due-tag ${due.cls}">${due.label}</span>` : '';
-  const recurTag = task.recur ? `<span class="chip task-recur-tag">↻ ${RECUR_LABELS[task.recur]}</span>` : '';
+  const recurTag = task.recur ? `<span class="chip task-recur-tag">↻ ${escHtml(recurLabel(task.recur))}</span>` : '';
+  const subs     = task.subtasks || [];
+  const subsDone = subs.filter(x => x.done).length;
+  const subTag   = subs.length ? `<span class="chip task-sub-tag${subsDone === subs.length ? ' all' : ''}" title="Подзадачи: выполнено ${subsDone} из ${subs.length}">${ICON.list}${subsDone}/${subs.length}</span>` : '';
+  const subList  = subs.length && !task.done ? `<ul class="subtasks" aria-label="Подзадачи">${subs.map(x =>
+    `<li><button type="button" class="sub-item${x.done ? ' done' : ''}" role="checkbox" aria-checked="${x.done}" data-sub="${escHtml(x.id)}">` +
+    `<span class="box">${ICON.check}</span><span class="sub-text">${escHtml(x.text)}</span></button></li>`).join('')}</ul>` : '';
   const projTag  = proj ? `<span class="chip task-proj-tag"><span class="dot" style="background:${proj.color}"></span>${escHtml(proj.name)}</span>` : '';
   const opt = (v, label, cur, dot) => `<option value="${v}"${v === cur ? ' selected' : ''}${dot ? ` data-dot="${escHtml(dot)}"` : ''}>${escHtml(label)}</option>`;
   const catOptions   = Object.entries(CATS).map(([k, c]) => opt(k, c.label, task.cat, `var(--c-${k})`)).join('');
   const projOptions  = projects.map(p => opt(p.id, p.name, task.projectId, p.color)).join('');
-  const recurOptions = Object.entries(RECUR_LABELS).map(([k, l]) => opt(k, l, task.recur)).join('');
+  const recurOptions = recurOptionsHTML(task.recur);
 
   div.innerHTML = `
     <button class="task-check" role="checkbox" aria-checked="${task.done}" aria-label="${task.done ? 'Вернуть в работу' : 'Отметить выполненной'}">
@@ -34,12 +40,14 @@ function makeTaskEl(task) {
     </button>
     <div class="task-body">
       <div class="task-text">${escHtml(task.text)}</div>
+      ${subList}
       ${task.note ? `<div class="task-note-preview">${escHtml(task.note)}</div>` : ''}
-      <div class="task-footer">${catTag}${dueTag}${recurTag}${projTag}</div>
-      <div class="done-confirm" role="group" aria-label="Подтверждение">
-        <span>Отметить выполненной?</span>
-        <button type="button" class="btn-sm" data-done-no>Нет</button>
+      <div class="task-footer">${catTag}${dueTag}${recurTag}${subTag}${projTag}</div>
+      <!-- «Да, выполнена» стоит прямо под галочкой: второе нажатие — в том же месте, что и первое -->
+      <div class="done-confirm" role="group" aria-label="Отметить выполненной?">
         <button type="button" class="btn-sm primary" data-done-yes>Да, выполнена</button>
+        <button type="button" class="btn-sm" data-done-no>Нет</button>
+        <span>Отметить выполненной?</span>
       </div>
       <form class="note-row" id="nr-${task.id}" autocomplete="off">
         <label class="sr-only" for="et-${task.id}">Название</label>
@@ -50,6 +58,15 @@ function makeTaskEl(task) {
           <input type="time" class="ui-field" data-label="Время" id="eh-${task.id}" value="${fmtTime(task.dueTime)}">
           <select class="ui-field" data-label="Проект" id="ep-${task.id}"><option value="">Без проекта</option>${projOptions}</select>
           <select class="ui-field" data-label="Повтор" id="er-${task.id}"><option value="">Нет</option>${recurOptions}</select>
+        </div>
+        <div class="sub-edit" role="group" aria-label="Подзадачи">
+          <div class="sub-edit-title">Подзадачи</div>
+          <div class="sub-edit-list"></div>
+          <div class="sub-row">
+            <label class="sr-only" for="sn-${task.id}">Новая подзадача</label>
+            <textarea class="sub-new one-line" id="sn-${task.id}" rows="1" wrap="off" maxlength="200" placeholder="Добавить шаг…" autocomplete="off"></textarea>
+            <button type="button" class="sub-btn" data-sub-add aria-label="Добавить шаг">${ICON.plus}</button>
+          </div>
         </div>
         <label class="sr-only" for="ni-${task.id}">Заметка</label>
         <textarea class="note-input" id="ni-${task.id}" rows="3" placeholder="Заметка…" autocomplete="off">${escHtml(task.note||'')}</textarea>
@@ -75,17 +92,60 @@ function makeTaskEl(task) {
   });
   div.querySelector('[data-done-no]').addEventListener('click', () => div.classList.remove('confirming'));
   div.querySelector('[data-done-yes]').addEventListener('click', async () => { await toggleDone(task.id); renderAll(); });
+  // Подзадачи отмечаются прямо в карточке
+  div.querySelectorAll('[data-sub]').forEach(b => b.addEventListener('click', async () => {
+    const list = subs.map(x => x.id === b.dataset.sub ? { ...x, done: !x.done } : x);
+    b.classList.toggle('done'); b.setAttribute('aria-checked', b.classList.contains('done'));
+    await saveTask(task.id, { subtasks: list });
+    renderAll();
+  }));
+  // Подзадачи в форме правки: черновик живёт, пока форма открыта, в базу уходит по «Сохранить»
+  let draft = [];
+  const subBox = div.querySelector('.sub-edit-list');
+  const paintDraft = () => {
+    subBox.innerHTML = draft.map((x, i) => `<div class="sub-row">
+      <label class="sr-only" for="se-${task.id}-${i}">Подзадача ${i + 1}</label>
+      <textarea class="sub-in one-line" id="se-${task.id}-${i}" rows="1" wrap="off" maxlength="200" autocomplete="off" data-i="${i}">${escHtml(x.text)}</textarea>
+      <button type="button" class="sub-btn" data-sub-rm="${i}" aria-label="Убрать шаг «${escHtml(x.text)}»">${ICON.close}</button></div>`).join('');
+    subBox.querySelectorAll('.sub-in').forEach(el => {
+      singleLine(el, () => own('sn-'+task.id).focus());
+      el.addEventListener('input', () => { draft[+el.dataset.i].text = el.value; });
+    });
+  };
+  subBox.addEventListener('click', e => {
+    const rm = e.target.closest('[data-sub-rm]');
+    if (!rm) return;
+    draft.splice(+rm.dataset.subRm, 1);
+    paintDraft();
+    own('sn-'+task.id).focus();
+  });
+  const addDraft = () => {
+    const el = own('sn-'+task.id), text = el.value.trim();
+    if (!text || draft.length >= SUBTASKS_MAX) { el.focus(); return; }
+    draft.push({ id: uid(), text, done: false });
+    el.value = '';
+    paintDraft();
+    el.focus();
+  };
+  singleLine(own('sn-'+task.id), addDraft);
+  div.querySelector('[data-sub-add]').addEventListener('click', addDraft);
   div.querySelector('[data-note]').addEventListener('click', () => {
     const row = own('nr-'+task.id);
     row.classList.toggle('open');
-    if (row.classList.contains('open')) own('et-'+task.id).focus();
+    if (row.classList.contains('open')) {
+      draft = subs.map(x => ({ ...x }));
+      paintDraft();
+      own('et-'+task.id).focus();
+    }
   });
   div.querySelector('[data-save]').addEventListener('click', async () => {
     const v = id => own(id + '-' + task.id).value;
     const text = v('et').trim();
     if (!text) { own('et-'+task.id).focus(); return; }
     const time = v('eh');
-    await saveTask(task.id, {
+    // Недописанный шаг в поле «Добавить шаг» тоже сохраняем
+    if (own('sn-'+task.id).value.trim()) addDraft();
+    const fields = {
       text,
       cat:        v('ec') || null,
       due_date:   v('ed') || null,
@@ -93,30 +153,20 @@ function makeTaskEl(task) {
       project_id: v('ep') || null,
       recur:      v('er') || null,
       note:       v('ni').trim(),
-    });
+    };
+    if (subs.length || draft.length) fields.subtasks = cleanSubtasks(draft);
+    await saveTask(task.id, fields);
     renderAll();
   });
   singleLine(own('et-'+task.id), () => div.querySelector('[data-save]').click());
   div.querySelector('[data-close]').addEventListener('click', () => {
     own('nr-'+task.id).classList.remove('open');
   });
-  // Удаление в два нажатия: первое просит подтвердить, через 3 секунды кнопка возвращается
-  const delBtn = div.querySelector('[data-del]');
-  let delTimer = null;
-  delBtn.addEventListener('click', async () => {
-    if (!delBtn.classList.contains('confirm')) {
-      delBtn.classList.add('confirm');
-      delBtn.innerHTML = 'Удалить?';
-      delBtn.setAttribute('aria-label', 'Нажмите ещё раз, чтобы удалить');
-      delTimer = setTimeout(() => {
-        delBtn.classList.remove('confirm');
-        delBtn.innerHTML = ICON.trash;
-        delBtn.setAttribute('aria-label', 'Удалить');
-      }, 3000);
-      return;
-    }
-    clearTimeout(delTimer);
-    await deleteTask(task.id); renderAll();
+  // Удаление сразу, без вопроса: вернуть задачу можно кнопкой «Отменить» в уведомлении внизу (drag.js)
+  div.querySelector('[data-del]').addEventListener('click', async () => {
+    const row = await deleteTask(task.id);
+    renderAll();
+    if (row) showDeleteToast(row);
   });
   if (task.note) {
     div.querySelector('.task-note-preview').addEventListener('click', function(){ this.classList.toggle('expanded'); });
@@ -151,12 +201,6 @@ function renderMeta() {
 // ═══ МАСКОТ ИВАН И СЕРИЯ ДНЕЙ ═══
 // Серия — дни подряд, в которые выполнена хотя бы одна задача (по done_at).
 // Если сегодня ещё ничего не сделано, серия до вчерашнего дня не сгорает.
-function plural(n, one, few, many) {
-  const a = n % 10, b = n % 100;
-  if (a === 1 && b !== 11) return one;
-  if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
-  return many;
-}
 
 function calcStreak() {
   const days = new Set(tasks.filter(t => t.done && t.doneAt).map(t => dateKey(new Date(t.doneAt))));
