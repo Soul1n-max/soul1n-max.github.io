@@ -228,18 +228,26 @@ const moveToast = document.createElement('div');
 moveToast.className = 'move-toast';
 moveToast.innerHTML = `<span class="mt-text"></span><button type="button" class="mt-undo">Отменить</button>`;
 document.body.appendChild(moveToast);
-let toastUndo = null, toastTimer = null;
+let toastUndo = null, toastTimer = null, toastExpire = null;
 
-function hideMoveToast() {
+// undone — нажали «Отменить»; иначе уведомление ушло, и onExpire доделывает то, что ждало отмены
+function hideMoveToast(undone) {
   clearTimeout(toastTimer);
   moveToast.classList.remove('show');
-  toastUndo = null;
+  const expire = toastExpire;
+  toastUndo = toastExpire = null;
+  if (!undone && expire) expire();
 }
-function armMoveToast(ms) { clearTimeout(toastTimer); toastTimer = setTimeout(hideMoveToast, ms); }
+function armMoveToast(ms) { clearTimeout(toastTimer); toastTimer = setTimeout(() => hideMoveToast(false), ms); }
+// Страницу закрывают, пока висит «Отменить» — доделываем отложенное (стираем файлы удалённой задачи)
+addEventListener('pagehide', () => { if (toastExpire) hideMoveToast(false); });
 
 // text — на уведомлении, say — для скринридера, onUndo — что сделать по «Отменить»
-function showUndoToast(text, say, onUndo) {
+// onExpire — что сделать, если отменять не стали (уведомление закрылось или его сменило новое)
+function showUndoToast(text, say, onUndo, onExpire) {
+  if (toastExpire) hideMoveToast(false);
   toastUndo = onUndo;
+  toastExpire = onExpire || null;
   moveToast.querySelector('.mt-text').textContent = text;
   moveToast.classList.add('show');
   armMoveToast(7000);
@@ -266,7 +274,9 @@ function showDeleteToast(row) {
       if (!await restoreTask(row)) return;
       renderAll();
       announce(`Задача «${row.text}» возвращена.`);
-    });
+    },
+    // Файлы удалённой задачи держим до конца уведомления, чтобы «Отменить» вернул их вместе с ней
+    row.files && row.files.length ? () => purgeFiles(row.files) : null);
 }
 
 // Пока на уведомлении курсор или фокус, оно не исчезает
@@ -277,6 +287,6 @@ moveToast.addEventListener('focusout',   () => { if (toastUndo) armMoveToast(300
 
 moveToast.querySelector('.mt-undo').addEventListener('click', async () => {
   const undo = toastUndo;
-  hideMoveToast();
+  hideMoveToast(true);
   if (undo) await undo();
 });

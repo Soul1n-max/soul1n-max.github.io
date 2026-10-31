@@ -33,7 +33,7 @@
 `created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `project_id`,
 `recur` (daily | weekdays | weekly | monthly | yearly | days:N | weeks:N | months:N, N от 2 до 365),
 `subtasks` (jsonb, массив `{id, text, done}`, до 50), `done_at`, `user_id` (Telegram ID из `app_metadata.telegram_id`),
-`reminded_for` (момент, о котором бот уже напомнил). `subtasks` и проверки `recur` добавляет `supabase/07_subtasks_backup.sql`.
+`reminded_for` (момент, о котором бот уже напомнил). `files` (jsonb, массив `{id, name, path, size, type}`, до 10) — файлы задачи, `supabase/09_task_files.sql`. `subtasks` и проверки `recur` добавляет `supabase/07_subtasks_backup.sql`.
 Следующий повтор считают `nextDue()` (`core.js`) и `next_due()` (`phrase.py` бота) — одинаково.
 
 Копия задач раз в неделю: `pg_cron` по воскресеньям в 20:00 МСК вызывает `request_weekly_backup()`
@@ -91,6 +91,11 @@
 - Удаление задачи — сразу, без вопроса. `deleteTask()` возвращает удалённую строку,
   `showDeleteToast()` (`drag.js`) показывает «Отменить», `restoreTask()` вставляет её обратно с тем же id.
   То же уведомление (`showUndoToast`) отменяет перенос задачи на другой день.
+- Файлы задачи: закрытый бакет Storage `task-files`, путь `<telegram_id>/<id задачи>/<id файла>.<расш>`, до 10 МБ
+  и 10 файлов. В карточке — плашки `.task-files` (нажатие скачивает через `openTaskFile()`), в форме «Изменить» —
+  «Прикрепить файл» и «Убрать» (сохраняются сразу, `uploadTaskFile()` / `removeTaskFile()` в `data.js`). Файлы удалённой
+  задачи стирает `purgeFiles()`, когда уведомление «Отменить» ушло; у повторов файлы общие. Пока открыта форма
+  «Изменить», обновления из базы не перерисовывают список (`renderDeferred`). Бот о файлах пока не знает.
 - Аватар (`avatar.js`): кнопка `#btn-avatar` внизу бокового меню (на телефоне — кружок в шапке, «Выйти» там переезжает
   в окно аватара). Выбор в `user_metadata.avatar`: `tg` (фото `tg_photo` — его и `tg_name` запоминает `rememberTgProfile()`
   при входе или привязке через Telegram), `ivan:<образ>` (`img/avatars/*.webp`), `photo:<время>` (своё фото 256×256 JPEG
