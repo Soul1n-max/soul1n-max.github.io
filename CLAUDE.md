@@ -41,9 +41,18 @@
 файл в формате кнопки «Скачать копию».
 
 Напоминания по времени шлёт сама база: `pg_cron` раз в минуту вызывает `send_task_reminders()`
-(`supabase/04_reminders.sql`), токен бота — в Supabase Vault (`telegram_bot_token`), время задач московское.
+(`supabase/04_reminders.sql`, текущая версия функции — в `11_timezone.sql`), токен бота — в Supabase Vault (`telegram_bot_token`),
+время задач — местное время владельца (`user_settings.tz`, без записи — московское).
 Под напоминанием кнопки «Выполнено», «+15 мин», «+1 час», «Завтра» (`callback_data` вида `r:…:id`) —
 их нажатия обрабатывает бот (`handle_task_callback` в `bot_webhook.py`), отложенное напоминание приходит снова.
+
+## Таблица `user_settings` (Supabase)
+
+`user_id` (Telegram ID, ключ), `tz` (часовой пояс IANA, по умолчанию `Europe/Moscow`), `updated_at`. Схема, RLS
+`own settings` и проверка пояса — `supabase/11_timezone.sql`. Пояс сайт определяет сам по устройству
+(`syncTimezone()` в `data.js` после загрузки задач, пишет только если поменялся) и показывает в окне аватара
+(«Екатеринбург · МСК+2», `mskDiff()` в `core.js`). Время задач — местное время владельца: по нему
+`send_task_reminders()` шлёт напоминания, а бот считает «сегодня», «завтра» и «+15 мин» (`user_tz()` в `bot_webhook.py`).
 
 ## Таблица `projects` (Supabase)
 

@@ -3,7 +3,7 @@
 --
 -- Что должно получиться:
 --   «RLS выключен»            — строк быть не должно;
---   «Политика»                — только own tasks и own projects (роль authenticated, условие с app_metadata);
+--   «Политика»                — только own tasks, own projects и own settings (роль authenticated, условие с app_metadata);
 --   «Функция доступна сайту»  — только link_telegram (authenticated);
 --   «Права anon на таблицу»   — строк быть не должно (после 06_hardening.sql);
 --   «Представление» и «Публичное хранилище» — строк быть не должно.

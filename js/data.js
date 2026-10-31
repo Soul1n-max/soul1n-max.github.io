@@ -53,6 +53,31 @@ async function loadProjects() {
 }
 
 // ═══ TASKS (Supabase) ═══
+// Часовой пояс пользователя (user_settings, supabase/11_timezone.sql): по нему база шлёт напоминания,
+// а бот понимает «сегодня» и «завтра». Определяется сам по устройству: открыли сайт в другом поясе —
+// запись обновится. userTz — то, что сейчас записано (null — ещё не знаем)
+let userTz = null;
+let tzSyncedFor = null;
+async function syncTimezone() {
+  const tz = deviceTz();
+  if (!telegramId || tzSyncedFor === telegramId) return;
+  tzSyncedFor = telegramId;
+  try {
+    const { data, error } = await sb.from('user_settings').select('tz').eq('user_id', telegramId).maybeSingle();
+    if (error) throw error;
+    userTz = data?.tz || TZ_DEFAULT;
+    if (tz && tz !== data?.tz) {
+      const { error: upErr } = await sb.from('user_settings').upsert({ user_id: telegramId, tz });
+      if (upErr) throw upErr;
+      userTz = tz;
+    }
+  } catch (e) {
+    // Таблицы ещё нет или пояс база не знает — напоминания остаются по Москве
+    console.warn('Часовой пояс не сохранён:', e.message || e);
+  }
+  if (typeof renderAvatar === 'function') renderAvatar();
+}
+
 async function loadTasks() {
   if (!telegramId) {
     tasks = [];
@@ -72,6 +97,7 @@ async function loadTasks() {
     }
     tasks = (data || []).map(fromDB);
     setSyncStatus('ok');
+    syncTimezone();
   } catch(e) {
     console.error('Network error:', e);
     setSyncStatus('err');

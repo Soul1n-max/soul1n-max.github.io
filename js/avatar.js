@@ -164,6 +164,15 @@ function closeAvatarMenu(returnFocus) {
   btn.setAttribute('aria-expanded', 'false');
   if (returnFocus) btn.focus();
 }
+// Часовой пояс: «Екатеринбург · МСК+2». Определяется сам (syncTimezone в data.js), поменять руками нельзя
+const CLOCK_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+function avatarTzHTML() {
+  const tz = avatarDemo.on ? deviceTz() : (userTz || deviceTz());
+  if (!tz) return '';
+  const diff = mskDiff(tz);
+  return `<div class="av-tz"><span class="backup-ico">${CLOCK_ICON}</span><span class="opt-text">${escHtml(tzCity(tz))}${diff ? ` · ${escHtml(diff)}` : ''}` +
+    `<small>Часовой пояс определён по устройству. По нему приходят напоминания</small></span></div>`;
+}
 function paintAvatarMenu() {
   const box = avatarMenu.box, cur = avatarCurrent();
   const hasPhoto = String(avatarMeta().avatar || '').startsWith('photo:');
@@ -181,6 +190,7 @@ function paintAvatarMenu() {
          <span class="av-name-btns"><button type="button" class="av-name-save" data-name-save>Сохранить</button><button type="button" class="av-name-cancel" data-name-cancel>Отмена</button></span>`
       : `<span class="av-name-row"><span class="av-name">${escHtml(avatarName())}</span><button type="button" class="av-name-edit" data-name-edit aria-label="Изменить имя и фамилию" title="Изменить имя">${ICON.note}</button></span>`}
       <span class="av-sub">${escHtml(avatarSub())}</span></div></div>
+    ${avatarTzHTML()}
     <div class="av-grid" role="group" aria-label="Выберите аватар">${opts.join('')}</div>
     <button type="button" class="ui-opt backup-opt av-upload" data-av-upload ${avatarMenu.busy ? 'disabled' : ''}>
       <span class="backup-ico">${ICON.up}</span><span class="opt-text">${avatarMenu.busy ? 'Загружаем…' : 'Загрузить своё фото'}<small>JPG или PNG, обрежем в квадрат</small></span></button>

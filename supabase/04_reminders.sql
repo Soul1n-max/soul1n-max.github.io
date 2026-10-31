@@ -11,7 +11,8 @@
 --    Если токен поменяли: select vault.update_secret(
 --      (select id from vault.secrets where name = 'telegram_bot_token'), 'НОВЫЙ_ТОКЕН');
 --
--- Время задач хранится без часового пояса, считаем его московским (reminder_tz ниже).
+-- Время задач хранится без часового пояса — это местное время владельца из user_settings.tz
+-- (11_timezone.sql; нет записи — московское).
 
 create extension if not exists pg_cron;
 create extension if not exists pg_net with schema extensions;
@@ -23,6 +24,13 @@ alter table public.tasks add column if not exists reminded_for timestamptz;
 create index if not exists tasks_reminder_idx on public.tasks (due_date)
   where done = false and due_time is not null;
 
+-- Пояса пользователей (полностью — в 11_timezone.sql: права, RLS, проверка пояса)
+create table if not exists public.user_settings (
+  user_id    bigint primary key,                      -- Telegram ID, как в tasks.user_id
+  tz         text   not null default 'Europe/Moscow', -- часовой пояс IANA, например Asia/Yekaterinburg
+  updated_at timestamptz not null default now()
+);
+
 create or replace function public.send_task_reminders()
 returns integer
 language plpgsql
@@ -30,7 +38,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  reminder_tz constant text     := 'Europe/Moscow';
+  default_tz  constant text     := 'Europe/Moscow';  -- если пояс человека неизвестен
   catch_up    constant interval := interval '30 minutes';  -- пропущенные минуты всё равно отправить
   site_url    constant text     := 'https://soul1n-max.github.io/';
   token text;
@@ -45,22 +53,26 @@ begin
   end if;
 
   for t in
-    select id, user_id, text, note,
-           due_time,
-           (due_date + due_time) at time zone reminder_tz as due_at
-    from public.tasks
-    where done = false
-      and due_time is not null
-      and user_id is not null
-      and due_date between (now() at time zone reminder_tz)::date - 1
-                       and (now() at time zone reminder_tz)::date
-      and (due_date + due_time) at time zone reminder_tz <= now()
-      and (due_date + due_time) at time zone reminder_tz >  now() - catch_up
-      and (due_date + due_time) at time zone reminder_tz >  created_at
-      and reminded_for is distinct from (due_date + due_time) at time zone reminder_tz
-    order by due_date, due_time
+    select k.id, k.user_id, k.text, k.note, k.due_time, d.due_at
+    from public.tasks k
+    left join public.user_settings s on s.user_id = k.user_id
+    -- Время задачи — местное время владельца (user_settings.tz, его ставит сайт)
+    cross join lateral (
+      select (k.due_date + k.due_time) at time zone coalesce(s.tz, default_tz) as due_at
+    ) d
+    where k.done = false
+      and k.due_time is not null
+      and k.user_id is not null
+      -- грубое окно по дате, чтобы работал индекс; точное сравнение — по due_at ниже
+      and k.due_date between (now() at time zone 'UTC')::date - 2
+                         and (now() at time zone 'UTC')::date + 1
+      and d.due_at <= now()
+      and d.due_at >  now() - catch_up
+      and d.due_at >  k.created_at
+      and k.reminded_for is distinct from d.due_at
+    order by d.due_at
     limit 200
-    for update skip locked
+    for update of k skip locked
   loop
     msg := '<b>Напоминание</b> · ' || to_char(t.due_time, 'HH24:MI') || E'\n'
         || replace(replace(replace(t.text, '&', '&amp;'), '<', '&lt;'), '>', '&gt;');
