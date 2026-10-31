@@ -43,10 +43,11 @@ function makeTaskEl(task) {
       ${subList}
       ${task.note ? `<div class="task-note-preview">${escHtml(task.note)}</div>` : ''}
       <div class="task-footer">${catTag}${dueTag}${recurTag}${subTag}${projTag}</div>
-      <div class="done-confirm" role="group" aria-label="Подтверждение">
-        <span>Отметить выполненной?</span>
-        <button type="button" class="btn-sm" data-done-no>Нет</button>
+      <!-- «Да, выполнена» стоит прямо под галочкой: второе нажатие — в том же месте, что и первое -->
+      <div class="done-confirm" role="group" aria-label="Отметить выполненной?">
         <button type="button" class="btn-sm primary" data-done-yes>Да, выполнена</button>
+        <button type="button" class="btn-sm" data-done-no>Нет</button>
+        <span>Отметить выполненной?</span>
       </div>
       <form class="note-row" id="nr-${task.id}" autocomplete="off">
         <label class="sr-only" for="et-${task.id}">Название</label>
@@ -77,8 +78,8 @@ function makeTaskEl(task) {
     </div>
     <div class="task-actions">
       <button aria-label="Изменить" title="Изменить" data-note="${task.id}">${ICON.note}</button>
-    </div>
-    <button class="task-del btn-delete" aria-label="Удалить" title="Удалить" data-del="${task.id}">${ICON.trash}</button>`;
+      <button class="btn-delete" aria-label="Удалить" title="Удалить" data-del="${task.id}">${ICON.trash}</button>
+    </div>`;
 
   // Одна задача бывает в DOM дважды (скрытая вкладка и открытая), поэтому ищем поля только в своей карточке
   const own = id => div.querySelector('#' + CSS.escape(id));

@@ -343,8 +343,10 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .task-check{grid-column:1;grid-row:1}
 .task-text{grid-column:2;grid-row:1;padding-top:11px;font-size:15px;font-weight:500;line-height:1.4;word-break:break-word}
 .task-actions{grid-column:3;grid-row:1}
-.task-note-preview,.task-footer,.note-row,.done-confirm,.subtasks{grid-column:2 / 4;margin-right:4px}
-.done-confirm{display:none;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);font-size:13px;font-weight:600;color:var(--accent-ink)}
+.task-note-preview,.task-footer,.note-row,.subtasks{grid-column:2 / 4;margin-right:4px}
+/* Подтверждение начинается под галочкой: «Да, выполнена» — первая кнопка слева */
+.done-confirm{grid-column:1 / 4;margin:0 4px 0 4px}
+.done-confirm{display:none;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px 8px 8px;border-radius:12px;background:var(--accent-soft);font-size:13px;font-weight:600;color:var(--accent-ink)}
 .done-confirm span{flex:1 1 auto;min-width:0}
 .task-item.confirming .done-confirm{display:flex}
 .task-item.confirming .task-check .box{border-color:var(--accent)}
@@ -371,10 +373,7 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .task-item:hover .task-actions,.task-item:focus-within .task-actions{opacity:1}
 .task-actions button{width:40px;height:40px;border:0;border-radius:12px;background:transparent;color:var(--fg-muted);display:grid;place-items:center;transition:background .12s,color .12s}
 .task-actions button:hover{background:var(--surface-2);color:var(--fg)}
-/* Корзина — под галочкой; отрицательные поля, чтобы строка с метками не стала выше */
-.task-del{grid-column:1;grid-row:2;justify-self:center;width:44px;height:44px;margin:-9px 0;border:0;border-radius:12px;background:transparent;color:var(--fg-muted);display:grid;place-items:center;opacity:.55;transition:opacity .15s,background .12s,color .12s}
-.task-item:hover .task-del,.task-item:focus-within .task-del{opacity:1}
-.task-del:hover{color:var(--c-urgent);background:var(--b-urgent)}
+.task-actions .btn-delete:hover{color:var(--c-urgent);background:var(--b-urgent)}
 /* Подзадачи в карточке */
 .subtasks{list-style:none;margin:-4px 4px 0 0;padding:0;display:flex;flex-direction:column}
 .sub-item{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0 8px 0 0;border:0;border-radius:10px;background:transparent;color:var(--fg);font-size:14px;line-height:1.35;text-align:left}
@@ -473,7 +472,7 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .day-panel .task-item{background:var(--side-2);border-color:var(--side-3);color:var(--side-fg)}
 .day-panel .task-item .task-check .box{border-color:var(--side-muted)}
 .day-panel .chip.task-due-tag.future,.day-panel .task-recur-tag,.day-panel .task-proj-tag{background:var(--side-3);color:var(--side-fg);border-color:var(--side-3)}
-.day-panel .task-actions button,.day-panel .task-del{color:var(--side-muted)}
+.day-panel .task-actions button{color:var(--side-muted)}
 .day-panel .sub-item{color:var(--side-fg)}
 .day-panel .sub-item:hover{background:var(--side-3)}
 .day-panel .task-sub-tag{background:var(--side-3);color:var(--side-fg)}
@@ -750,7 +749,7 @@ body.auth-locked .app{display:none}
   .feed-tools.searching .search-input{padding-right:40px}
   .feed-tools.searching .search-input::placeholder{color:var(--fg-muted)}
   .feed-tools.searching .filter-row{flex:1 1 100%;margin:0 -16px;padding:0 16px}
-  .task-actions,.task-del{opacity:1}
+  .task-actions{opacity:1}
   /* На телефоне месяц стоит над списком и по умолчанию свёрнут до одной недели */
   .tasks-layout{gap:20px}
   .tasks-aside{display:contents}
