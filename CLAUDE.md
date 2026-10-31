@@ -54,6 +54,14 @@
 («Екатеринбург · МСК+2», `mskDiff()` в `core.js`). Время задач — местное время владельца: по нему
 `send_task_reminders()` шлёт напоминания, а бот считает «сегодня», «завтра» и «+15 мин» (`user_tz()` в `bot_webhook.py`).
 
+Утренняя сводка (`supabase/12_morning_summary.sql`): столбцы `morning` (вкл., по умолчанию да), `morning_time`
+(05:00–12:00, по умолчанию 09:00, на сайте шаг 30 минут) и `morning_sent_on` (местная дата последней сводки).
+`pg_cron` раз в минуту вызывает `request_morning_summary()`: она берёт тех, у кого по местному времени наступило время
+сводки (не позже чем через 3 часа), сегодня её ещё не было и есть задачи на сегодня или просроченные, ставит им
+`morning_sent_on` и шлёт список Telegram ID боту на `/morning-summary` (секрет — hmac(токен бота, 'morning-summary')).
+Текст собирает бот (`morning_text()`: сегодня, просрочено, серия как `calcStreak()`), кнопка «Не присылать по утрам» и
+команда `/summary`. На сайте выключатель и время — в окне аватара (`avatarMorningHTML()`, `saveMorning()` в `data.js`).
+
 ## Таблица `projects` (Supabase)
 
 `id` (uuid), `user_id` (Telegram ID), `name`, `color`, `created_at`. Схема и RLS-политика `own projects`

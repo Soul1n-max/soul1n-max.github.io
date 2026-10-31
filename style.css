@@ -148,6 +148,18 @@ svg{flex-shrink:0}
 .av-name-cancel{background:var(--surface-2);color:var(--fg)}
 .av-tz{display:flex;align-items:center;gap:12px;min-height:56px;padding:4px 12px 10px;font-size:14px;font-weight:500}
 .av-tz small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--fg-muted)}
+.av-morning{min-height:56px}
+.av-switch{position:relative;flex-shrink:0;width:40px;height:24px;border-radius:12px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border);transition:background .2s}
+.av-switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--fg-muted);transition:transform .2s,background .2s}
+.av-morning[aria-checked="true"] .av-switch{background:var(--accent);box-shadow:none}
+.av-morning[aria-checked="true"] .av-switch::after{transform:translateX(16px);background:#fff}
+.av-morning-time{display:flex;align-items:center;gap:6px;padding:0 12px 8px 60px;font-size:13px;color:var(--fg-muted)}
+.av-morning-time>span:first-child{flex:1}
+.av-morning-val{min-width:48px;text-align:center;font-size:15px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}
+.av-step{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:12px;background:var(--surface-2);color:var(--fg)}
+.av-step:hover:not(:disabled),.av-step:focus-visible{background:var(--accent-soft);color:var(--accent-ink);outline:none}
+.av-step:disabled{opacity:.35}
+@media (prefers-reduced-motion: reduce){.av-switch,.av-switch::after{transition:none}}
 .av-msg{margin:6px 8px 4px;font-size:13px;color:var(--accent-ink)}
 
 /* ─── PAGE HEAD ─── */
