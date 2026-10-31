@@ -182,7 +182,7 @@ document.getElementById('btn-reset-back').addEventListener('click', async () => 
   // После ссылки или кода вход уже есть — выходим, чтобы планнер не открылся без нового пароля
   const recovering = passwordRecovery;
   passwordRecovery = false;
-  if (recovering) await sb.auth.signOut();
+  if (recovering) await sb.auth.signOut({ scope: 'local' });
   switchAuthForm('login');
 });
 
@@ -342,8 +342,10 @@ async function applyLinkCode(code) {
   return true;
 }
 
+// Выходим только в этом браузере. Без scope: 'local' Supabase завершает вход на всех
+// устройствах сразу (scope 'global'), и остальные браузеры через час выкидывало на экран входа.
 document.getElementById('btn-logout').addEventListener('click', async () => {
-  await sb.auth.signOut();
+  await sb.auth.signOut({ scope: 'local' });
   tasks = []; projects = []; updateProjectSelect(); renderAll();
 });
 
