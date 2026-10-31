@@ -83,8 +83,83 @@ function maybeWelcome(user) {
   // Ждём, пока закроется экран входа и пройдёт заставка
   setTimeout(() => {
     if (document.body.classList.contains('auth-locked')) return; // ещё задаётся пароль — покажем при следующем событии
+    if (document.querySelector('.consent-gate')) return;         // сначала согласия, окно покажет acceptGate
     showWelcome(user);
   }, 1600);
+}
+
+// ═══ СОГЛАСИЯ ПОСЛЕ ВХОДА ═══
+// Аккаунт без отметки о согласиях на текущие редакции (CONSENT_VERSION в auth.js) — создан входом через
+// Telegram с формы входа, где галочек нет, или зарегистрирован до появления документов. Пока галочки
+// не отмечены, планер закрыт окном; выйти можно. Отметка — только подтверждение для документов,
+// доступ к данным по-прежнему решает RLS по app_metadata.
+function consentCurrent(c) {
+  return !!c && Object.keys(CONSENT_VERSION).every(k =>
+    typeof CONSENT_VERSION[k] === 'number' ? c[k] >= CONSENT_VERSION[k] : c[k] === CONSENT_VERSION[k]);
+}
+
+function showConsentGate(user) {
+  if (document.querySelector('.consent-gate')) return;
+  const back = document.createElement('div');
+  back.className = 'welcome-backdrop consent-gate';
+  // Тексты галочек — те же, что в форме регистрации
+  const checks = CONSENT_CHECKS.map(c => {
+    const label = document.getElementById(c.id).closest('label').querySelector('span').innerHTML;
+    return `<label class="auth-check"><input type="checkbox" data-gate="${c.id}"><span>${label}</span></label>`;
+  }).join('');
+  back.innerHTML = `<div class="welcome" role="dialog" aria-modal="true" aria-labelledby="gate-title" aria-describedby="gate-text">
+      <img class="welcome-ivan" src="img/ivan/think.webp" alt="" width="96" height="132">
+      <h2 class="welcome-title" id="gate-title">Остался один шаг</h2>
+      <p class="welcome-text" id="gate-text">Чтобы пользоваться планером, примите документы. Без этого мы не можем хранить ваши задачи.</p>
+      <div class="auth-error" id="gate-error" role="alert"></div>
+      <fieldset class="auth-consents gate-checks"><legend class="sr-only">Согласия</legend>${checks}</fieldset>
+      <button type="button" class="auth-btn" data-gate-ok>Принять и продолжить</button>
+      <button type="button" class="gate-logout" data-gate-out>Не принимаю, выйти</button>
+    </div>`;
+  const boxes = [...back.querySelectorAll('[data-gate]')];
+  boxes.forEach(b => b.addEventListener('change', () => {
+    b.removeAttribute('aria-invalid');
+    if (boxes.every(x => x.checked)) clearAuthError('gate-error');
+  }));
+  back.querySelector('[data-gate-ok]').addEventListener('click', async e => {
+    const missing = boxes.filter(b => !b.checked);
+    boxes.forEach(b => { if (b.checked) b.removeAttribute('aria-invalid'); else b.setAttribute('aria-invalid', 'true'); });
+    if (missing.length) {
+      showAuthError('gate-error', missing.length === 1
+        ? 'Чтобы продолжить, ' + CONSENT_CHECKS.find(c => c.id === missing[0].dataset.gate).what + '.'
+        : 'Чтобы продолжить, отметьте все галочки: пустые подсвечены красным.');
+      missing[0].focus();
+      return;
+    }
+    const btn = e.currentTarget;
+    btn.disabled = true; btn.textContent = 'Сохраняем…';
+    const { error } = await sb.auth.updateUser({ data: { consent: consentRecord() } });
+    if (error) {
+      btn.disabled = false; btn.textContent = 'Принять и продолжить';
+      showAuthError('gate-error', 'Не удалось сохранить: ' + error.message);
+      return;
+    }
+    back.remove();
+    document.removeEventListener('keydown', onKey);
+    maybeWelcome(user);
+  });
+  back.querySelector('[data-gate-out]').addEventListener('click', () => {
+    back.remove();
+    document.removeEventListener('keydown', onKey);
+    document.getElementById('btn-logout').click();
+  });
+  // Окно не закрывается по Esc и клику мимо; Tab ходит только по его элементам
+  const onKey = e => {
+    if (!back.isConnected) { document.removeEventListener('keydown', onKey); return; } // окно убрали при выходе
+    if (e.key !== 'Tab') return;
+    const f = [...back.querySelectorAll('input, a, button')];
+    const i = f.indexOf(document.activeElement);
+    const next = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 ? 0 : i + 1);
+    e.preventDefault(); f[next].focus();
+  };
+  document.addEventListener('keydown', onKey);
+  document.body.appendChild(back);
+  boxes[0].focus();
 }
 
 // Видимый пароль не оставляем после входа: при выходе формы снова прячут его
@@ -95,17 +170,19 @@ function resetPasswordEyes() {
 
 // Регистрация через Telegram: галочки согласий отмечены на сайте, а аккаунт создал сервер бота.
 // Записываем отметку о согласиях в user_metadata новому аккаунту (по почте её пишет сам signUp).
+// Возвращает true, если отметка записывается сейчас — тогда окно согласий не нужно.
 function savePendingConsent(user) {
   const raw = lsGet('spm2_consent_pending');
-  if (!raw) return;
+  if (!raw) return false;
   lsDel('spm2_consent_pending');
-  if (user.user_metadata?.consent) return;
+  if (consentCurrent(user.user_metadata?.consent)) return false;
   let consent = null;
-  try { consent = JSON.parse(raw); } catch (_) { return; }
+  try { consent = JSON.parse(raw); } catch (_) { return false; }
   // Отметка устарела (вход отменили и вернулись позже) — не приписываем её чужому аккаунту
-  if (!consent?.at || Date.now() - new Date(consent.at).getTime() > 36e5) return;
+  if (!consent?.at || Date.now() - new Date(consent.at).getTime() > 36e5) return false;
   // Вызов Supabase изнутри onAuthStateChange может зависнуть — выносим из обработчика
   setTimeout(() => { sb.auth.updateUser({ data: { consent } }).catch(() => {}); }, 0);
+  return true;
 }
 
 // Галочки согласий снова пустые, когда экран входа откроется после выхода
@@ -115,10 +192,16 @@ function resetConsentChecks() {
 
 if (!new URLSearchParams(location.search).has('demo')) {
   sb.auth.onAuthStateChange((event, session) => {
-    if (!session?.user) return;
+    // Вышли (в том числе на другой вкладке) — окно согласий не должно остаться поверх экрана входа
+    if (!session?.user) { document.querySelector('.consent-gate')?.remove(); return; }
     resetPasswordEyes();
     resetConsentChecks();
-    savePendingConsent(session.user);
+    const saving = savePendingConsent(session.user);
+    // Пока задаётся новый пароль, планер закрыт экраном сброса — окно согласий покажем после
+    if (!saving && !passwordRecovery && !consentCurrent(session.user.user_metadata?.consent)) {
+      setTimeout(() => showConsentGate(session.user), 0);
+      return;
+    }
     maybeWelcome(session.user);
   });
 }
