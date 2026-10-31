@@ -33,7 +33,7 @@
 `created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `project_id`,
 `recur` (daily | weekdays | weekly | monthly | yearly | days:N | weeks:N | months:N, N от 2 до 365),
 `subtasks` (jsonb, массив `{id, text, done}`, до 50), `done_at`, `user_id` (Telegram ID из `app_metadata.telegram_id`),
-`reminded_for` (момент, о котором бот уже напомнил). `files` (jsonb, массив `{id, name, path, size, type}`, до 10) — файлы задачи, `supabase/08_task_files.sql`. `subtasks` и проверки `recur` добавляет `supabase/07_subtasks_backup.sql`.
+`reminded_for` (момент, о котором бот уже напомнил). `files` (jsonb, массив `{id, name, path, size, type}`, до 10) — файлы задачи, `supabase/09_task_files.sql`. `subtasks` и проверки `recur` добавляет `supabase/07_subtasks_backup.sql`.
 Следующий повтор считают `nextDue()` (`core.js`) и `next_due()` (`phrase.py` бота) — одинаково.
 
 Копия задач раз в неделю: `pg_cron` по воскресеньям в 20:00 МСК вызывает `request_weekly_backup()`
@@ -59,7 +59,7 @@
 `core.js` (Supabase, иконки, константы, состояние, утилиты) → `phrase.js` (ввод фразой) → `data.js` (проекты и задачи в базе) →
 `render.js` (карточка задачи, списки, календарь, проекты, сетка месяца, перетаскивание) →
 `fields.js` (свои поля выбора, выбор проекта и цвета) → `ui.js` (вкладки, тема, быстрое добавление) →
-`auth.js` (вход по почте и через Telegram) → `main.js` (`init()`) → `demo.js` (режим `?demo`, подменяет функции базы).
+`auth.js` (вход по почте и через Telegram) → `avatar.js` (аватар) → `onboarding.js` → `main.js` (`init()`) → `demo.js` (режим `?demo`, подменяет функции базы).
 
 - `style.css`: токены в `:root`, тёмная тема через `prefers-color-scheme` и `[data-theme="dark"]`;
   мобильная вёрстка — `@media (max-width: 860px)` (боковое меню → верхняя шапка + нижняя панель вкладок).
@@ -96,6 +96,11 @@
   «Прикрепить файл» и «Убрать» (сохраняются сразу, `uploadTaskFile()` / `removeTaskFile()` в `data.js`). Файлы удалённой
   задачи стирает `purgeFiles()`, когда уведомление «Отменить» ушло; у повторов файлы общие. Пока открыта форма
   «Изменить», обновления из базы не перерисовывают список (`renderDeferred`). Бот о файлах пока не знает.
+- Аватар (`avatar.js`): кнопка `#btn-avatar` внизу бокового меню (на телефоне — кружок в шапке, «Выйти» там переезжает
+  в окно аватара). Выбор в `user_metadata.avatar`: `tg` (фото `tg_photo` — его и `tg_name` запоминает `rememberTgProfile()`
+  при входе или привязке через Telegram), `ivan:<образ>` (`img/avatars/*.webp`), `photo:<время>` (своё фото 256×256 JPEG
+  в публичном бакете Storage `avatars/<auth.uid()>/avatar.jpg`, бакет и политики — `supabase/08_avatars.sql`), `letter`.
+  Это только оформление, для доступа к данным `user_metadata` по-прежнему не используем.
 - Подзадачи: список в карточке (`.subtasks`, отмечаются сразу) и черновик в форме «Изменить» (`.sub-edit`), сохраняется кнопкой «Сохранить».
 - ID элементов используются в JS — при правке вёрстки не переименовывай их.
 - Встроенные обработчики (`onclick="…"`, `onsubmit="…"`) и `<script>` без `src` CSP запрещает — события

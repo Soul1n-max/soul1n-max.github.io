@@ -108,6 +108,7 @@ if (new URLSearchParams(location.search).has('demo')) {
   };
 
   hideAuthOverlay();
+  avatarDemo.on = true; renderAvatar();
   initTheme();
   updateHeader();
   setInterval(updateHeader, 60000);

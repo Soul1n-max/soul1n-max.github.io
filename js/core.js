@@ -28,6 +28,7 @@ const ICON = {
   list:  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l1.5 1.5L8 5M4 13l1.5 1.5L8 12M11 6h9M11 13h9M11 19h9M5 19h1"/></svg>',
   clip:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 11.5l-8.4 8.4a5 5 0 0 1-7.1-7.1l8.8-8.8a3.3 3.3 0 0 1 4.7 4.7l-8.8 8.8a1.7 1.7 0 0 1-2.4-2.4l8.1-8.1"/></svg>',
   file:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>',
+  exit:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg>',
   table: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 10v10"/></svg>',
 };
 
@@ -258,7 +259,7 @@ function cleanSubtasks(list) {
     .map(s => ({ id: typeof s.id === 'string' && s.id ? s.id.slice(0, 40) : uid(), text: s.text.trim().slice(0, 200), done: s.done === true }));
 }
 // Файлы задачи — массив {id, name, path, size, type} в поле files; сами файлы лежат в закрытом
-// бакете Storage task-files по пути <telegram_id>/<id задачи>/<id файла>.<расширение> (08_task_files.sql)
+// бакете Storage task-files по пути <telegram_id>/<id задачи>/<id файла>.<расширение> (09_task_files.sql)
 const FILES_BUCKET = 'task-files';
 const FILES_MAX = 10;
 const FILE_MAX_BYTES = 10 * 1024 * 1024; // как file_size_limit бакета
