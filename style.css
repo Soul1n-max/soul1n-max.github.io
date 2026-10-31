@@ -616,13 +616,6 @@ body.auth-locked .app{display:none}
 .auth-ivan-3d::after{content:'';position:absolute;left:50%;bottom:-8px;width:112px;height:16px;margin-left:-56px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.75),rgba(0,0,0,0) 70%);animation:ivanShadow 3.6s ease-in-out infinite}
 .auth-ivan{position:relative;display:block;width:100%;height:100%;object-fit:contain;object-position:bottom center;
   filter:drop-shadow(calc(var(--tx) * -6px) 4px 0 rgba(0,0,0,.35)) drop-shadow(0 18px 22px rgba(0,0,0,.55));animation:ivanFloat 3.6s ease-in-out infinite}
-/* 3D-Иван (js/vendor/ivan3d.js): холст больше места под картинку, чтобы при повороте рог и уши не обрезались.
-   Пока модель грузится или без WebGL — видна обычная картинка. */
-.auth-ivan-canvas{position:absolute;left:50%;bottom:-6px;width:240px;height:270px;margin-left:-120px;cursor:grab;touch-action:none;opacity:0;animation:ivanIn .5s ease-out forwards}
-.auth-ivan-3d.is-3d{transform:none}
-.auth-ivan-3d.is-3d .auth-ivan{visibility:hidden;animation:none}
-.auth-ivan-3d.is-grab .auth-ivan-canvas{cursor:grabbing}
-@keyframes ivanIn{to{opacity:1}}
 @keyframes ivanFloat{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-12px) rotate(1.5deg)}}
 @keyframes ivanShadow{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.78);opacity:.55}}
 @media (prefers-reduced-motion: reduce){.auth-ivan,.auth-ivan-3d::after{animation:none}.auth-ivan-3d{transition:none}}
