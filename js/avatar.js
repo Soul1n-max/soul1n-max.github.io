@@ -20,8 +20,9 @@ function avatarMeta() {
   return avatarDemo.on ? avatarDemo.meta : (currentUser?.user_metadata || {});
 }
 function avatarName() {
-  if (avatarDemo.on) return 'Гость';
   const m = avatarMeta(), email = currentUser?.email || '';
+  if (typeof m.full_name === 'string' && m.full_name.trim()) return m.full_name.trim().slice(0, 60);
+  if (avatarDemo.on) return 'Гость';
   if (m.tg_name) return String(m.tg_name).slice(0, 60);
   // Аккаунт, созданный входом через Telegram, получает служебную почту tg<ID>@…
   if (/^tg\d+@/.test(email)) return 'Telegram';
@@ -142,13 +143,13 @@ async function removeAvatarPhoto() {
 }
 
 // ═══ Окно выбора ═══
-const avatarMenu = { box: null, back: null, busy: false, msg: '' };
+const avatarMenu = { box: null, back: null, busy: false, msg: '', editing: false };
 function closeAvatarMenu(returnFocus) {
   if (!avatarMenu.box) return;
   avatarMenu.box.remove();
   if (avatarMenu.back) avatarMenu.back.remove();
   avatarMenu.box = avatarMenu.back = null;
-  avatarMenu.msg = '';
+  avatarMenu.msg = ''; avatarMenu.editing = false;
   const btn = document.getElementById('btn-avatar');
   btn.setAttribute('aria-expanded', 'false');
   if (returnFocus) btn.focus();
@@ -165,13 +166,37 @@ function paintAvatarMenu() {
   opts.push(opt('letter', '', 'Буква имени'));
   AVATAR_IVANS.forEach(([k, label]) => opts.push(opt('ivan:' + k, `img/avatars/${k}.webp`, 'Иван: ' + label.toLowerCase())));
   box.innerHTML = `<div class="ui-pop-title">Аватар</div>
-    <div class="av-head">${avatarFace(cur.src, 'av-big')}<div class="av-who"><span class="av-name">${escHtml(avatarName())}</span><span class="av-sub">${escHtml(avatarSub())}</span></div></div>
+    <div class="av-head">${avatarFace(cur.src, 'av-big')}<div class="av-who">${avatarMenu.editing
+      ? `<textarea class="one-line av-name-input" rows="1" wrap="off" maxlength="60" aria-label="Имя и фамилия" placeholder="Имя и фамилия">${escHtml(avatarName())}</textarea>
+         <span class="av-name-btns"><button type="button" class="av-name-save" data-name-save>Сохранить</button><button type="button" class="av-name-cancel" data-name-cancel>Отмена</button></span>`
+      : `<span class="av-name-row"><span class="av-name">${escHtml(avatarName())}</span><button type="button" class="av-name-edit" data-name-edit aria-label="Изменить имя и фамилию" title="Изменить имя">${ICON.note}</button></span>`}
+      <span class="av-sub">${escHtml(avatarSub())}</span></div></div>
     <div class="av-grid" role="group" aria-label="Выберите аватар">${opts.join('')}</div>
     <button type="button" class="ui-opt backup-opt av-upload" data-av-upload ${avatarMenu.busy ? 'disabled' : ''}>
       <span class="backup-ico">${ICON.up}</span><span class="opt-text">${avatarMenu.busy ? 'Загружаем…' : 'Загрузить своё фото'}<small>JPG или PNG, обрежем в квадрат</small></span></button>
     ${avatarDemo.on ? '' : `<button type="button" class="ui-opt backup-opt av-logout" data-av-logout><span class="backup-ico">${ICON.exit}</span><span class="opt-text">Выйти</span></button>`}
     ${avatarMenu.msg ? `<p class="av-msg" role="alert">${escHtml(avatarMenu.msg)}</p>` : ''}`;
   hideBrokenAvatars(box);
+  const input = box.querySelector('.av-name-input');
+  if (input) {
+    singleLine(input, saveAvatarName);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); avatarMenu.editing = false; paintAvatarMenu(); box.querySelector('[data-name-edit]')?.focus(); }
+    });
+  }
+}
+// Имя и фамилия: хранится в user_metadata.full_name; пустое — снова имя из Telegram или начало почты
+async function saveAvatarName() {
+  const input = avatarMenu.box?.querySelector('.av-name-input');
+  if (!input || avatarMenu.busy) return;
+  const name = input.value.replace(/\s+/g, ' ').trim().slice(0, 60);
+  avatarMenu.busy = true; avatarMenu.msg = '';
+  const err = await saveAvatarMeta({ full_name: name || null });
+  avatarMenu.busy = false;
+  if (err) { avatarMenu.msg = 'Имя не сохранилось: ' + err.message; paintAvatarMenu(); return; }
+  avatarMenu.editing = false;
+  renderAvatar();
+  avatarMenu.box?.querySelector('[data-name-edit]')?.focus();
 }
 function openAvatarMenu() {
   const btn = document.getElementById('btn-avatar');
@@ -205,6 +230,14 @@ function openAvatarMenu() {
 async function onAvatarMenuClick(e) {
   if (avatarMenu.busy) return;
   if (e.target.closest('[data-av-logout]')) { closeAvatarMenu(false); document.getElementById('btn-logout').click(); return; }
+  if (e.target.closest('[data-name-edit]')) {
+    avatarMenu.editing = true; avatarMenu.msg = ''; paintAvatarMenu();
+    const input = avatarMenu.box.querySelector('.av-name-input');
+    input.focus(); input.setSelectionRange(input.value.length, input.value.length);
+    return;
+  }
+  if (e.target.closest('[data-name-save]')) { saveAvatarName(); return; }
+  if (e.target.closest('[data-name-cancel]')) { avatarMenu.editing = false; paintAvatarMenu(); avatarMenu.box.querySelector('[data-name-edit]')?.focus(); return; }
   if (e.target.closest('[data-av-upload]')) { document.getElementById('avatar-file').click(); return; }
   const b = e.target.closest('[data-av]');
   if (!b) return;
