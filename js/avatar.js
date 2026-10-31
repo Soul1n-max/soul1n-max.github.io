@@ -31,7 +31,10 @@ function avatarName() {
 function avatarSub() {
   if (avatarDemo.on) return 'Демо-режим';
   const email = currentUser?.email || '';
-  return /^tg\d+@/.test(email) ? 'Вход через Telegram' : email;
+  if (!/^tg\d+@/.test(email)) return email;
+  // Аккаунт создан входом через Telegram: настоящей почты нет, показываем ник в Telegram
+  const u = String(avatarMeta().tg_username || '');
+  return /^\w{4,32}$/.test(u) ? `Telegram @${u}` : 'Вход через Telegram';
 }
 function tgPhoto() {
   const p = avatarMeta().tg_photo;
@@ -73,7 +76,7 @@ function renderAvatar() {
   btn.hidden = !show;
   if (!show) { closeAvatarMenu(false); return; }
   btn.innerHTML = avatarFace(avatarCurrent().src, 'av-btn') +
-    `<span class="av-who"><span class="av-name">${escHtml(avatarName())}</span><span class="av-sub">Сменить аватар</span></span>`;
+    `<span class="av-who"><span class="av-name">${escHtml(avatarName())}</span><span class="av-sub">${escHtml(avatarSub())}</span></span>`;
   btn.setAttribute('aria-label', `Аватар: ${avatarName()}. Сменить`);
   hideBrokenAvatars(btn);
   if (avatarMenu.box) paintAvatarMenu();
@@ -92,10 +95,11 @@ function rememberTgProfile(user) {
   if (!user) return;
   const name = [user.first_name, user.last_name].filter(Boolean).join(' ').trim().slice(0, 60);
   const photo = TG_PHOTO_RE.test(user.photo_url || '') ? user.photo_url : null;
+  const username = /^\w{4,32}$/.test(user.username || '') ? user.username : null;
   const m = currentUser?.user_metadata || {};
-  if ((m.tg_name || '') === name && (m.tg_photo || null) === photo) return;
+  if ((m.tg_name || '') === name && (m.tg_photo || null) === photo && (m.tg_username || null) === username) return;
   setTimeout(async () => {
-    await saveAvatarMeta({ tg_name: name || null, tg_photo: photo });
+    await saveAvatarMeta({ tg_name: name || null, tg_photo: photo, tg_username: username });
     renderAvatar();
   }, 0);
 }
