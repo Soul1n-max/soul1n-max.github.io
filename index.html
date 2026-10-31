@@ -99,7 +99,11 @@
           <div class="h1" id="hdr-date">—</div>
         </div>
         <div class="progress-card mascot-card">
-          <img class="mascot-img" id="mascot-img" src="img/ivan/idea.webp" width="84" height="116" alt="Маскот Иван">
+          <!-- Поверх образа при открытии планера Иван машет (waveMascot() в render.js) -->
+          <span class="mascot-fig">
+            <img class="mascot-img" id="mascot-img" src="img/ivan/idea.webp" width="84" height="116" alt="Маскот Иван">
+            <img class="mascot-wave" id="mascot-wave" width="116" height="116" alt="" aria-hidden="true" hidden>
+          </span>
           <div class="mascot-body">
             <p class="mascot-say" id="mascot-say" aria-live="polite">Привет! Я Иван.</p>
             <div class="streak" id="streak" title="Дни подряд, в которые выполнена хотя бы одна задача">

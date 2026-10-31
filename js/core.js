@@ -95,6 +95,7 @@ function hideAuthOverlay() {
   document.getElementById('auth-overlay').style.display = 'none';
   document.body.classList.remove('auth-locked');
   clearAuthInputs();
+  if (typeof waveMascot === 'function') waveMascot(); // render.js
 }
 // Пароль, оставшийся в скрытой форме входа, браузер принимал за вход при добавлении
 // задачи и предлагал «сохранить пароль» с текстом задачи вместо почты.
