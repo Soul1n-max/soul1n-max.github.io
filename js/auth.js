@@ -262,6 +262,7 @@ async function finishTelegramLogin(user, errorId) {
     const { error } = await sb.auth.verifyOtp({ token_hash: data.token_hash, type: 'magiclink' });
     if (error) throw error;
     // Дальше сессию подхватит onAuthStateChange, как после входа по почте
+    rememberTgProfile(user); // имя и фото для аватара (js/avatar.js)
   } catch (e) {
     showAuthError(errorId, 'Не удалось войти через Telegram: ' + e.message);
   } finally {
@@ -309,7 +310,7 @@ async function linkWithTelegramUser(user) {
     const res = await fetch(TG_LINK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(user) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.code) throw new Error(data.error || 'сервер не ответил');
-    if (await applyLinkCode(data.code)) return;
+    if (await applyLinkCode(data.code)) { rememberTgProfile(user); return; }
   } catch (e) {
     showAuthError('link-error', 'Не удалось привязать Telegram: ' + e.message);
   }
