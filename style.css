@@ -327,7 +327,8 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .link-nudge svg{flex:none;color:#229ED9}
 .link-nudge b{display:block;color:var(--fg);font-weight:600}
 .link-nudge .nudge-text{flex:1;min-width:0}
-.link-nudge .btn-sm{flex:none}
+.link-nudge .btn-sm{flex:none;background:var(--accent);color:var(--on-accent)}
+.link-nudge .btn-sm:hover{background:var(--accent-hover)}
 .link-card .auth-error{margin-top:12px}
 .link-row{display:flex;gap:10px;margin-top:14px}
 .link-row .auth-input{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.12em;font-weight:600}
