@@ -25,6 +25,7 @@ const ICON = {
   plus:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   down:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
   up:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>',
+  list:  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l1.5 1.5L8 5M4 13l1.5 1.5L8 12M11 6h9M11 13h9M11 19h9M5 19h1"/></svg>',
   table: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 10v10"/></svg>',
 };
 
@@ -141,7 +142,12 @@ const CATS = {
   personal: {label:'Личное',    cls:'cat-personal'},
 };
 const PROJ_COLORS = ['#8b78f0','#5ba8f0','#5fcea0','#f0976a','#e06a72','#f5c842','#c45bde','#42d4d4'];
-const RECUR_LABELS = {daily:'Ежедневно',weekly:'Еженедельно',monthly:'Ежемесячно'};
+// Повторы. В поле recur — одно из слов ниже или «days:N», «weeks:N», «months:N» (раз в N дней, недель, месяцев)
+const RECUR_LABELS = {daily:'Ежедневно',weekdays:'По будням',weekly:'Еженедельно',monthly:'Ежемесячно',yearly:'Ежегодно'};
+// Что предлагают списки «Повтор»; другой интервал задаётся фразой («каждые 5 дней»)
+const RECUR_CHOICES = ['daily','weekdays','days:2','weekly','weeks:2','monthly','yearly'];
+const RECUR_RE = /^(daily|weekdays|weekly|monthly|yearly|(days|weeks|months):([1-9]\d{0,2}))$/;
+function isRecur(r) { return typeof r === 'string' && RECUR_RE.test(r) && !/:1$/.test(r) && !(+r.split(':')[1] > 365); }
 const RU_MONTHS = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 const RU_MONTHS_G = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const RU_WEEKDAYS = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
@@ -200,12 +206,51 @@ function fmtShort(s) {
   const d = parseDate(s);
   return `${d.getDate()} ${RU_MONTHS_G[d.getMonth()].slice(0,3)}`;
 }
+function recurLabel(r) {
+  if (RECUR_LABELS[r]) return RECUR_LABELS[r];
+  if (!isRecur(r)) return '';
+  const [unit, n] = r.split(':'), k = +n;
+  const word = unit === 'days' ? plural(k, 'день', 'дня', 'дней')
+             : unit === 'weeks' ? plural(k, 'неделю', 'недели', 'недель')
+             : plural(k, 'месяц', 'месяца', 'месяцев');
+  return `Раз в ${k} ${word}`;
+}
+// Прибавить месяцы: 31-е число становится последним днём короткого месяца (как в боте)
+function addMonths(d, n) {
+  const day = d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth() + n);
+  d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+}
 function nextDue(dueDate, recur) {
   const d = parseDate(dueDate) || new Date();
-  if (recur === 'daily')        d.setDate(d.getDate()+1);
-  else if (recur === 'weekly')  d.setDate(d.getDate()+7);
-  else if (recur === 'monthly') d.setMonth(d.getMonth()+1);
+  const [unit, n] = String(recur).split(':'), k = +n || 1;
+  if (recur === 'daily')          d.setDate(d.getDate()+1);
+  else if (recur === 'weekdays')  { do d.setDate(d.getDate()+1); while (d.getDay() === 0 || d.getDay() === 6); }
+  else if (recur === 'weekly')    d.setDate(d.getDate()+7);
+  else if (recur === 'monthly')   addMonths(d, 1);
+  else if (recur === 'yearly')    addMonths(d, 12);
+  else if (unit === 'days')       d.setDate(d.getDate()+k);
+  else if (unit === 'weeks')      d.setDate(d.getDate()+7*k);
+  else if (unit === 'months')     addMonths(d, k);
   return dateKey(d);
+}
+// Варианты списка «Повтор»; повтор задачи, которого нет в списке (задан фразой), добавляется в него
+function recurOptionsHTML(cur) {
+  const list = isRecur(cur) && !RECUR_CHOICES.includes(cur) ? [...RECUR_CHOICES, cur] : RECUR_CHOICES;
+  return list.map(r => `<option value="${r}"${r === cur ? ' selected' : ''}>${escHtml(recurLabel(r))}</option>`).join('');
+}
+function plural(n, one, few, many) {
+  const a = n % 10, b = n % 100;
+  if (a === 1 && b !== 11) return one;
+  if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
+  return many;
+}
+// Подзадачи — массив {id, text, done} в поле subtasks; из базы и копий берём только такой вид
+const SUBTASKS_MAX = 50;
+function cleanSubtasks(list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter(s => s && typeof s.text === 'string' && s.text.trim()).slice(0, SUBTASKS_MAX)
+    .map(s => ({ id: typeof s.id === 'string' && s.id ? s.id.slice(0, 40) : uid(), text: s.text.trim().slice(0, 200), done: s.done === true }));
 }
 function getProject(id) { return projects.find(p => p.id === id) || null; }
 
@@ -221,7 +266,8 @@ function fromDB(row) {
     dueDate:   row.due_date || null,
     dueTime:   row.due_time || null,
     projectId: row.project_id || null,
-    recur:     row.recur || null,
+    recur:     isRecur(row.recur) ? row.recur : null,
+    subtasks:  cleanSubtasks(row.subtasks),
     doneAt:    row.done_at ? new Date(row.done_at).getTime() : null,
   };
 }

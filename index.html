@@ -38,7 +38,7 @@
      Обновлять версию — вместе с новым хешем. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style.css?v=15">
 </head>
 <body class="auth-locked">
 
@@ -119,11 +119,13 @@
           <section class="quick-add" aria-label="Новая задача">
             <div class="quick-add-row">
               <label for="task-input" class="sr-only">Новая задача</label>
-              <textarea class="quick-input one-line" id="task-input" rows="1" wrap="off" placeholder="Что нужно сделать?" maxlength="300" autocomplete="off" spellcheck="true"></textarea>
+              <textarea class="quick-input one-line" id="task-input" rows="1" wrap="off" placeholder="Что сделать? Например: отчёт завтра в 15 #срочно" maxlength="300" autocomplete="off" spellcheck="true"></textarea>
               <!-- На телефоне категории, дата и повтор спрятаны за этой кнопкой, чтобы список был виден сразу -->
               <button class="qa-more" id="qa-more" type="button" aria-expanded="false" aria-controls="add-options" aria-label="Параметры задачи"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
               <button class="btn-add" id="btn-add">Добавить</button>
             </div>
+            <!-- Что распознано во фразе («завтра в 15 #срочно»): заполняет ui.js -->
+            <div class="qa-preview" id="qa-preview" role="status" hidden></div>
             <div class="add-options" id="add-options">
               <div class="tags-row" role="group" aria-label="Тип задачи">
                 <button class="tag-btn cat-project"  data-cat="project">Проект</button>
@@ -136,11 +138,9 @@
                 <input type="date" class="ui-field" data-label="Дата" id="task-due" data-required>
                 <input type="time" class="ui-field" data-label="Время" id="task-time">
                 <select class="ui-field" data-label="Проект" id="task-project"><option value="">Без проекта</option></select>
+                <!-- Варианты повтора подставляет ui.js (RECUR_CHOICES в core.js) -->
                 <select class="ui-field" data-label="Повтор" id="task-recur">
                   <option value="">Нет</option>
-                  <option value="daily">Ежедневно</option>
-                  <option value="weekly">Еженедельно</option>
-                  <option value="monthly">Ежемесячно</option>
                 </select>
               </div>
             </div>
@@ -369,15 +369,16 @@
 </div>
 
 <!-- Скрипты подключаются по порядку: каждый следующий пользуется функциями предыдущих -->
-<script src="js/core.js?v=14"></script>
-<script src="js/data.js?v=14"></script>
-<script src="js/render.js?v=14"></script>
-<script src="js/drag.js?v=14"></script>
-<script src="js/fields.js?v=14"></script>
-<script src="js/ui.js?v=14"></script>
-<script src="js/auth.js?v=14"></script>
-<script src="js/onboarding.js?v=14"></script>
-<script src="js/main.js?v=14"></script>
-<script src="js/demo.js?v=14"></script>
+<script src="js/core.js?v=15"></script>
+<script src="js/phrase.js?v=15"></script>
+<script src="js/data.js?v=15"></script>
+<script src="js/render.js?v=15"></script>
+<script src="js/drag.js?v=15"></script>
+<script src="js/fields.js?v=15"></script>
+<script src="js/ui.js?v=15"></script>
+<script src="js/auth.js?v=15"></script>
+<script src="js/onboarding.js?v=15"></script>
+<script src="js/main.js?v=15"></script>
+<script src="js/demo.js?v=15"></script>
 </body>
 </html>
