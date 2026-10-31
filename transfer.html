@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Согласие на трансграничную передачу — Синергия PM</title>
+<meta name="description" content="Согласие пользователя планера задач Синергия PM на трансграничную передачу персональных данных.">
+<meta name="theme-color" content="#1C1C1C">
+<link rel="icon" type="image/png" sizes="48x48" href="img/favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<script src="js/terms.js?v=13"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
+<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="legal.css?v=13">
+</head>
+<body>
+<!-- Отдельное согласие на трансграничную передачу (ст. 12 Федерального закона № 152-ФЗ).
+     Даётся при регистрации своей галочкой (#reg-transfer, проверка в js/auth.js).
+     Уведомление Роскомнадзора о трансграничной передаче этим согласием не заменяется — см. privacy.html, раздел 8.
+     Текст подготовлен как шаблон и не является юридической консультацией. -->
+<main class="terms">
+  <header class="terms-top">
+    <div class="side-brand" style="padding:0">
+      <div class="brand-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg></div>
+      <div class="brand-name">Синергия<span>PM</span></div>
+    </div>
+    <a class="terms-back" href="./"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>К планеру</a>
+  </header>
+  <nav class="doc-switch" aria-label="Документы">
+    <a href="terms.html">Соглашение</a>
+    <a href="privacy.html">Политика ПДн</a>
+    <a href="consent.html">Согласие на обработку</a>
+    <a href="transfer.html" aria-current="page">Трансграничная передача</a>
+  </nav>
+
+  <div class="terms-head">
+    <img src="img/ivan/growth.webp" width="72" height="100" alt="Маскот Иван">
+    <h1>Согласие на трансграничную передачу персональных данных</h1>
+  </div>
+  <p class="terms-date">Редакция № 1. Вступает в силу 1 ноября 2026 г..</p>
+  <p class="terms-lead">Отмечая при регистрации поле «Даю согласие на трансграничную передачу персональных данных», я, пользователь планера задач «Синергия PM», свободно, своей волей и в своём интересе даю Оператору отдельное согласие на передачу моих персональных данных лицам, находящимся за пределами Российской Федерации, на условиях ниже.</p>
+
+  <nav class="doc-toc" aria-label="Оглавление">
+    <div class="doc-toc-title">Содержание</div>
+    <ol>
+      <li><a href="#x1">Оператор</a></li>
+      <li><a href="#x2">Кому и куда передаются данные</a></li>
+      <li><a href="#x3">Какие данные и зачем</a></li>
+      <li><a href="#x4">Что мне известно о рисках</a></li>
+      <li><a href="#x5">Срок действия и отзыв</a></li>
+    </ol>
+  </nav>
+
+  <section id="x1">
+    <h2>1. Оператор</h2>
+    <p>Винокуров Александр Дмитриевич, самозанятый (плательщик налога на профессиональный доход), ИНН 220912258870, адрес: 129090, г. Москва, ул. Гиляровского, д. 1, стр. 1, электронная почта: <a href="mailto:synergyplanner26@gmail.com">synergyplanner26@gmail.com</a>.</p>
+  </section>
+
+  <section id="x2">
+    <h2>2. Кому и куда передаются данные</h2>
+    <table class="doc-table">
+      <thead><tr><th>Получатель</th><th>Страна</th><th>Для чего</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Получатель">Supabase Inc.</td><td data-label="Страна">США; сервер — Ирландия, Дублин</td><td data-label="Для чего">база данных, вход по почте, письма с кодом</td></tr>
+        <tr><td data-label="Получатель">Render Services, Inc.</td><td data-label="Страна">США; сервер — Германия, Франкфурт-на-Майне</td><td data-label="Для чего">сервер Telegram-бота</td></tr>
+        <tr><td data-label="Получатель">Telegram</td><td data-label="Страна">за пределами РФ</td><td data-label="Для чего">сообщения бота и вход через Telegram</td></tr>
+        <tr><td data-label="Получатель">GitHub, Inc.</td><td data-label="Страна">США</td><td data-label="Для чего">размещение страниц сайта</td></tr>
+        <tr><td data-label="Получатель">Google LLC, jsDelivr</td><td data-label="Страна">США и другие страны</td><td data-label="Для чего">загрузка шрифтов и библиотеки сайта</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="x3">
+    <h2>3. Какие данные и зачем</h2>
+    <p>Передаются данные из раздела 3 <a href="consent.html">Согласия на обработку персональных данных</a>: почта и хеш пароля, Telegram ID и данные входа через Telegram, тексты задач и проектов, IP-адрес и сведения о браузере. Каждому получателю — только то, что нужно для его задачи из таблицы выше.</p>
+    <p>Цель передачи — работа планера: хранение задач, вход, синхронизация с ботом и напоминания.</p>
+  </section>
+
+  <section id="x4">
+    <h2>4. Что мне известно о рисках</h2>
+    <ul>
+      <li>Данные хранятся на серверах за пределами России. В стране получателя может действовать иной уровень защиты персональных данных, чем в России.</li>
+      <li>Уведомление Роскомнадзора о трансграничной передаче Оператором не подано.</li>
+      <li>Оператор выбирает получателей, которые шифруют соединение и ограничивают доступ к данным, но не может влиять на законы страны получателя.</li>
+    </ul>
+  </section>
+
+  <section id="x5">
+    <h2>5. Срок действия и отзыв</h2>
+    <p>Согласие действует с момента отметки при регистрации до удаления аккаунта или до отзыва согласия.</p>
+    <p>Отозвать согласие можно в любой момент письмом на <a href="mailto:synergyplanner26@gmail.com">synergyplanner26@gmail.com</a> или по адресу 129090, г. Москва, ул. Гиляровского, д. 1, стр. 1. После отзыва передача прекращается, а данные у получателей уничтожаются в срок не более 30 дней. Планер работает только на этих серверах, поэтому после отзыва пользоваться им будет невозможно.</p>
+  </section>
+
+  <p class="doc-foot">Связанные документы: <a href="terms.html">Пользовательское соглашение</a> · <a href="privacy.html">Политика обработки персональных данных</a> · <a href="consent.html">Согласие на обработку персональных данных</a>.</p>
+</main>
+</body>
+</html>

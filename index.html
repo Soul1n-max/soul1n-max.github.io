@@ -38,7 +38,7 @@
      Обновлять версию — вместе с новым хешем. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=13">
 </head>
 <body class="auth-locked">
 
@@ -55,7 +55,7 @@
     <nav class="tabs-nav" aria-label="Разделы">
       <button class="tab-btn active" data-tab="tasks">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M8 12l3 3 5-6"/></svg>
-        <span class="tab-label">Задачи</span><span class="tab-count" id="nav-count-tasks"></span>
+        <span class="tab-label"><span class="tl-full">Лента задач</span><span class="tl-short">Лента</span></span><span class="tab-count" id="nav-count-tasks"></span>
       </button>
       <button class="tab-btn" data-tab="calendar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
@@ -105,7 +105,7 @@
               <strong id="streak-num">0</strong> <span id="streak-label">дней подряд</span>
             </div>
             <div class="progress-label">
-              <span>Прогресс</span>
+              <span>За сегодня</span>
               <strong id="prog-text">0 / 0</strong>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
@@ -120,9 +120,11 @@
             <div class="quick-add-row">
               <label for="task-input" class="sr-only">Новая задача</label>
               <textarea class="quick-input one-line" id="task-input" rows="1" wrap="off" placeholder="Что нужно сделать?" maxlength="300" autocomplete="off" spellcheck="true"></textarea>
+              <!-- На телефоне категории, дата и повтор спрятаны за этой кнопкой, чтобы список был виден сразу -->
+              <button class="qa-more" id="qa-more" type="button" aria-expanded="false" aria-controls="add-options" aria-label="Параметры задачи"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
               <button class="btn-add" id="btn-add">Добавить</button>
             </div>
-            <div class="add-options">
+            <div class="add-options" id="add-options">
               <div class="tags-row" role="group" aria-label="Тип задачи">
                 <button class="tag-btn cat-project"  data-cat="project">Проект</button>
                 <button class="tag-btn cat-contact"  data-cat="contact">Контакт</button>
@@ -131,7 +133,7 @@
                 <button class="tag-btn cat-personal" data-cat="personal">Личное</button>
               </div>
               <div class="extra-row">
-                <input type="date" class="ui-field" data-label="Дата" id="task-due">
+                <input type="date" class="ui-field" data-label="Дата" id="task-due" data-required>
                 <input type="time" class="ui-field" data-label="Время" id="task-time">
                 <select class="ui-field" data-label="Проект" id="task-project"><option value="">Без проекта</option></select>
                 <select class="ui-field" data-label="Повтор" id="task-recur">
@@ -144,6 +146,14 @@
             </div>
           </section>
 
+          <div class="feed-tools" id="feed-tools">
+          <!-- Поиск — однострочная textarea, как поле задачи: в <input> менеджеры паролей подставляют почту -->
+          <div class="search-box" id="search-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <label for="task-search" class="sr-only">Поиск по задачам</label>
+            <textarea class="search-input one-line" id="task-search" rows="1" wrap="off" placeholder="Поиск по задачам" maxlength="100" autocomplete="off" spellcheck="false" role="searchbox"></textarea>
+            <button class="search-clear" id="search-clear" type="button" aria-label="Очистить поиск" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
           <div class="filter-row" role="group" aria-label="Фильтр по типу">
             <button class="filter-chip active" data-filter="all">Все <span class="filter-count" id="fc-all">0</span></button>
             <button class="filter-chip" data-filter="project">Проект <span class="filter-count" id="fc-project">0</span></button>
@@ -151,6 +161,7 @@
             <button class="filter-chip" data-filter="remind">Напомнить <span class="filter-count" id="fc-remind">0</span></button>
             <button class="filter-chip" data-filter="urgent">Срочно <span class="filter-count" id="fc-urgent">0</span></button>
             <button class="filter-chip" data-filter="personal">Личное <span class="filter-count" id="fc-personal">0</span></button>
+          </div>
           </div>
 
           <div class="tasks-layout">
@@ -229,15 +240,41 @@
       <div class="brand-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg></div>
       <div class="brand-name">Синергия<span>PM</span></div>
     </div>
-    <div>
-      <h1>Задачи, календарь и&nbsp;проекты — <span>в одном месте</span></h1>
+    <div class="auth-hero-body">
+      <div class="auth-hero-head">
+        <img class="auth-ivan" src="img/ivan/thumb.webp" width="120" height="166" alt="Маскот Иван">
+        <div>
+          <h1>Планер задач в&nbsp;Telegram <span>и&nbsp;на&nbsp;сайте</span></h1>
+          <p class="auth-lead">Напишите задачу боту — она сразу появится здесь. Напоминания, календарь и&nbsp;проекты в&nbsp;одном месте.</p>
+        </div>
+      </div>
+      <!-- Как это работает: сообщение боту превращается в карточку задачи на сайте. Чистый CSS, без видео. -->
+      <div class="how" role="img" aria-label="Как это работает: вы пишете боту «Сдать курсовую завтра в 10:00», задача сразу появляется на сайте с датой и напоминанием">
+        <div class="how-panel how-tg" aria-hidden="true">
+          <div class="how-head"><span class="how-ava"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 4.5L2.5 11.8l6 2.2M21.5 4.5l-3 15-7-5.3M21.5 4.5L8.5 14l3 5.5 2-5.3"/></svg></span>Бот планера</div>
+          <div class="how-msg how-msg-me">Сдать курсовую завтра в&nbsp;10:00</div>
+          <div class="how-msg how-msg-bot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Задача добавлена</div>
+        </div>
+        <div class="how-arrow" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        <div class="how-panel how-site" aria-hidden="true">
+          <div class="how-head how-head-site"><span class="how-dot"></span>Сайт · Задачи</div>
+          <div class="how-card">
+            <span class="how-check"></span>
+            <div class="how-card-body">
+              <div class="how-card-text">Сдать курсовую</div>
+              <div class="how-chips"><span class="how-chip">Завтра, 10:00</span><span class="how-chip how-chip-remind">Напомнить</span></div>
+            </div>
+          </div>
+          <div class="how-bell"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>Напомним в&nbsp;Telegram</div>
+        </div>
+      </div>
       <ul class="auth-points">
-        <li><span class="tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>Задачи из Telegram-бота синхронизируются здесь</li>
-        <li><span class="tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>Дата, время и повтор — каждый день, неделю или месяц</li>
-        <li><span class="tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>Проекты с цветными метками, просроченное — всегда наверху</li>
+        <li><span class="tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>Пишите задачи боту или добавляйте на сайте — список общий</li>
+        <li><span class="tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>Дата, время, повтор и напоминание от бота в нужный момент</li>
+        <li><span class="tick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>Календарь месяца и проекты с цветными метками</li>
       </ul>
     </div>
-    <span class="auth-copy">© Синергия PM</span>
+    <div class="auth-copy"><span>© Синергия PM</span><a href="terms.html" target="_blank" rel="noopener">Соглашение</a><a href="privacy.html" target="_blank" rel="noopener">Политика ПДн</a><a href="consent.html" target="_blank" rel="noopener">Согласие на обработку ПДн</a><a href="transfer.html" target="_blank" rel="noopener">Трансграничная передача</a></div>
   </section>
 
   <section class="auth-side">
@@ -245,6 +282,18 @@
       <div class="auth-logo side-brand" style="padding:0">
         <div class="brand-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg></div>
         <div class="brand-name" style="color:var(--fg)">Синергия<span style="color:var(--accent-ink)">PM</span></div>
+      </div>
+      <!-- Короткое УТП для телефона: там .auth-hero скрыт -->
+      <div class="auth-pitch">
+        <!-- Две копии одной картинки: Иван без лампочки и отдельно лампочка, которая подпрыгивает (стили в разделе AUTH) -->
+        <span class="auth-pitch-ivan" aria-hidden="true">
+          <img class="ivan-body" src="img/ivan/idea.webp" width="46" height="66" alt="">
+          <img class="ivan-bulb" src="img/ivan/idea.webp" width="46" height="66" alt="">
+        </span>
+        <div>
+          <p class="auth-pitch-title">Планер задач в&nbsp;Telegram и&nbsp;на&nbsp;сайте</p>
+          <p class="auth-pitch-text">Напишите задачу боту — она сразу появится здесь. Напоминания, календарь и&nbsp;проекты.</p>
+        </div>
       </div>
       <!-- LOGIN -->
       <form id="auth-form-login">
@@ -258,16 +307,32 @@
         <div class="auth-forgot"><button type="button" id="btn-forgot">Забыли пароль?</button></div>
         <button type="button" class="auth-btn" id="btn-login">Войти</button>
         <div class="auth-switch">Нет аккаунта? <button type="button" id="switch-to-register">Зарегистрироваться</button></div>
+        <p class="auth-legal">Нет аккаунта — сначала зарегистрируйтесь: при регистрации принимается соглашение и даётся согласие на обработку данных.</p>
+        <nav class="auth-docs" aria-label="Документы">
+          <a href="terms.html" target="_blank" rel="noopener">Пользовательское соглашение</a>
+          <a href="privacy.html" target="_blank" rel="noopener">Политика обработки ПДн</a>
+          <a href="consent.html" target="_blank" rel="noopener">Согласие на обработку ПДн</a>
+          <a href="transfer.html" target="_blank" rel="noopener">Согласие на трансграничную передачу</a>
+        </nav>
       </form>
       <!-- REGISTER -->
       <form id="auth-form-register" style="display:none">
         <h2 class="auth-title">Регистрация</h2>
         <p class="auth-sub">Создайте аккаунт для доступа к планнеру</p>
         <div class="auth-error" id="auth-error-register" role="alert"></div>
+        <!-- Две отдельные неотмеченные галочки: без них не срабатывают ни Telegram, ни почта (проверка в js/auth.js).
+             Согласие на обработку ПДн с 01.09.2025 оформляется отдельно от других документов. -->
+        <fieldset class="auth-consents">
+          <legend class="sr-only">Согласия</legend>
+          <label class="auth-check"><input type="checkbox" id="reg-terms"><span>Принимаю <a href="terms.html" target="_blank" rel="noopener">пользовательское соглашение</a> и подтверждаю, что мне исполнилось 14 лет, а если мне нет 18 — что у меня есть согласие родителя или законного представителя, когда оно требуется по закону</span></label>
+          <label class="auth-check"><input type="checkbox" id="reg-consent"><span>Даю <a href="consent.html" target="_blank" rel="noopener">согласие на обработку персональных данных</a> на условиях <a href="privacy.html" target="_blank" rel="noopener">политики обработки ПДн</a></span></label>
+          <label class="auth-check"><input type="checkbox" id="reg-transfer"><span>Даю <a href="transfer.html" target="_blank" rel="noopener">согласие на трансграничную передачу персональных данных</a> — серверы планера находятся за пределами России</span></label>
+        </fieldset>
         <button class="auth-tg" id="btn-tg-register" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 4.5L2.5 11.8l6 2.2M21.5 4.5l-3 15-7-5.3M21.5 4.5L8.5 14l3 5.5 2-5.3"/></svg>Войти через Telegram</button>
         <div class="auth-or">или по почте</div>
         <div class="auth-field"><label class="auth-label" for="reg-email">Email</label><input class="auth-input" id="reg-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
         <div class="auth-field"><label class="auth-label" for="reg-password">Пароль</label><input class="auth-input" id="reg-password" type="password" placeholder="Минимум 8 символов" autocomplete="new-password"></div>
+        <div class="auth-field"><label class="auth-label" for="reg-password2">Повторите пароль</label><input class="auth-input" id="reg-password2" type="password" placeholder="Ещё раз тот же пароль" autocomplete="new-password"></div>
         <button type="button" class="auth-btn" id="btn-register">Создать аккаунт</button>
         <div class="auth-switch">Уже есть аккаунт? <button type="button" id="switch-to-login">Войти</button></div>
       </form>
@@ -304,13 +369,15 @@
 </div>
 
 <!-- Скрипты подключаются по порядку: каждый следующий пользуется функциями предыдущих -->
-<script src="js/core.js?v=10"></script>
-<script src="js/data.js?v=10"></script>
-<script src="js/render.js?v=10"></script>
-<script src="js/fields.js?v=10"></script>
-<script src="js/ui.js?v=10"></script>
-<script src="js/auth.js?v=10"></script>
-<script src="js/main.js?v=10"></script>
-<script src="js/demo.js?v=10"></script>
+<script src="js/core.js?v=13"></script>
+<script src="js/data.js?v=13"></script>
+<script src="js/render.js?v=13"></script>
+<script src="js/drag.js?v=13"></script>
+<script src="js/fields.js?v=13"></script>
+<script src="js/ui.js?v=13"></script>
+<script src="js/auth.js?v=13"></script>
+<script src="js/onboarding.js?v=13"></script>
+<script src="js/main.js?v=13"></script>
+<script src="js/demo.js?v=13"></script>
 </body>
 </html>

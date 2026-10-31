@@ -2,15 +2,18 @@
 /* Гамма Синергии: красный #ED131C, чёрный #1C1C1C, белый #FFFFFF */
 :root {
   --bg:#F5F5F5; --surface:#FFFFFF; --surface-2:#F0F0F0; --border:#E3E3E3;
-  --fg:#1C1C1C; --fg-muted:#5C5C5C; --fg-dim:#8A8A8A;
+  --fg:#1C1C1C; --fg-muted:#5C5C5C; --fg-dim:#707070;
   --accent:#ED131C; --accent-hover:#C90F17; --accent-soft:#FDE8E9; --accent-ink:#C20E16; --on-accent:#FFFFFF;
   --lav:#ED131C; --on-lav:#FFFFFF;
   --side:#1C1C1C; --side-2:#2A2A2A; --side-3:#3A3A3A; --side-fg:#FFFFFF; --side-muted:#A6A6A6; --side-text:#E3E3E3; --side-accent:#FF5A60;
-  --c-project:#1C1C1C;  --b-project:#ECECEC;
-  --c-contact:#0369A1;  --b-contact:#E6F3FB;
-  --c-remind:#B45309;   --b-remind:#FDF1DF;
-  --c-urgent:#B91C1C;   --b-urgent:#FDECEC;
-  --c-personal:#047857; --b-personal:#E5F5EC;
+  /* Категории: серая метка + приглушённая точка (--c-* — цвет точки, не текста). Цветом выделено только «Срочно» */
+  --c-project:#1C1C1C;  --b-project:#F0F0F0;
+  --c-contact:#5E7A94;  --b-contact:#F0F0F0;
+  --c-remind:#AD7A22;   --b-remind:#F0F0F0;
+  --c-urgent:#C20E16;   --b-urgent:#FDE8E9;
+  --c-personal:#5B8A68; --b-personal:#F0F0F0;
+  /* Заливка второстепенных кнопок: видна и на фоне страницы, и на белых карточках */
+  --btn-2:#E8E8E8; --btn-2-hover:#DCDCDC;
   --ok:#2FA87A;
   --shade:0,0,0;
   --radius:16px; --radius-lg:22px;
@@ -19,27 +22,29 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg:#121212; --surface:#1C1C1C; --surface-2:#262626; --border:#333333;
-    --fg:#F2F2F2; --fg-muted:#ABABAB; --fg-dim:#767676;
+    --fg:#F2F2F2; --fg-muted:#ABABAB; --fg-dim:#8F8F8F;
     --accent:#ED131C; --accent-hover:#FF2E37; --accent-soft:rgba(237,19,28,.18); --accent-ink:#FF6B70;
     --side:#0A0A0A; --side-2:#1C1C1C; --side-3:#2E2E2E;
-    --c-project:#F2F2F2;  --b-project:rgba(255,255,255,.10);
-    --c-contact:#7CC4F5;  --b-contact:rgba(91,168,240,.14);
-    --c-remind:#F5B470;   --b-remind:rgba(240,151,106,.14);
-    --c-urgent:#F08A90;   --b-urgent:rgba(224,106,114,.14);
-    --c-personal:#6FD8A8; --b-personal:rgba(95,206,160,.14);
+    --c-project:#F2F2F2;  --b-project:#262626;
+    --c-contact:#8DA9C4;  --b-contact:#262626;
+    --c-remind:#D6A65A;   --b-remind:#262626;
+    --c-urgent:#FF6B70;   --b-urgent:rgba(237,19,28,.18);
+    --c-personal:#86B593; --b-personal:#262626;
+    --btn-2:#2C2C2C; --btn-2-hover:#383838;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg:#121212; --surface:#1C1C1C; --surface-2:#262626; --border:#333333;
-  --fg:#F2F2F2; --fg-muted:#ABABAB; --fg-dim:#767676;
+  --fg:#F2F2F2; --fg-muted:#ABABAB; --fg-dim:#8F8F8F;
   --accent:#ED131C; --accent-hover:#FF2E37; --accent-soft:rgba(237,19,28,.18); --accent-ink:#FF6B70;
   --side:#0A0A0A; --side-2:#1C1C1C; --side-3:#2E2E2E;
-  --c-project:#F2F2F2;  --b-project:rgba(255,255,255,.10);
-  --c-contact:#7CC4F5;  --b-contact:rgba(91,168,240,.14);
-  --c-remind:#F5B470;   --b-remind:rgba(240,151,106,.14);
-  --c-urgent:#F08A90;   --b-urgent:rgba(224,106,114,.14);
-  --c-personal:#6FD8A8; --b-personal:rgba(95,206,160,.14);
+  --c-project:#F2F2F2;  --b-project:#262626;
+  --c-contact:#8DA9C4;  --b-contact:#262626;
+  --c-remind:#D6A65A;   --b-remind:#262626;
+  --c-urgent:#FF6B70;   --b-urgent:rgba(237,19,28,.18);
+  --c-personal:#86B593; --b-personal:#262626;
+  --btn-2:#2C2C2C; --btn-2-hover:#383838;
   color-scheme: dark;
 }
 
@@ -66,7 +71,8 @@ svg{flex-shrink:0}
 
 /* ─── SIDEBAR ─── */
 .side-brand{display:flex;align-items:center;gap:12px;padding:0 8px}
-.brand-icon{width:36px;height:36px;border-radius:11px;background:var(--lav);display:grid;place-items:center;color:var(--on-lav)}
+/* Знак Университета «Синергия»: белая рамка со стрелкой на красной плашке (скругление 9/48 задано в SVG) */
+.brand-icon{width:36px;height:36px;flex:none;border-radius:11px;background:var(--lav);display:grid;place-items:center;color:var(--on-lav)}
 .brand-name{font-family:'Unbounded','Onest',sans-serif;font-size:16px;font-weight:600;letter-spacing:-.02em}
 .brand-name span{font-family:'Onest',sans-serif;font-size:11px;font-weight:700;color:var(--side-accent);letter-spacing:.08em;margin-left:4px}
 .tabs-nav{display:flex;flex-direction:column;gap:4px}
@@ -76,6 +82,7 @@ svg{flex-shrink:0}
   transition:background .15s,color .15s;
 }
 .tab-btn .tab-label{flex:1}
+.tab-btn .tl-short{display:none}
 .tab-btn:hover{background:var(--side-2);color:var(--side-fg)}
 .tab-btn.active{background:var(--side-3);color:#fff}
 .tab-count{font-size:12px;font-variant-numeric:tabular-nums;opacity:.8}
@@ -83,6 +90,8 @@ svg{flex-shrink:0}
 .side-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--side-muted);padding:0 12px 6px}
 .side-proj{display:flex;align-items:center;gap:12px;width:100%;min-height:40px;padding:0 12px;border-radius:10px;background:transparent;border:0;color:var(--side-text);font-size:14px;text-align:left}
 .side-proj:hover{background:var(--side-2)}
+.side-proj[aria-pressed="true"]{background:var(--side-3);color:#fff}
+.side-proj.none .dot{border:1.5px dashed var(--side-muted)}
 .side-proj .dot{width:9px;height:9px;border-radius:3px}
 .side-proj .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .side-proj .cnt{font-size:12px;color:var(--side-muted);font-variant-numeric:tabular-nums}
@@ -136,16 +145,22 @@ svg{flex-shrink:0}
 .quick-input{flex:1;min-width:0;height:56px;padding:16px;line-height:24px;border:0;outline:none;background:transparent;font-size:18px;font-weight:500}
 .quick-input::placeholder{color:var(--fg-dim)}
 .btn-add{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s,transform .1s}
+.qa-more{display:none;flex-shrink:0;width:44px;height:44px;border:0;border-radius:12px;background:var(--surface-2);color:var(--fg-muted);place-items:center;transition:background .15s,color .15s}
+.qa-more:hover{color:var(--fg)}
+.qa-more[aria-expanded="true"]{background:var(--fg);color:var(--bg)}
 .btn-add::before{content:"+";font-size:20px;font-weight:500;line-height:1}
 .btn-add:hover{background:var(--accent-hover)}
 .btn-add:active{transform:scale(.97)}
 .btn-add:disabled{opacity:.6;cursor:not-allowed}
 .add-options{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:0 12px}
 .tags-row{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 auto}
-.tag-btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--fg-muted);font-size:13px;font-weight:600;transition:all .15s}
+/* Кнопки с заливкой: второстепенные — серые, выбранные — чёрные (в тёмной теме белые), главные — красные */
+.tag-btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:999px;border:0;background:var(--btn-2);color:var(--fg-muted);font-size:13px;font-weight:600;transition:background .15s,color .15s,transform .1s}
 .tag-btn::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tag-color)}
-.tag-btn:hover{border-color:var(--tag-color);color:var(--fg)}
-.tag-btn.active{background:var(--tag-bg);border-color:var(--tag-color);color:var(--tag-color)}
+.tag-btn:hover{background:var(--btn-2-hover);color:var(--fg)}
+.tag-btn:active{transform:scale(.97)}
+.tag-btn.active{background:var(--fg);color:var(--bg)}
+.tag-btn.active.cat-project::before{background:var(--bg)}
 .extra-row{display:flex;flex-wrap:wrap;gap:8px}
 .field-pill{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:12px;background:var(--surface-2);font-size:13px;color:var(--fg-muted)}
 
@@ -179,9 +194,10 @@ svg{flex-shrink:0}
 .tp-col-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-dim);padding:0 6px 4px}
 .tp-col .ui-opt{justify-content:center;min-height:40px;font-variant-numeric:tabular-nums}
 .pop-foot{display:flex;flex-wrap:wrap;gap:6px;padding:10px 4px 2px;border-top:1px solid var(--border);margin-top:8px}
-.pop-chip{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;transition:background .13s,border-color .13s}
-.pop-chip:hover,.pop-chip:focus-visible{background:var(--surface-2);border-color:var(--accent)}
-.pop-chip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.pop-chip{height:40px;padding:0 12px;border-radius:10px;border:0;background:var(--btn-2);color:var(--fg);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;transition:background .13s,transform .1s}
+.pop-chip:hover{background:var(--btn-2-hover)}
+.pop-chip:active{transform:scale(.97)}
+.pop-chip.on{background:var(--fg);color:var(--bg)}
 .pop-chip.clear{color:var(--c-urgent);margin-left:auto}
 .pop-chip.done{margin-left:auto;background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .pop-chip.clear + .pop-chip.done{margin-left:0}
@@ -218,33 +234,85 @@ svg{flex-shrink:0}
 .day-filter .df-text{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
 .day-filter .df-text small{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
 .day-filter .df-text b{font-size:17px;font-weight:700;color:var(--fg)}
-.day-filter .btn-sm{height:40px}
+.day-filter .btn-sm{background:var(--surface)}
+.day-filter .btn-sm:hover{background:var(--btn-2)}
+.day-filter .df-text b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.df-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:1px}
+/* Группы ленты; группа с датой — цель перетаскивания */
+.feed-group{display:flex;flex-direction:column;gap:8px;border-radius:var(--radius);transition:background .15s,box-shadow .15s}
+.feed-group + .feed-group{margin-top:12px}
+.feed-group.empty{display:none}
+body.dragging-task .feed-group[data-drop]{display:flex;padding:8px;margin:4px -8px 0;box-shadow:inset 0 0 0 1.5px var(--border)}
+.feed-group.drop-over{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent) !important}
+/* Своя группа не цель: перенос ищет цель через elementFromPoint, а он пропускает pointer-events:none.
+   Иначе задача из «Позже», брошенная в «Позже», переехала бы на первый день группы */
+body.dragging-task .feed-group:has(.task-item.dragging){pointer-events:none;box-shadow:none}
+.feed-hint{margin-top:-4px;font-size:13px;color:var(--fg-muted)}
+.feed-drop-hint{display:grid;place-items:center;min-height:44px;border:1.5px dashed var(--border);border-radius:12px;font-size:13px;color:var(--fg-muted)}
+.section-head.inbox{color:var(--fg-muted)}
+.task-text mark,.task-note-preview mark{background:color-mix(in srgb,var(--c-remind) 28%,transparent);color:inherit;border-radius:3px;padding:0 1px}
 /* Перетаскивание задачи на день календаря */
-.task-item[draggable="true"]{cursor:grab}
-.task-item.dragging{opacity:.45}
+/* Перетаскивание задач на день (drag.js): мышью сразу, пальцем после долгого нажатия */
+@media (pointer:fine){.task-item:not(.done),.cal-ev[data-id]{cursor:grab}}
+@media (pointer:coarse){
+  .task-item:not(.done),.cal-ev[data-id]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .task-item textarea,.task-item input{-webkit-user-select:text;user-select:text}
+}
+.task-item.drag-hold{transform:scale(.97);transition:transform .35s ease,border-color .15s,opacity .2s;border-color:var(--accent)}
+.task-item.dragging,.cal-ev.dragging{opacity:.4}
+body.dragging-task{-webkit-user-select:none;user-select:none}
+body.dragging-task,body.dragging-task *{cursor:grabbing !important}
+body.dragging-task .cal-card{box-shadow:0 0 0 2px var(--accent)}
+:where([data-drop]).drop-over{box-shadow:inset 0 0 0 2px var(--accent)}
+.drag-ghost{position:fixed;left:0;top:0;z-index:60;pointer-events:none;max-width:min(280px,80vw);padding:10px 14px;border-radius:14px;background:var(--side);color:var(--side-fg);font-size:14px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 12px 32px rgba(var(--shade),.3);border-left:4px solid var(--accent);rotate:-2deg}
+.drag-ghost.touch{font-size:15px;padding:12px 16px}
+.cal-nav-btn.drag-flip{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.drop-landed{animation:drop-landed .9s ease}
+@keyframes drop-landed{0%{background:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}100%{box-shadow:inset 0 0 0 2px transparent}}
+@media (prefers-reduced-motion: reduce){.drop-landed{animation:none}.task-item.drag-hold{transition:none}}
+/* Уведомление «Перенесено на … · Отменить» */
+.move-toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;align-items:center;gap:6px;max-width:calc(100vw - 32px);padding:4px 4px 4px 18px;border-radius:16px;border:1px solid var(--side-3);background:var(--side);color:var(--side-fg);font-size:14px;font-weight:500;box-shadow:0 12px 32px rgba(var(--shade),.3);opacity:0;visibility:hidden;transform:translate(-50%,12px);transition:opacity .2s,transform .2s,visibility .2s}
+.move-toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.move-toast .mt-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.move-toast .mt-undo{flex:none;min-height:44px;padding:0 14px;border:0;border-radius:12px;background:transparent;color:var(--side-accent);font-weight:700}
+.move-toast .mt-undo:hover{background:var(--side-2)}
+@media (max-width: 860px){.move-toast{bottom:calc(98px + env(safe-area-inset-bottom,0px))}}
 body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2px var(--accent)}
 .week-day.drop-over,.week-day[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--lav)}
 .cal-day.drop-over{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
 
 /* ─── FILTERS ─── */
+.feed-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.search-box{position:relative;display:flex;align-items:center;flex:0 1 260px;min-width:180px;height:40px;border-radius:12px;background:var(--btn-2);color:var(--fg-muted);transition:flex-basis .2s}
+.search-box:focus-within{box-shadow:0 0 0 2px var(--accent)}
+.search-box > svg{position:absolute;left:12px;pointer-events:none}
+.search-input{flex:1;min-width:0;height:40px;padding:9px 40px 9px 38px;border:0;background:transparent;color:var(--fg);font:inherit;font-size:14px;line-height:22px;resize:none;overflow:hidden;white-space:nowrap;outline:none}
+.search-input::placeholder{color:var(--fg-muted)}
+.search-clear{position:absolute;right:2px;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:10px;background:transparent;color:var(--fg-muted)}
+.search-clear:hover{color:var(--fg)}
+.search-clear[hidden]{display:none}
+.feed-tools .filter-row{flex:1 1 auto;min-width:0}
 .filter-row{display:flex;flex-wrap:wrap;gap:6px}
-.filter-chip{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 8px 0 14px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--fg-muted);font-size:13px;font-weight:600;transition:all .15s}
-.filter-chip:hover{border-color:var(--accent);color:var(--fg)}
-.filter-chip.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.filter-count{min-width:24px;height:24px;padding:0 6px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-variant-numeric:tabular-nums;background:var(--surface-2);color:var(--fg-muted)}
-.filter-chip.active .filter-count{background:var(--lav);color:var(--on-lav)}
+.filter-chip{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 8px 0 14px;border-radius:12px;border:0;background:var(--btn-2);color:var(--fg-muted);font-size:13px;font-weight:600;transition:background .15s,color .15s,transform .1s}
+.filter-chip:hover{background:var(--btn-2-hover);color:var(--fg)}
+.filter-chip:active{transform:scale(.97)}
+/* Красный оставлен для главного действия, выбранный фильтр — чёрный (в тёмной теме белый) */
+.filter-chip.active{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.filter-count{min-width:24px;height:24px;padding:0 6px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-variant-numeric:tabular-nums;background:var(--surface);color:var(--fg-muted)}
+.filter-chip.active .filter-count{background:color-mix(in srgb,var(--bg) 20%,transparent);color:var(--bg)}
 
 /* ─── TASKS LAYOUT ─── */
 .tasks-layout{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
 .tasks-col{flex:999 1 520px;min-width:0;display:flex;flex-direction:column;gap:10px}
 .tasks-aside{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:16px}
-.section-head{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg);padding:18px 0 2px}
+.section-head{display:flex;align-items:center;gap:10px;font-family:'Unbounded','Onest',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--fg);padding:18px 0 2px}
 .section-head:first-child{padding-top:0}
 .section-head.overdue{color:var(--c-urgent)}
 .section-head .cnt{font-size:12px;font-weight:600;letter-spacing:0;color:var(--fg-muted);font-variant-numeric:tabular-nums}
 .tasks-empty{text-align:center;padding:48px 16px;color:var(--fg-muted);background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius)}
 .tasks-empty .empty-title{font-family:'Unbounded','Onest',sans-serif;font-size:18px;font-weight:600;color:var(--fg);margin-bottom:6px}
 .tasks-empty p{font-size:14px}
+.empty-ivan{display:block;width:88px;height:120px;object-fit:contain;object-position:bottom;margin:0 auto 12px}
 .link-card{text-align:left;max-width:520px;margin:0 auto}
 .link-card .auth-error{margin-top:12px}
 .link-row{display:flex;gap:10px;margin-top:14px}
@@ -281,9 +349,16 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .task-footer{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .task-footer:empty{display:none}
 .chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
-.task-tag{color:var(--tag-color);background:var(--tag-bg)}
-.task-due-tag.today{color:var(--c-personal);background:var(--b-personal)}
+.task-tag{color:var(--fg-muted);background:var(--tag-bg)}
+.task-tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tag-color)}
+.task-tag.cat-urgent{color:var(--c-urgent)}
+.task-due-tag.today{color:var(--fg);background:var(--btn-2)}
 .task-due-tag.overdue{color:var(--c-urgent);background:var(--b-urgent)}
+/* «Срочно» и «Просрочено» отличаются не только цветом: знак «!» рядом с текстом */
+.task-tag.cat-urgent::before,.task-due-tag.overdue::before,.section-head.overdue::before{
+  content:"!";display:grid;place-items:center;width:14px;height:14px;border-radius:50%;
+  background:var(--c-urgent);color:var(--surface);font-family:'Onest',sans-serif;font-size:10px;font-weight:800;line-height:1}
+.section-head.overdue::before{width:16px;height:16px;font-size:11px}
 .task-due-tag.future{color:var(--fg-muted);background:var(--surface-2)}
 .task-recur-tag{color:var(--fg-muted);background:var(--surface-2)}
 .task-proj-tag{color:var(--fg-muted);background:var(--surface);border:1px solid var(--border)}
@@ -302,9 +377,10 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .note-input::placeholder{color:var(--fg-dim)}
 .note-input:focus{border-color:var(--accent)}
 .note-save-row{display:flex;justify-content:flex-end;gap:8px}
-.btn-sm{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--fg-muted);font-size:13px;font-weight:600;transition:background .13s,color .13s}
-.btn-sm:hover{background:var(--surface-2);color:var(--fg)}
-.btn-sm.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn-sm{height:44px;padding:0 16px;border-radius:12px;border:0;background:var(--btn-2);color:var(--fg);font-size:13px;font-weight:600;transition:background .13s,color .13s,transform .1s}
+.btn-sm:hover{background:var(--btn-2-hover)}
+.btn-sm:active{transform:scale(.97)}
+.btn-sm.primary{background:var(--accent);color:var(--on-accent)}
 .btn-sm.primary:hover{background:var(--accent-hover)}
 .done-section{margin-top:12px}
 .done-toggle{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 4px;border:0;background:transparent;color:var(--fg-muted);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:color .15s}
@@ -329,7 +405,8 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .week-day .wd-task b{font-weight:700;font-variant-numeric:tabular-nums;margin-right:6px;opacity:.8}
 .week-day .wd-empty{opacity:.5}
 .week-day .wd-more{font-size:12px;opacity:.7}
-.week-day.today{background:var(--lav);color:var(--on-lav)}
+.week-day.today{background:var(--side-3);box-shadow:inset 3px 0 0 var(--accent)}
+.week-day.today .num,.week-day.today .dow{color:var(--side-accent);opacity:1}
 
 /* ─── CALENDAR ─── */
 .cal-layout{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
@@ -337,10 +414,11 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .cal-nav{display:flex;align-items:center;gap:10px}
 .cal-nav h2{flex:1}
 .cal-nav .h1{font-size:clamp(22px,2.6vw,28px);letter-spacing:-.02em}
-.cal-nav-btn,.cal-today-btn{height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--fg);display:grid;place-items:center;transition:background .15s}
+.cal-nav-btn,.cal-today-btn{height:44px;border-radius:12px;border:0;background:var(--btn-2);color:var(--fg);display:grid;place-items:center;transition:background .15s,transform .1s}
 .cal-nav-btn{width:44px}
 .cal-today-btn{padding:0 16px;font-size:13px;font-weight:600}
-.cal-nav-btn:hover,.cal-today-btn:hover{background:var(--surface-2)}
+.cal-nav-btn:hover,.cal-today-btn:hover{background:var(--btn-2-hover)}
+.cal-nav-btn:active,.cal-today-btn:active{transform:scale(.96)}
 .cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px}
 .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .cal-dow{padding:8px 10px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted)}
@@ -418,13 +496,54 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
    на iPhone оно просвечивало над окном входа и прокручивалось под ним. */
 body.auth-locked .app{display:none}
 .auth-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;gap:16px;padding:16px;overflow-y:auto;overscroll-behavior:contain}
-.auth-hero{flex:1 1 480px;background:var(--side);color:var(--side-fg);border-radius:28px;padding:clamp(28px,5vw,56px);display:flex;flex-direction:column;justify-content:space-between;gap:48px}
-.auth-hero h1{font-family:'Unbounded','Onest',sans-serif;font-size:clamp(34px,4.2vw,58px);line-height:1.04;font-weight:600;letter-spacing:-.035em}
+.auth-hero{flex:1 1 480px;background:var(--side);color:var(--side-fg);border-radius:28px;padding:clamp(28px,4vw,52px);display:flex;flex-direction:column;justify-content:space-between;gap:36px}
+.auth-hero-head{display:flex;align-items:flex-end;gap:20px}
+.auth-hero h1{font-family:'Unbounded','Onest',sans-serif;font-size:clamp(28px,3vw,44px);line-height:1.08;font-weight:600;letter-spacing:-.035em}
 .auth-hero h1 span{color:var(--side-accent)}
-.auth-points{list-style:none;padding:0;display:flex;flex-direction:column;gap:14px;max-width:460px;margin-top:28px}
-.auth-points li{display:flex;gap:14px;align-items:flex-start;font-size:16px;line-height:1.45;color:var(--side-text)}
+.auth-lead{margin-top:14px;font-size:17px;line-height:1.5;color:var(--side-text);max-width:520px}
+.auth-ivan{display:block;flex:none;width:96px;height:133px;object-fit:contain;object-position:bottom left;filter:drop-shadow(0 10px 18px rgba(0,0,0,.4))}
+.auth-points{list-style:none;padding:0;display:flex;flex-direction:column;gap:12px;max-width:520px;margin-top:28px}
+.auth-points li{display:flex;gap:14px;align-items:flex-start;font-size:15px;line-height:1.45;color:var(--side-text)}
 .auth-points .tick{flex-shrink:0;width:28px;height:28px;border-radius:9px;background:var(--side-3);display:grid;place-items:center;color:var(--side-accent)}
-.auth-copy{font-size:13px;color:var(--side-muted)}
+.auth-copy{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;font-size:13px;color:var(--side-muted)}
+.auth-copy a{color:var(--side-text);text-decoration:underline;text-underline-offset:3px;padding:12px 0}
+.auth-copy a:hover{color:var(--side-fg)}
+
+/* «Как это работает»: сообщение боту → карточка задачи на сайте → напоминание. Цикл 8 с. */
+.how{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;margin-top:28px;max-width:600px}
+.how-panel{border-radius:18px;padding:12px;min-height:176px;display:flex;flex-direction:column;gap:8px}
+.how-tg{background:var(--side-2);border:1px solid var(--side-3)}
+.how-site{background:#FFFFFF;color:#1C1C1C}
+.how-head{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--side-muted);padding-bottom:6px;border-bottom:1px solid var(--side-3)}
+.how-head-site{color:#5C5C5C;border-color:#E3E3E3}
+.how-ava{width:24px;height:24px;border-radius:50%;background:#229ED9;color:#FFFFFF;display:grid;place-items:center}
+.how-dot{width:10px;height:10px;border-radius:3px;background:#ED131C}
+.how-msg{max-width:92%;padding:8px 11px;border-radius:14px;font-size:13px;line-height:1.35}
+.how-msg-me{align-self:flex-end;background:#2B5278;color:#FFFFFF;border-bottom-right-radius:4px;animation:howMe 8s ease infinite}
+.how-msg-bot{align-self:flex-start;display:flex;align-items:center;gap:6px;background:var(--side-3);color:var(--side-text);border-bottom-left-radius:4px;animation:howBot 8s ease infinite}
+.how-msg-bot svg{color:#6FD8A8}
+.how-arrow{color:var(--side-muted);animation:howArrow 8s ease infinite}
+.how-card{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;border:1px solid #E3E3E3;background:#FFFFFF;animation:howCard 8s ease infinite}
+.how-check{flex:none;width:18px;height:18px;border-radius:6px;border:2px solid #B45309;margin-top:1px}
+.how-card-body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.how-card-text{font-size:13px;font-weight:600;line-height:1.3}
+.how-chips{display:flex;flex-wrap:wrap;gap:4px}
+.how-chip{font-size:11px;font-weight:600;padding:2px 7px;border-radius:7px;background:#F0F0F0;color:#1C1C1C;animation:howChip 8s ease infinite}
+.how-chip-remind{background:#FDF1DF;color:#B45309;animation-name:howChip2}
+.how-bell{align-self:flex-start;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#C20E16;background:#FDE8E9;padding:5px 9px;border-radius:9px;animation:howBell 8s ease infinite}
+@keyframes howMe   {0%,4%{opacity:0;transform:translateY(8px) scale(.94)} 10%,88%{opacity:1;transform:none} 96%,100%{opacity:0}}
+@keyframes howBot  {0%,18%{opacity:0;transform:translateY(8px)} 24%,88%{opacity:1;transform:none} 96%,100%{opacity:0}}
+@keyframes howArrow{0%,26%{color:var(--side-muted);transform:none} 31%{color:var(--side-accent);transform:translateX(5px)} 38%,100%{color:var(--side-muted);transform:none}}
+@keyframes howCard {0%,32%{opacity:0;transform:translateX(-14px) scale(.96)} 40%{opacity:1;transform:none;box-shadow:0 0 0 3px rgba(237,19,28,.35)} 56%,88%{opacity:1;box-shadow:0 0 0 0 rgba(237,19,28,0)} 96%,100%{opacity:0}}
+@keyframes howChip {0%,44%{opacity:0;transform:scale(.7)} 50%,88%{opacity:1;transform:none} 96%,100%{opacity:0}}
+@keyframes howChip2{0%,52%{opacity:0;transform:scale(.7)} 58%,88%{opacity:1;transform:none} 96%,100%{opacity:0}}
+@keyframes howBell {0%,62%{opacity:0;transform:translateY(6px)} 68%{opacity:1;transform:none} 71%{transform:rotate(-4deg)} 74%{transform:rotate(4deg)} 77%,88%{opacity:1;transform:none} 96%,100%{opacity:0}}
+@media (max-width: 1100px) {
+  .how{grid-template-columns:minmax(0,1fr)}
+  .how-arrow{justify-self:center;transform:rotate(90deg)}
+  .how-arrow{animation:none}
+  .how-panel{min-height:0}
+}
 .auth-side{flex:1 1 420px;display:grid;place-items:center;padding:32px 8px}
 .auth-card{width:100%;max-width:400px}
 .auth-logo{display:none;align-items:center;gap:12px;margin-bottom:28px}
@@ -444,14 +563,90 @@ body.auth-locked .app{display:none}
 .auth-forgot{display:flex;justify-content:flex-end;margin:-8px 0 4px}
 .auth-forgot button{background:none;border:0;color:var(--fg-muted);font-size:14px;font-weight:600;min-height:44px;padding:0 2px;text-decoration:underline;text-underline-offset:3px}
 .auth-forgot button:hover{color:var(--accent-ink)}
-.auth-tg{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:54px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--fg);font-size:15px;font-weight:600;transition:border-color .15s,background .15s}
-.auth-tg:hover{border-color:var(--accent);background:var(--accent-soft)}
+.auth-tg{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:54px;border:0;border-radius:14px;background:var(--btn-2);color:var(--fg);font-size:15px;font-weight:600;transition:background .15s,transform .1s}
+.auth-tg:hover{background:var(--btn-2-hover)}
+.auth-tg:active,.auth-btn:active{transform:scale(.98)}
 .auth-tg svg{color:#229ED9;flex-shrink:0}
 .auth-or{display:flex;align-items:center;gap:12px;margin:20px 0;font-size:13px;color:var(--fg-muted)}
 .auth-or::before,.auth-or::after{content:'';flex:1;height:1px;background:var(--border)}
 .auth-tg:disabled{opacity:.6;cursor:not-allowed}
 .auth-error{background:var(--b-urgent);border:1px solid var(--c-urgent);border-radius:12px;padding:10px 14px;font-size:14px;color:var(--c-urgent);margin-bottom:16px;display:none}
 .auth-error.visible{display:block}
+/* Кнопка «показать пароль» внутри поля (ставит js/auth.js) */
+.auth-pass{position:relative}
+.auth-pass .auth-input{padding-right:56px}
+.auth-eye{position:absolute;top:4px;right:4px;width:44px;height:44px;border:0;border-radius:10px;background:none;color:var(--fg-muted);display:grid;place-items:center;transition:color .15s,background .15s}
+.auth-eye:hover,.auth-eye[aria-pressed="true"]{color:var(--accent-ink);background:var(--accent-soft)}
+/* Ссылка на пользовательское соглашение */
+.auth-legal{margin-top:14px;text-align:center;font-size:13px;line-height:1.5;color:var(--fg-muted)}
+.auth-legal a{color:var(--accent-ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.auth-docs{display:flex;flex-wrap:wrap;justify-content:center;gap:0 14px;margin-top:4px}
+.auth-docs a{display:inline-flex;align-items:center;min-height:44px;font-size:13px;font-weight:600;color:var(--fg-muted);text-decoration:underline;text-underline-offset:3px}
+.auth-docs a:hover{color:var(--accent-ink)}
+/* Галочки согласий в регистрации: квадрат 22px, вся строка — цель нажатия ≥44px */
+.auth-consents{border:0;padding:0;margin:0 0 18px;display:flex;flex-direction:column;gap:4px}
+.auth-check{display:flex;align-items:flex-start;gap:12px;min-height:44px;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);font-size:14px;line-height:1.45;color:var(--fg);cursor:pointer}
+.auth-check input{flex:none;width:22px;height:22px;margin:0;accent-color:var(--accent);cursor:pointer}
+.auth-check a{color:var(--accent-ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.auth-check:has(input[aria-invalid="true"]){border-color:var(--c-urgent);background:var(--b-urgent)}/* Короткое УТП над формой — только на телефоне, где .auth-hero скрыт */
+.auth-pitch{display:none;align-items:center;gap:14px;background:var(--side);color:var(--side-fg);border-radius:18px;padding:12px 16px 12px 10px;margin-bottom:24px}
+/* Иван с лампочкой: в idea.webp лампочка отделена от пальца прозрачной щелью (левый верхний угол,
+   до 21.5% ширины и 28.7% высоты картинки 209×300). Нижняя копия картинки показывает всё, кроме этого угла,
+   верхняя — только его. Лампочка плавно ходит вверх-вниз и светится, Иван чуть покачивается. */
+.auth-pitch-ivan{position:relative;flex:none;width:46px;height:66px;transform-origin:50% 100%;animation:ivanSway 2.8s ease-in-out infinite}
+.auth-pitch-ivan img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.auth-pitch-ivan .ivan-body{clip-path:polygon(21.5% 0,100% 0,100% 100%,0 100%,0 28.7%,21.5% 28.7%)}
+.auth-pitch-ivan .ivan-bulb{clip-path:inset(0 78.5% 71.3% 0);transform-origin:10% 27%;animation:ivanBulb 1.4s ease-in-out infinite alternate}
+/* Свечение за лампочкой */
+.auth-pitch-ivan::before{content:'';position:absolute;left:-9px;top:-10px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,102,.75),rgba(255,214,102,0) 70%);animation:ivanGlow 1.4s ease-in-out infinite alternate}
+@keyframes ivanBulb{from{transform:translateY(1px) rotate(4deg)} to{transform:translateY(-5px) rotate(-6deg)}}
+@keyframes ivanGlow{from{opacity:.25;transform:translateY(1px) scale(.8)} to{opacity:1;transform:translateY(-5px) scale(1.1)}}
+@keyframes ivanSway{0%,100%{transform:rotate(0)} 50%{transform:rotate(-2deg)}}
+@media (prefers-reduced-motion: reduce) {
+  .auth-pitch-ivan,.auth-pitch-ivan .ivan-bulb,.auth-pitch-ivan::before{animation:none}
+}
+.auth-pitch-title{font-family:'Unbounded','Onest',sans-serif;font-size:15px;font-weight:600;line-height:1.25;letter-spacing:-.02em}
+.auth-pitch-text{margin-top:4px;font-size:13px;line-height:1.45;color:var(--side-text)}
+@media (max-width: 860px) {
+  .auth-pitch{display:flex}
+  .auth-logo{margin-bottom:16px}
+}
+
+/* Заставка с Иваном (js/onboarding.js): один раз за вкладку, клики не перехватывает */
+.splash{position:fixed;inset:0;z-index:300;background:var(--side);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:none;animation:splashOut 1.4s ease forwards}
+.splash-stage{position:relative;width:120px;height:166px}
+.splash-ivan{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:bottom;opacity:0;transform-origin:50% 100%}
+.splash-ivan.p1{animation:ivanP1 1.4s ease-out forwards}
+.splash-ivan.p2{animation:ivanP2 1.4s ease-out forwards}
+.splash-ivan.p3{animation:ivanP3 1.4s ease-out forwards}
+.splash-shadow{position:absolute;left:50%;bottom:-8px;width:84px;height:12px;margin-left:-42px;border-radius:50%;background:rgba(0,0,0,.45);animation:ivanShadow 1.4s ease-out forwards}
+.splash-name{font-family:'Unbounded','Onest',sans-serif;font-size:20px;font-weight:600;letter-spacing:-.02em;color:var(--side-fg);opacity:0;animation:splashName 1.4s ease forwards}
+.splash-name span{font-family:'Onest',sans-serif;font-size:12px;font-weight:700;color:var(--side-accent);letter-spacing:.08em;margin-left:4px}
+@keyframes splashOut {0%{opacity:0} 6%,80%{opacity:1} 100%{opacity:0;visibility:hidden}}
+@keyframes ivanP1 {0%{opacity:0;transform:translateY(40px) scale(.7)} 14%{opacity:1;transform:translateY(-16px) scale(1.04)} 22%,30%{opacity:1;transform:none} 34%,100%{opacity:0}}
+@keyframes ivanP2 {0%,30%{opacity:0;transform:none} 34%{opacity:1;transform:translateY(-20px)} 44%,56%{opacity:1;transform:none} 60%,100%{opacity:0}}
+@keyframes ivanP3 {0%,56%{opacity:0;transform:none} 60%{opacity:1;transform:translateY(-24px) scale(1.06)} 70%{transform:scale(.97,1.03)} 76%,100%{opacity:1;transform:none}}
+@keyframes ivanShadow {0%{transform:scale(.4);opacity:0} 14%{transform:scale(.7)} 22%,30%{transform:none;opacity:1} 34%{transform:scale(.75)} 44%,56%{transform:none} 60%{transform:scale(.7)} 76%,100%{transform:none;opacity:1}}
+@keyframes splashName {0%,18%{opacity:0;transform:translateY(8px)} 30%,100%{opacity:1;transform:none}}
+
+/* Окно «Спасибо за регистрацию» */
+.welcome-backdrop{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:16px;overflow-y:auto;animation:welcomeFade .2s ease}
+.welcome{width:100%;max-width:440px;background:var(--surface);color:var(--fg);border-radius:22px;padding:28px 24px 24px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:welcomeIn .3s cubic-bezier(.2,.9,.3,1.2)}
+.welcome-ivan{display:block;width:96px;height:132px;object-fit:contain;margin:-8px auto 8px}
+.welcome-title{font-family:'Unbounded','Onest',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.03em;margin-bottom:10px}
+.welcome-text{font-size:15px;line-height:1.5;color:var(--fg-muted)}
+.welcome-note{margin-top:14px;font-size:14px;line-height:1.5;text-align:left;background:var(--surface-2);border-radius:14px;padding:12px 14px}
+.welcome-steps{list-style:none;padding:0;margin-top:16px;display:flex;flex-direction:column;gap:10px;text-align:left}
+.welcome-steps li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.45}
+.welcome-steps span{flex:none;width:26px;height:26px;border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-size:13px;display:grid;place-items:center}
+.welcome-ok{margin-top:20px}
+@keyframes welcomeFade{from{opacity:0}}
+@keyframes welcomeIn{from{opacity:0;transform:translateY(16px) scale(.96)}}
+
+@media (prefers-reduced-motion: reduce) {
+  .how *,.how-arrow,.welcome-backdrop,.welcome{animation:none !important}
+  .splash{display:none}
+}
 
 /* ─── MOBILE ─── */
 @media (max-width: 860px) {
@@ -476,16 +671,44 @@ body.auth-locked .app{display:none}
   }
   .tab-btn{flex:1;flex-direction:column;justify-content:center;gap:3px;min-height:56px;font-size:11px;border-radius:16px;padding:0 4px}
   .tab-btn .tab-label{flex:none}
-  .tab-btn.active{background:var(--lav);color:var(--on-lav)}
+  .tab-btn.active{background:var(--side-fg);color:var(--side)}
   .tab-count{display:none}
+  /* Подложка под нижней панелью: список уходит под неё плавно, без обрезанных карточек */
+  .app::after{content:'';position:fixed;left:0;right:0;bottom:0;z-index:15;height:calc(96px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent,var(--bg) 60%);pointer-events:none}
   .main{padding:20px 16px calc(110px + env(safe-area-inset-bottom,0px))}
   .main-inner{gap:20px}
   .progress-card{flex:1 1 100%}
-  .mascot-img{width:64px;height:88px}
+  /* Компактный Иван: одна строка с фразой, серией и прогрессом */
+  .mascot-card{padding:8px 14px 12px 6px;gap:8px}
+  .mascot-img{width:52px;height:72px}
+  .mascot-body{gap:6px}
+  .mascot-say{font-size:13px}
+  .streak{height:24px;font-size:11px}
+  .mascot-body .progress-label{font-size:12px}
+  /* Форма: сначала только поле, параметры — по кнопке */
+  .qa-more{display:grid}
+  .quick-add{padding:6px 6px 6px}
+  .quick-add.open{padding-bottom:14px}
+  .quick-add:not(.open) .add-options{display:none}
   .quick-input{font-size:16px;height:48px;padding:12px 10px;line-height:22px}
   .btn-add{height:44px;padding:0 14px}
-  .filter-row{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px}
+  .filter-row{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 48px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 48px),transparent)}
+  .filter-row::-webkit-scrollbar{display:none}
   .filter-chip{flex-shrink:0}
+  .tab-btn .tl-full{display:none}
+  .tab-btn .tl-short{display:inline}
+  /* Поиск свёрнут в лупу слева от фильтров; пока в нём ищут — на всю ширину, фильтры строкой ниже */
+  .feed-tools{flex-wrap:nowrap;gap:6px}
+  .feed-tools .filter-row{margin:0 -16px 0 0;padding:0 16px 0 0}
+  .search-box{flex:0 0 44px;min-width:44px;height:40px}
+  .search-input{padding:9px 0 9px 44px;font-size:16px}
+  .search-input::placeholder{color:transparent}
+  .feed-tools.searching{flex-wrap:wrap}
+  .feed-tools.searching .search-box{flex:1 1 100%}
+  .feed-tools.searching .search-input{padding-right:40px}
+  .feed-tools.searching .search-input::placeholder{color:var(--fg-muted)}
+  .feed-tools.searching .filter-row{flex:1 1 100%;margin:0 -16px;padding:0 16px}
   .task-actions{opacity:1}
   /* На телефоне месяц стоит над списком и по умолчанию свёрнут до одной недели */
   .tasks-layout{gap:20px}

@@ -1,0 +1,49 @@
+/* Юридические страницы: terms.html, privacy.html, consent.html. Подключается после style.css. */
+.terms{max-width:760px;margin:0 auto;padding:16px 16px 64px}
+.terms-top{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--side);color:var(--side-fg);border-radius:22px;padding:14px 16px 14px 18px}
+.terms-back{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;background:var(--side-3);color:var(--side-fg);font-weight:600;font-size:14px;text-decoration:none}
+.terms-back:hover{background:var(--accent)}
+/* Переключатель между тремя документами */
+.doc-switch{display:flex;gap:6px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+.doc-switch::-webkit-scrollbar{display:none}
+.doc-switch a{flex:none;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:14px;font-weight:600;text-decoration:none}
+.doc-switch a:hover{border-color:var(--accent)}
+.doc-switch a[aria-current="page"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.terms-head{display:flex;align-items:flex-end;gap:16px;margin:32px 0 8px}
+.terms-head img{width:72px;height:100px;object-fit:contain;flex:none}
+.terms h1{font-family:'Unbounded','Onest',sans-serif;font-size:clamp(24px,5vw,34px);line-height:1.12;font-weight:600;letter-spacing:-.03em}
+.terms-date{color:var(--fg-muted);font-size:14px;line-height:1.5;margin-bottom:20px}
+.terms-lead{font-size:15px;line-height:1.6;margin-bottom:16px}
+/* Оглавление */
+.doc-toc{background:var(--surface-2);border-radius:18px;padding:16px 20px;margin-bottom:16px}
+.doc-toc-title{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted);margin-bottom:6px}
+.doc-toc ol{padding-left:22px;display:flex;flex-direction:column}
+.doc-toc li{font-size:15px;line-height:1.5;padding:10px 0 9px}
+.doc-toc a{color:var(--accent-ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.terms section{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px 22px;margin-bottom:12px;scroll-margin-top:16px}
+.terms h2{font-family:'Unbounded','Onest',sans-serif;font-size:17px;font-weight:600;line-height:1.3;letter-spacing:-.02em;margin-bottom:10px}
+.terms p,.terms li{font-size:15px;line-height:1.6;color:var(--fg)}
+.terms p+p,.terms ul+p,.terms ol+p,.terms p+ul,.terms p+ol{margin-top:10px}
+.terms section ul,.terms section ol{padding-left:20px;display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.terms b{font-weight:600}
+.terms section a,.terms-lead a,.doc-foot a{color:var(--accent-ink);text-decoration:underline;text-underline-offset:3px}
+.terms .muted{color:var(--fg-muted)}
+.terms .ph{background:var(--b-remind);color:var(--c-remind);border-radius:6px;padding:0 4px;font-weight:600}
+/* Таблица обработчиков: на телефоне — карточки */
+.doc-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+.doc-table th,.doc-table td{text-align:left;vertical-align:top;padding:10px 8px;border-top:1px solid var(--border);line-height:1.5}
+.doc-table th{font-size:12px;font-weight:700;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.04em;border-top:0}
+.doc-foot{margin-top:24px;font-size:14px;color:var(--fg-muted);line-height:1.6}
+@media (max-width: 600px) {
+  .terms section{padding:16px}
+  .terms-head{margin-top:24px}
+  .terms-head img{width:56px;height:78px}
+  .doc-table thead{display:none}
+  .doc-table tr{display:block;border-top:1px solid var(--border);padding:8px 0}
+  .doc-table td{display:block;border:0;padding:2px 0}
+  .doc-table td::before{content:attr(data-label) ': ';font-weight:600;color:var(--fg-muted)}
+}
+@media print {
+  .terms-top,.doc-switch,.doc-toc{display:none}
+  .terms section{border:0;padding:0 0 12px}
+}
