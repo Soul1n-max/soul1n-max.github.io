@@ -114,6 +114,19 @@ if (new URLSearchParams(location.search).has('demo')) {
     days: Array.from({ length: 14 }, (_, i) => ({ day: off(i - 13), created: 30 + (i * 7) % 25, done: 22 + (i * 5) % 23 })),
   } });
 
+  // Обратная связь в демо: отправка ничего не шлёт, у админа (?demo&admin) — примерные сообщения
+  const demoFeedback = [
+    { id: 'f1', kind: 'bug', status: 'new', text: 'На телефоне не открывается выбор времени, если задача в проекте.', created_at: new Date(Date.now() - 36e5).toISOString(),
+      device: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', name: 'Мария', email: 'maria@example.ru', tg_username: 'maria_k' },
+    { id: 'f2', kind: 'idea', status: 'new', text: 'Хочу видеть задачи на неделю вперёд в утренней сводке.', created_at: new Date(Date.now() - 864e5).toISOString(),
+      device: 'Mozilla/5.0 (Windows NT 10.0) Chrome/130.0 YaBrowser/24.10', name: 'Олег', email: 'oleg@example.ru' },
+    { id: 'f3', kind: 'idea', status: 'done', text: 'Добавьте тёмную тему.', created_at: new Date(Date.now() - 3 * 864e5).toISOString(),
+      device: 'Mozilla/5.0 (Linux; Android 14) Chrome/130.0', name: 'Анна', email: 'anna@example.ru' },
+  ];
+  sendFeedback = async () => null;
+  loadFeedback = async () => ({ data: demoFeedback });
+  setFeedbackStatus = async (id, status) => { const f = demoFeedback.find(x => x.id === id); if (f) f.status = status; return null; };
+
   hideAuthOverlay();
   avatarDemo.on = true; renderAvatar();
   initTheme();
