@@ -621,8 +621,8 @@ function renderCalendar() {
 
   const grid = document.getElementById('cal-grid');
   grid.innerHTML = '';
-  ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(d => {
-    const el = document.createElement('div'); el.className='cal-dow'; el.textContent=d; grid.appendChild(el);
+  ['пн','вт','ср','чт','пт','сб','вс'].forEach((d, i) => {
+    const el = document.createElement('div'); el.className = 'cal-dow' + (i > 4 ? ' we' : ''); el.textContent = d; grid.appendChild(el);
   });
 
   const first = new Date(calYear, calMonth, 1);
@@ -649,36 +649,52 @@ function renderCalendar() {
   renderCalDay();
 }
 
+// В клетке до CAL_MAX задач строками: точка категории, текст, время справа; остальные — «ещё N»
+const CAL_MAX = 4;
 function makeDayCell(dayNum, key, dayTasks, otherMonth) {
   const today = todayKey();
+  const d = parseDate(key);
   const el = document.createElement('button');
   let cls = 'cal-day';
   if (otherMonth)          cls += ' other-month';
+  if (d.getDay() % 6 === 0) cls += ' we';
   if (key === today)       cls += ' today';
   if (key === calSelected) cls += ' selected';
   el.className = cls;
   el.dataset.drop = key;
-  const d = parseDate(key);
   el.setAttribute('aria-label', `${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}${dayTasks.length ? ', задач: ' + dayTasks.length : ''}`);
 
   const numEl = document.createElement('span');
   numEl.className = 'num';
   numEl.textContent = dayNum;
+  if (dayNum === 1) {   // первое число соседнего и текущего месяца подписано: «1 дек»
+    const mon = document.createElement('small');
+    mon.textContent = RU_MONTHS_G[d.getMonth()].slice(0, 3);
+    numEl.appendChild(mon);
+  }
   el.appendChild(numEl);
 
   if (dayTasks.length > 0) {
     const isPast = key < today;
-    dayTasks.slice(0, 2).forEach(t => {
+    const shown = dayTasks.length > CAL_MAX ? CAL_MAX - 1 : CAL_MAX;
+    dayTasks.slice(0, shown).forEach(t => {
       const ev = document.createElement('span');
-      ev.className = 'cal-ev' + (isPast ? ' overdue' : '');
+      ev.className = `cal-ev cat-${t.cat}` + (isPast ? ' overdue' : '');
       ev.dataset.id = t.id;   // событие в клетке можно перетащить на другой день (drag.js)
-      ev.textContent = (t.dueTime ? fmtTime(t.dueTime) + ' ' : '') + t.text;
+      ev.title = (t.dueTime ? fmtTime(t.dueTime) + ' ' : '') + t.text;
+      const dot = document.createElement('span'); dot.className = 'ev-dot';
+      const txt = document.createElement('span'); txt.className = 'ev-text'; txt.textContent = t.text;
+      ev.append(dot, txt);
+      if (t.dueTime) {
+        const tm = document.createElement('span'); tm.className = 'ev-time'; tm.textContent = fmtTime(t.dueTime);
+        ev.appendChild(tm);
+      }
       el.appendChild(ev);
     });
-    if (dayTasks.length > 2) {
+    if (dayTasks.length > shown) {
       const more = document.createElement('span');
       more.className = 'cal-more';
-      more.textContent = `+${dayTasks.length - 2}`;
+      more.textContent = `ещё ${dayTasks.length - shown}`;
       el.appendChild(more);
     }
     const dots = document.createElement('span');
@@ -694,10 +710,25 @@ function makeDayCell(dayNum, key, dayTasks, otherMonth) {
   return el;
 }
 
+// Задачи выбранного дня — всплывающее окно поверх календаря (нажатие на день). Закрывают крестик, фон и Esc.
+function closeCalDay() {
+  const key = calSelected;
+  if (!key) return;
+  calSelected = null;
+  renderCalendar();
+  document.querySelector(`.cal-day[data-drop="${key}"]`)?.focus();
+}
 function renderCalDay() {
+  const pop = document.getElementById('cal-day-pop');
   const cont = document.getElementById('cal-day-tasks');
+  const key = calSelected;
+  const wasOpen = !pop.hidden;
+  pop.hidden = !key;
+  document.body.classList.toggle('cal-pop-open', !!key);
+  if (!key) { cont.innerHTML = ''; return; }
+  const scroll = cont.querySelector('.day-panel')?.scrollTop || 0;
+  const hadFocus = cont.contains(document.activeElement);
   cont.innerHTML = '';
-  const key = calSelected || todayKey();
 
   const d = parseDate(key);
   const dayTasks  = tasks.filter(t => !t.done && t.dueDate===key).sort(byDue);
@@ -706,9 +737,12 @@ function renderCalDay() {
   const panel = document.createElement('section');
   panel.className = 'day-panel';
   panel.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:4px">
-      <span class="eyebrow">${RU_WEEKDAYS[d.getDay()]}</span>
-      <h2 class="day-title">${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}</h2>
+    <div class="day-head">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span class="eyebrow">${RU_WEEKDAYS[d.getDay()]}</span>
+        <h2 class="day-title" id="cal-day-title">${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}</h2>
+      </div>
+      <button type="button" class="day-close" data-cal-close aria-label="Закрыть">${ICON.close}</button>
     </div>`;
   const listEl = document.createElement('div');
   listEl.className = 'day-list';
@@ -727,6 +761,7 @@ function renderCalDay() {
   addBtn.className = 'btn-add-for-day';
   addBtn.innerHTML = `${ICON.plus} Задача на этот день`;
   addBtn.addEventListener('click', () => {
+    calSelected = null; renderCalDay();
     dayFilter = key; miniAnchor = key;
     document.getElementById('task-due').value = key;
     switchTab('tasks');
@@ -734,6 +769,9 @@ function renderCalDay() {
   });
   panel.appendChild(addBtn);
   cont.appendChild(panel);
+  panel.scrollTop = scroll;
+  // после перерисовки фокус остаётся в окне (иначе Tab уводит под фон)
+  if (!wasOpen || (hadFocus && !cont.contains(document.activeElement))) panel.querySelector('.day-close').focus();
 }
 
 // ═══ RENDER PROJECTS ═══

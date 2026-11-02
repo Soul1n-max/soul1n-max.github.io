@@ -527,8 +527,8 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .week-day.today .num,.week-day.today .dow{color:var(--side-accent);opacity:1}
 
 /* ─── CALENDAR ─── */
-.cal-layout{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
-.cal-main{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.cal-layout{display:flex;flex-direction:column;gap:24px}
+.cal-main{min-width:0;display:flex;flex-direction:column;gap:20px}
 .cal-nav{display:flex;align-items:center;gap:10px}
 .cal-nav h2{flex:1}
 .cal-nav .h1{font-size:clamp(22px,2.6vw,28px);letter-spacing:-.02em}
@@ -537,24 +537,44 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .cal-today-btn{padding:0 16px;font-size:13px;font-weight:600}
 .cal-nav-btn:hover,.cal-today-btn:hover{background:var(--btn-2-hover)}
 .cal-nav-btn:active,.cal-today-btn:active{transform:scale(.96)}
-.cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.cal-dow{padding:8px 10px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted)}
-.cal-day{display:flex;flex-direction:column;align-items:stretch;gap:4px;min-height:108px;padding:8px;border-radius:14px;border:0;background:transparent;text-align:left;min-width:0;transition:background .15s}
+/* Месяц на всю ширину: сетка с тонкими линиями, в клетке — задачи строками (точка категории, текст, время справа) */
+.cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--border)}
+.cal-dow{padding:12px 12px 10px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:lowercase;text-align:right;color:var(--fg-muted);background:var(--surface)}
+.cal-dow.we{color:var(--accent-ink)}
+.cal-day{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-height:124px;padding:8px;border:0;border-radius:0;background:var(--surface);text-align:left;min-width:0;transition:background .15s}
+.cal-day.we{background:color-mix(in srgb,var(--surface-2) 40%,var(--surface))}
 .cal-day:hover{background:var(--surface-2)}
-.cal-day .num{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;padding:2px 4px}
+.cal-day .num{align-self:flex-end;display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 6px;border-radius:14px;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cal-day .num small{font-size:12px;font-weight:500;color:var(--fg-muted);margin-left:3px}
 .cal-day.other-month .num{color:var(--fg-dim)}
+.cal-day.other-month .cal-ev{opacity:.6}
 .cal-day.today{background:var(--accent-soft)}
-.cal-day.today .num{color:var(--accent-ink);font-weight:700}
+.cal-day.today .num{background:var(--accent);color:#fff;font-weight:700}
 .cal-day.selected{box-shadow:inset 0 0 0 2px var(--accent)}
-.cal-ev{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:3px 7px;border-radius:7px;font-size:11px;font-weight:600;background:var(--surface-2);color:var(--fg)}
-.cal-day.today .cal-ev{background:var(--accent);color:#fff}
-.cal-ev.overdue{background:var(--b-urgent);color:var(--c-urgent)}
-.cal-more{font-size:11px;font-weight:600;color:var(--fg-muted);padding:0 4px}
+.cal-ev{display:flex;align-items:center;gap:6px;min-width:0;padding:3px 6px;border-radius:7px;font-size:12px;font-weight:500;line-height:1.3;color:var(--fg)}
+.cal-ev:hover{background:color-mix(in srgb,var(--fg) 6%,transparent)}
+.cal-ev .ev-dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--tag-color,var(--fg-muted))}
+.cal-ev .ev-text{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cal-ev .ev-time{flex:none;font-size:11px;font-weight:600;color:var(--fg-muted);font-variant-numeric:tabular-nums}
+.cal-ev.overdue .ev-text,.cal-ev.overdue .ev-time{color:var(--c-urgent)}
+.cal-more{font-size:12px;font-weight:600;color:var(--fg-muted);padding:1px 6px}
 .cal-dots{display:none;gap:3px;justify-content:center}
 .cal-dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .cal-dot.overdue-dot{background:var(--c-urgent)}
-.cal-side{flex:1 1 300px;min-width:0}
+/* Окно дня: поверх календаря, по центру; на телефоне — лист снизу */
+.cal-side{position:fixed;inset:0;z-index:45;display:grid;place-items:center;padding:24px}
+.cal-side[hidden]{display:none}
+.cal-pop-back{position:absolute;inset:0;background:rgba(0,0,0,.45);animation:welcomeFade .15s ease}
+.cal-pop{position:relative;width:min(560px,100%);max-height:calc(100dvh - 48px);display:flex;animation:calPopIn .18s ease}
+.cal-pop .day-panel{flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+@keyframes calPopIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.day-head{display:flex;align-items:flex-start;gap:12px}
+.day-head>div{flex:1;min-width:0}
+.day-close{flex:none;width:44px;height:44px;margin:-6px -6px 0 0;border:0;border-radius:12px;background:var(--side-2);color:var(--side-fg);display:grid;place-items:center}
+.day-close:hover{background:var(--side-3)}
+body.cal-pop-open{overflow:hidden}
+@media (prefers-reduced-motion:reduce){.cal-pop,.cal-pop-back{animation:none}}
 .day-panel{background:var(--side);color:var(--side-fg);border-radius:var(--radius-lg);padding:22px;display:flex;flex-direction:column;gap:16px}
 .day-panel .eyebrow{color:var(--side-muted);font-size:12px}
 .day-title{font-family:'Unbounded','Onest',sans-serif;font-size:26px;font-weight:600;letter-spacing:-.02em}
@@ -864,10 +884,15 @@ body.auth-locked .app{display:none}
   .month-card:not(.expanded) .mc-week:not(.cur){display:none}
   .mc-hint{display:none}
   .week-card{flex:1 1 100%;min-width:0}
-  .cal-day{min-height:52px;align-items:center;padding:6px 2px}
+  .cal-day{min-height:56px;align-items:center;padding:6px 2px}
+  .cal-day .num{align-self:center;min-width:26px;height:26px;padding:0 4px;font-size:13px}
+  .cal-day .num small{display:none}
   .cal-ev,.cal-more{display:none}
   .cal-dots{display:flex}
-  .cal-dow{text-align:center;padding:6px 0}
+  .cal-dow{text-align:center;padding:8px 0}
+  .cal-side{place-items:end stretch;padding:0;z-index:45}
+  .cal-pop{width:100%;max-height:88dvh}
+  .cal-pop .day-panel{border-radius:22px 22px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
   .auth-hero{display:none}
   .auth-logo{display:flex}
   .auth-overlay{padding:16px}
