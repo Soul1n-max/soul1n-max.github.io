@@ -38,7 +38,7 @@
      Обновлять версию — вместе с новым хешем. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=34">
+<link rel="stylesheet" href="style.css?v=35">
 </head>
 <body class="auth-locked">
 
@@ -94,9 +94,10 @@
   <main class="main">
     <div class="main-inner">
       <header class="page-head">
+        <!-- Название раздела (switchTab() в ui.js) и под ним сегодняшняя дата -->
         <div class="head-date">
-          <span class="eyebrow" id="hdr-day">—</span>
-          <div class="h1" id="hdr-date">—</div>
+          <h1 class="h1" id="page-title">Лента задач</h1>
+          <span class="eyebrow"><span id="hdr-day">—</span>, <span id="hdr-date">—</span></span>
         </div>
         <div class="progress-card mascot-card">
           <!-- Поверх образа при открытии планера Иван машет (waveMascot() в render.js) -->
@@ -380,20 +381,20 @@
 </div>
 
 <!-- Скрипты подключаются по порядку: каждый следующий пользуется функциями предыдущих -->
-<script src="js/core.js?v=34"></script>
-<script src="js/phrase.js?v=34"></script>
-<script src="js/data.js?v=34"></script>
-<script src="js/render.js?v=34"></script>
-<script src="js/drag.js?v=34"></script>
-<script src="js/fields.js?v=34"></script>
-<script src="js/ui.js?v=34"></script>
-<script src="js/auth.js?v=34"></script>
-<script src="js/avatar.js?v=34"></script>
-<script src="js/admin.js?v=34"></script>
-<script src="js/admin-actions.js?v=34"></script>
-<script src="js/feedback.js?v=34"></script>
-<script src="js/onboarding.js?v=34"></script>
-<script src="js/main.js?v=34"></script>
-<script src="js/demo.js?v=34"></script>
+<script src="js/core.js?v=35"></script>
+<script src="js/phrase.js?v=35"></script>
+<script src="js/data.js?v=35"></script>
+<script src="js/render.js?v=35"></script>
+<script src="js/drag.js?v=35"></script>
+<script src="js/fields.js?v=35"></script>
+<script src="js/ui.js?v=35"></script>
+<script src="js/auth.js?v=35"></script>
+<script src="js/avatar.js?v=35"></script>
+<script src="js/admin.js?v=35"></script>
+<script src="js/admin-actions.js?v=35"></script>
+<script src="js/feedback.js?v=35"></script>
+<script src="js/onboarding.js?v=35"></script>
+<script src="js/main.js?v=35"></script>
+<script src="js/demo.js?v=35"></script>
 </body>
 </html>

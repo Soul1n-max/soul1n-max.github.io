@@ -80,6 +80,7 @@
 
 - `style.css`: токены в `:root`, тёмная тема через `prefers-color-scheme` и `[data-theme="dark"]`;
   мобильная вёрстка — `@media (max-width: 860px)` (боковое меню → верхняя шапка + нижняя панель вкладок).
+- Шапка `.page-head`: крупно название раздела `#page-title` (ставит `switchTab()` из `TAB_TITLES`), под ним сегодняшняя дата.
 - Разметка: `.sidebar` (бренд, `.tabs-nav`, проекты, синхронизация/тема/выход) и `.main`
   с вкладками `#tab-tasks`, `#tab-calendar`, `#tab-projects`; `#auth-overlay` — экран входа.
 - JS: `renderAll()` → `renderMeta()` + рендер активной вкладки; `makeTaskEl()` — карточка задачи;

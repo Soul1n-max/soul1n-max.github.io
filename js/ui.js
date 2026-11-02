@@ -10,6 +10,7 @@ function renderAll() {
 }
 
 // ═══ TAB SWITCH ═══
+const TAB_TITLES = { tasks: 'Лента задач', calendar: 'Календарь', projects: 'Проекты' };
 function switchTab(tab) {
   activeTab = tab;
   if (tab !== 'calendar') calSelected = null;   // окно дня календаря не переживает смену вкладки
@@ -19,6 +20,7 @@ function switchTab(tab) {
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   document.querySelectorAll('.tab-panel').forEach(p => p.hidden = p.id!=='tab-'+tab);
+  document.getElementById('page-title').textContent = TAB_TITLES[tab] || '';
   renderAll();
 }
 
