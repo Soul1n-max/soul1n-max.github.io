@@ -575,9 +575,43 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
   .cal-nav #cal-prev{order:2}
   .cal-nav #cal-next{order:3}
   .cal-nav h2{order:4;margin-left:12px}
+  .cal-nav .cal-views{order:5}
   .cal-nav .cal-nav-btn{background:transparent;border-radius:50%}
   .cal-nav .cal-nav-btn:hover,.cal-nav .cal-today-btn:hover{background:var(--btn-2)}
 }
+/* Переключатель вида: День / 4 дня / Неделя / Месяц */
+.cal-views{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--btn-2)}
+.cal-views button{min-height:38px;padding:0 16px;border:0;border-radius:999px;background:transparent;color:var(--fg-muted);font-size:13px;font-weight:600;white-space:nowrap}
+.cal-views button:hover{color:var(--fg)}
+.cal-views button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(var(--shade),.12)}
+/* Сетка по часам (render.js, renderTimeGrid) */
+.tg{display:flex;flex-direction:column;min-width:0}
+.tg[hidden],.cal-grid[hidden]{display:none!important}
+.tg-row{display:grid;grid-template-columns:56px repeat(var(--cols),minmax(0,1fr))}
+.tg-head,.tg-allday{overflow-y:hidden;scrollbar-gutter:stable;border-bottom:1px solid var(--border)}
+.tg-gutter{font-size:11px;font-weight:600;color:var(--fg-muted);text-align:right;padding:8px 8px 0 0;line-height:1.2}
+.tg-day{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px 8px;border:0;background:transparent;min-width:0;border-radius:0}
+.tg-day:hover{background:var(--surface-2)}
+.tg-dow{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--fg-muted)}
+.tg-day.we .tg-dow{color:var(--accent-ink)}
+.tg-num{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;font-family:'Unbounded','Onest',sans-serif;font-size:19px;font-weight:600}
+.tg-day.today .tg-dow{color:var(--accent-ink)}
+.tg-day.today .tg-num{background:var(--accent);color:#fff}
+.tg-cell{display:flex;flex-direction:column;gap:3px;min-height:34px;padding:4px;border-left:1px solid var(--border);min-width:0}
+.tg-body{overflow-y:auto;scrollbar-gutter:stable;overscroll-behavior:contain;height:60vh}
+.tg-hours-row{position:relative;height:calc(var(--hour) * 24)}
+.tg-hours{position:relative;padding:0}
+.tg-hours span{position:absolute;right:8px;transform:translateY(-50%);font-size:11px;font-weight:500;color:var(--fg-muted);font-variant-numeric:tabular-nums}
+.tg-col{position:relative;border-left:1px solid var(--border);min-width:0;background:repeating-linear-gradient(to bottom,var(--border) 0 1px,transparent 1px var(--hour))}
+.tg-col.we{background-color:color-mix(in srgb,var(--surface-2) 40%,var(--surface))}
+.tg-col.drop-over,.tg-cell.drop-over{box-shadow:inset 0 0 0 2px var(--accent);background-color:var(--accent-soft)}
+.tg-ev{background:var(--surface-2);border-left:3px solid var(--tag-color,var(--fg-muted))}
+.tg-ev .ev-dot{display:none}
+.tg-col .tg-ev{position:absolute;z-index:1;padding:2px 6px;overflow:hidden;box-shadow:0 1px 2px rgba(var(--shade),.08)}
+.tg-ev:hover{background:color-mix(in srgb,var(--fg) 9%,var(--surface))}
+.tg-ev.overdue{background:var(--b-urgent)}
+.tg-now{position:absolute;left:0;right:0;z-index:2;height:2px;margin-top:-1px;background:var(--accent);pointer-events:none}
+.tg-now::before{content:'';position:absolute;left:-6px;top:-5px;width:12px;height:12px;border-radius:50%;background:var(--accent)}
 /* Окно дня: поверх календаря, по центру; на телефоне — лист снизу */
 .cal-side{position:fixed;inset:0;z-index:45;display:grid;place-items:center;padding:24px}
 .cal-side[hidden]{display:none}
@@ -900,6 +934,14 @@ body.auth-locked .app{display:none}
   .month-card:not(.expanded) .mc-week:not(.cur){display:none}
   .mc-hint{display:none}
   .week-card{flex:1 1 100%;min-width:0}
+  .cal-nav{flex-wrap:wrap}
+  .cal-views{order:10;flex:1 1 100%;display:flex}
+  .cal-views button{flex:1;padding:0 6px;min-height:40px}
+  .tg-row{grid-template-columns:40px repeat(var(--cols),minmax(0,1fr))}
+  .tg-num{width:32px;height:32px;font-size:15px}
+  .tg .cal-ev{display:flex}
+  .tg-ev .ev-time{display:none}
+  .tg-col .tg-ev{padding:2px 4px;font-size:11px}
   .cal-day{min-height:56px;align-items:center;padding:6px 2px}
   .cal-day .num{align-self:center;min-width:26px;height:26px;padding:0 4px;font-size:13px}
   .cal-day .num small{display:none}

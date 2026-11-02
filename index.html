@@ -38,7 +38,7 @@
      Обновлять версию — вместе с новым хешем. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=38">
+<link rel="stylesheet" href="style.css?v=39">
 </head>
 <body class="auth-locked">
 
@@ -214,8 +214,14 @@
               <button class="cal-today-btn" id="cal-today">Сегодня</button>
               <button class="cal-nav-btn" id="cal-prev" aria-label="Предыдущий месяц"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
               <button class="cal-nav-btn" id="cal-next" aria-label="Следующий месяц"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+              <div class="cal-views" id="cal-views" role="group" aria-label="Вид календаря">
+                <button type="button" data-view="day">День</button>
+                <button type="button" data-view="4days">4 дня</button>
+                <button type="button" data-view="week">Неделя</button>
+                <button type="button" data-view="month">Месяц</button>
+              </div>
             </div>
-            <div class="cal-card"><div class="cal-grid" id="cal-grid"></div></div>
+            <div class="cal-card"><div class="cal-grid" id="cal-grid"></div><div class="tg" id="cal-time" hidden></div></div>
           </section>
         </div>
       </div>
@@ -381,20 +387,20 @@
 </div>
 
 <!-- Скрипты подключаются по порядку: каждый следующий пользуется функциями предыдущих -->
-<script src="js/core.js?v=38"></script>
-<script src="js/phrase.js?v=38"></script>
-<script src="js/data.js?v=38"></script>
-<script src="js/render.js?v=38"></script>
-<script src="js/drag.js?v=38"></script>
-<script src="js/fields.js?v=38"></script>
-<script src="js/ui.js?v=38"></script>
-<script src="js/auth.js?v=38"></script>
-<script src="js/avatar.js?v=38"></script>
-<script src="js/admin.js?v=38"></script>
-<script src="js/admin-actions.js?v=38"></script>
-<script src="js/feedback.js?v=38"></script>
-<script src="js/onboarding.js?v=38"></script>
-<script src="js/main.js?v=38"></script>
-<script src="js/demo.js?v=38"></script>
+<script src="js/core.js?v=39"></script>
+<script src="js/phrase.js?v=39"></script>
+<script src="js/data.js?v=39"></script>
+<script src="js/render.js?v=39"></script>
+<script src="js/drag.js?v=39"></script>
+<script src="js/fields.js?v=39"></script>
+<script src="js/ui.js?v=39"></script>
+<script src="js/auth.js?v=39"></script>
+<script src="js/avatar.js?v=39"></script>
+<script src="js/admin.js?v=39"></script>
+<script src="js/admin-actions.js?v=39"></script>
+<script src="js/feedback.js?v=39"></script>
+<script src="js/onboarding.js?v=39"></script>
+<script src="js/main.js?v=39"></script>
+<script src="js/demo.js?v=39"></script>
 </body>
 </html>

@@ -174,17 +174,15 @@ document.getElementById('done-toggle').addEventListener('click', () => {
   renderTasks();
 });
 
-document.getElementById('cal-prev').addEventListener('click', () => {
-  calMonth--; if (calMonth < 0) { calMonth=11; calYear--; }
-  calSelected = null; renderCalendar();
-});
-document.getElementById('cal-next').addEventListener('click', () => {
-  calMonth++; if (calMonth > 11) { calMonth=0; calYear++; }
-  calSelected = null; renderCalendar();
-});
+document.getElementById('cal-prev').addEventListener('click', () => { calShift(-1); calSelected = null; renderCalendar(); });
+document.getElementById('cal-next').addEventListener('click', () => { calShift(1);  calSelected = null; renderCalendar(); });
 document.getElementById('cal-today').addEventListener('click', () => {
-  const n = new Date(); calYear = n.getFullYear(); calMonth = n.getMonth(); calSelected = null;
+  const n = new Date(); calYear = n.getFullYear(); calMonth = n.getMonth(); calDay = todayKey(); calSelected = null;
   renderCalendar();
+});
+document.getElementById('cal-views').addEventListener('click', e => {
+  const b = e.target.closest('[data-view]');
+  if (b) setCalView(b.dataset.view);
 });
 // Окно дня календаря: крестик, фон и Esc (если не открыт выбор даты/времени поверх него)
 document.getElementById('cal-day-pop').addEventListener('click', e => {

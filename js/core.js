@@ -167,6 +167,10 @@ let activeTab = 'tasks';
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 let calSelected = null;
+// Вид календаря: day | 4days | week | month (запоминается на устройстве); calDay — опорный день для дня/4 дней/недели
+const CAL_VIEWS = { day: 1, '4days': 4, week: 7, month: 0 };
+let calView = (() => { try { const v = localStorage.getItem('spm2_cal_view'); return v in CAL_VIEWS ? v : 'month'; } catch { return 'month'; } })();
+let calDay = todayKey();
 let dayFilter = null;     // день, выбранный в календаре на главной: список задач показывает только его
 let projFilter = null;    // проект, выбранный в боковом меню: id проекта или 'none' — «Без проекта»
 let searchQuery = '';     // текст из поиска над лентой, в нижнем регистре
