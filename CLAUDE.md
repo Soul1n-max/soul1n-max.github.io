@@ -30,7 +30,8 @@
 ## Таблица `tasks` (Supabase)
 
 `id` (uuid), `text` (не пустой — `supabase/10_task_text_check.sql`), `cat` (project | contact | remind | urgent | personal), `note`, `done`,
-`created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `project_id`,
+`created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `due_end` (время окончания, только при `due_time` и позже него —
+`supabase/19_task_end_time.sql`; на сайте поле «До», во фразе «с 10 до 12», «в 15 на 2 часа»), `project_id`,
 `recur` (daily | weekdays | weekly | monthly | yearly | days:N | weeks:N | months:N, N от 2 до 365),
 `subtasks` (jsonb, массив `{id, text, done}`, до 50), `done_at`, `user_id` (Telegram ID из `app_metadata.telegram_id`),
 `reminded_for` (момент, о котором бот уже напомнил). `files` (jsonb, массив `{id, name, path, size, type}`, до 10) — файлы задачи, `supabase/09_task_files.sql`. `subtasks` и проверки `recur` добавляет `supabase/07_subtasks_backup.sql`.
@@ -96,6 +97,10 @@
 - Вкладка «Календарь» (`renderCalendar()` в `render.js`): месяц на всю ширину, в клетке до 4 задач строками (точка категории,
   текст, время справа) и «ещё N». Нажатие на день открывает окно дня `#cal-day-pop` (`renderCalDay()`, вне `.app`, чтобы
   закрывать весь экран); закрывают крестик, фон и Esc (`closeCalDay()`), на телефоне — лист снизу.
+  Виды «День / 4 дня / Неделя / Месяц» (`#cal-views`, `setCalView()`, вид в localStorage `spm2_cal_view`): кроме месяца —
+  сетка по часам `renderTimeGrid()` (задачи со временем — блоком на полчаса, без времени — строка «весь день», красная линия
+  «сейчас»); стрелки листают на 1/4/7 дней (`calShift()`), перенос задачи на другой день — тем же перетаскиванием.
+  На компьютере вкладка растягивается на весь экран (`body[data-tab="calendar"]`, ставит `switchTab()`), панель как в Google: «Сегодня ‹ › Месяц Год».
 - Календарь на главной: `#month-card` (`renderMonthCard()`, общая сетка `monthGridHTML()` с окном выбора даты).
   Нажатие на день — `setDayFilter()`: список показывает только этот день, поле «Дата» ставится на него.
   Задачи мышью перетаскиваются на любой элемент с `data-drop="YYYY-MM-DD"` → `moveTask()`.

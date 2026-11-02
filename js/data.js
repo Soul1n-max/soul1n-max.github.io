@@ -118,7 +118,7 @@ async function loadTasks() {
   }
 }
 
-async function addTask(text, cat, due, dueTime, projId, recur) {
+async function addTask(text, cat, due, dueTime, projId, recur, dueEnd) {
   text = String(text || '').trim();
   if (!text) return false; // задачу без текста не сохраняем (база тоже не примет, см. 10_task_text_check.sql)
   // Задачи хранятся по Telegram ID (так их видит и бот), без привязки база их не примет
@@ -140,6 +140,8 @@ async function addTask(text, cat, due, dueTime, projId, recur) {
     recur:      recur || null,
     user_id:    telegramId || null,
   };
+  const end = validEnd(dueTime, dueEnd);
+  if (end) row.due_end = end;   // без окончания поле не шлём
   const { data, error } = await sb.from('tasks').insert([row]).select().single();
   if (error) { console.error('Insert:', error); alert('Не удалось добавить задачу: ' + error.message); return false; }
   tasks.unshift(fromDB(data));
@@ -171,6 +173,7 @@ async function toggleDone(id) {
       project_id: t.projectId || null, recur: t.recur,
       user_id: telegramId || null,
     };
+    if (t.dueEnd) row.due_end = t.dueEnd;
     // Подзадачи переходят в следующий повтор неотмеченными
     if (t.subtasks.length) row.subtasks = t.subtasks.map(x => ({ ...x, done: false }));
     // Файлы у повторов общие: стираются, когда на них не ссылается ни одна задача (purgeFiles)

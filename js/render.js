@@ -5,7 +5,7 @@ function makeTaskEl(task) {
   const cat  = task.cat ? CATS[task.cat] : null;
   const proj = task.projectId ? getProject(task.projectId) : null;
   const dueInfo = formatDue(task.dueDate);
-  const timeStr = fmtTime(task.dueTime);
+  const timeStr = fmtTimeRange(task);
   const due = dueInfo ? { label: dueInfo.label + (timeStr ? ' · ' + timeStr : ''), cls: dueInfo.cls }
             : timeStr ? { label: 'в ' + timeStr, cls: 'future' } : null;
   const isOvrd     = task.dueDate && task.dueDate < todayKey() && !task.done;
@@ -57,6 +57,7 @@ function makeTaskEl(task) {
           <select class="ui-field" data-label="Тип" id="ec-${task.id}"><option value="">Без типа</option>${catOptions}</select>
           <input type="date" class="ui-field" data-label="Дата" id="ed-${task.id}" value="${task.dueDate || ''}"${task.dueDate ? ' data-required' : ''}>
           <input type="time" class="ui-field" data-label="Время" id="eh-${task.id}" value="${fmtTime(task.dueTime)}">
+          <input type="time" class="ui-field" data-label="До" id="ee-${task.id}" value="${fmtTime(task.dueEnd)}">
           <select class="ui-field" data-label="Проект" id="ep-${task.id}"><option value="">Без проекта</option>${projOptions}</select>
           <select class="ui-field" data-label="Повтор" id="er-${task.id}"><option value="">Нет</option>${recurOptions}</select>
         </div>
@@ -225,6 +226,7 @@ function makeTaskEl(task) {
       cat:        v('ec') || null,
       due_date:   v('ed') || null,
       due_time:   time ? time + ':00' : null,
+      due_end:    validEnd(time, v('ee')),
       project_id: v('ep') || null,
       recur:      v('er') || null,
       note:       v('ni').trim(),
@@ -608,9 +610,50 @@ function renderWeek() {
 }
 
 // ═══ RENDER CALENDAR ═══
+const capFirst = s => s.charAt(0).toUpperCase() + s.slice(1);
+const CAL_ARROWS = { day: ['Предыдущий день', 'Следующий день'], '4days': ['Предыдущие 4 дня', 'Следующие 4 дня'],
+  week: ['Предыдущая неделя', 'Следующая неделя'], month: ['Предыдущий месяц', 'Следующий месяц'] };
+
+// Стрелки: месяц листается по месяцам, остальные виды — на 1, 4 или 7 дней
+function calShift(dir) {
+  if (calView === 'month') {
+    calMonth += dir;
+    if (calMonth < 0)  { calMonth = 11; calYear--; }
+    if (calMonth > 11) { calMonth = 0;  calYear++; }
+    return;
+  }
+  const d = parseDate(calDay);
+  d.setDate(d.getDate() + dir * CAL_VIEWS[calView]);
+  calDay = dateKey(d); calYear = d.getFullYear(); calMonth = d.getMonth();
+}
+function setCalView(v) {
+  if (!(v in CAL_VIEWS) || v === calView) return;
+  if (calView === 'month') {   // из месяца: сегодня, если оно в показанном месяце, иначе 1-е число
+    const ym = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+    calDay = todayKey().startsWith(ym) ? todayKey() : ym + '-01';
+  }
+  calView = v;
+  try { localStorage.setItem('spm2_cal_view', v); } catch {}
+  renderCalendar();
+}
+// Дни, которые показывает вид: день, 4 дня с опорного, неделя с понедельника
+function calRange() {
+  const start = parseDate(calDay);
+  if (calView === 'week') start.setDate(start.getDate() - (start.getDay() + 6) % 7);
+  return Array.from({ length: CAL_VIEWS[calView] }, (_, i) => { const d = new Date(start); d.setDate(d.getDate() + i); return d; });
+}
+
 function renderCalendar() {
+  document.querySelectorAll('#cal-views [data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === calView));
+  document.getElementById('cal-prev').setAttribute('aria-label', CAL_ARROWS[calView][0]);
+  document.getElementById('cal-next').setAttribute('aria-label', CAL_ARROWS[calView][1]);
+  const timeBox = document.getElementById('cal-time');
+  document.getElementById('cal-grid').hidden = calView !== 'month';
+  timeBox.hidden = calView === 'month';
+  if (calView !== 'month') { renderTimeGrid(); renderCalDay(); return; }
+
   const m = RU_MONTHS[calMonth];
-  document.getElementById('cal-title').innerHTML = `${m.charAt(0).toUpperCase()+m.slice(1)} <span>${calYear}</span>`;
+  document.getElementById('cal-title').innerHTML = `${capFirst(m)} <span>${calYear}</span>`;
 
   const dateMap = {};
   tasks.filter(t => !t.done && t.dueDate).forEach(t => {
@@ -641,6 +684,7 @@ function renderCalendar() {
   }
   const totalCells = startDow + last.getDate();
   const trailing = (7 - (totalCells % 7)) % 7;
+  grid.style.setProperty('--weeks', (totalCells + trailing) / 7);
   for (let i = 1; i <= trailing; i++) {
     const d = new Date(calYear, calMonth+1, i);
     const k = dateKey(d);
@@ -648,6 +692,94 @@ function renderCalendar() {
   }
   renderCalDay();
 }
+
+// ═══ ДЕНЬ / 4 ДНЯ / НЕДЕЛЯ — сетка по часам, как в Google Календаре ═══
+// Задачи со временем стоят на своём часе (длительности у задач нет — блок на полчаса), без времени — в строке «Весь день».
+const TG_HOUR = 48;   // высота часа, px
+let tgRangeKey = '';
+function renderTimeGrid() {
+  const box = document.getElementById('cal-time');
+  const days = calRange(), keys = days.map(dateKey), today = todayKey();
+  const first = days[0], last = days[days.length - 1];
+  const title = document.getElementById('cal-title');
+  if (calView === 'day') title.innerHTML = `${first.getDate()} ${RU_MONTHS_G[first.getMonth()]} <span>${first.getFullYear()}</span>`;
+  else if (first.getMonth() === last.getMonth()) title.innerHTML = `${capFirst(RU_MONTHS[first.getMonth()])} <span>${first.getFullYear()}</span>`;
+  else title.innerHTML = `${capFirst(RU_MONTHS[first.getMonth()])} – ${RU_MONTHS[last.getMonth()]} <span>${last.getFullYear()}</span>`;
+
+  const by = Object.fromEntries(keys.map(k => [k, []]));
+  tasks.forEach(t => { if (!t.done && by[t.dueDate]) by[t.dueDate].push(t); });
+  const mins = v => { const [h, m] = v.split(':'); return +h * 60 + +m; };
+  const evHTML = (t, k, extra = '', style = '') => {
+    const time = t.dueTime ? `<span class="ev-time">${fmtTimeRange(t)}</span>` : '';
+    return `<span class="cal-ev tg-ev cat-${t.cat}${k < today ? ' overdue' : ''}${extra}" data-id="${escHtml(t.id)}" data-day="${k}"${style ? ` style="${style}"` : ''} title="${escHtml((t.dueTime ? fmtTimeRange(t) + ' ' : '') + t.text)}"><span class="ev-dot"></span><span class="ev-text">${escHtml(t.text)}</span>${time}</span>`;
+  };
+
+  const head = keys.map((k, i) => {
+    const d = days[i];
+    return `<button type="button" class="tg-day${k === today ? ' today' : ''}${d.getDay() % 6 === 0 ? ' we' : ''}" data-day="${k}" aria-label="${RU_WEEKDAYS[d.getDay()]}, ${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}"><span class="tg-dow">${RU_WD_SHORT[d.getDay()].toLowerCase()}</span><span class="tg-num">${d.getDate()}</span></button>`;
+  }).join('');
+  const allday = keys.map(k => `<div class="tg-cell" data-drop="${k}" data-day="${k}">${by[k].filter(t => !t.dueTime).sort(byDue).map(t => evHTML(t, k)).join('')}</div>`).join('');
+
+  const nowM = new Date().getHours() * 60 + new Date().getMinutes();
+  const cols = keys.map((k, i) => {
+    // Задачи на одно время ставим рядом: в группе пересекающихся (по полчаса) каждой своя колонка
+    // Без времени окончания блок — на полчаса
+    const timed = by[k].filter(t => t.dueTime).sort(byDue).map(t => ({ t, s: mins(t.dueTime), e: t.dueEnd ? mins(t.dueEnd) : mins(t.dueTime) + 30 }));
+    let group = [], ends = [], groupEnd = -1, out = '';
+    const flush = () => {
+      group.forEach(g => {
+        const w = 100 / ends.length;
+        const h = Math.max(TG_HOUR / 2, (g.e - g.s) * TG_HOUR / 60) - 2;
+        out += evHTML(g.t, k, (h > TG_HOUR / 2 ? ' long' : '') + (h >= TG_HOUR * 1.4 ? ' tall' : ''), `top:${g.s * TG_HOUR / 60}px;height:${h}px;left:calc(${g.col * w}% + 2px);width:calc(${w}% - 4px)`);
+      });
+      group = []; ends = [];
+    };
+    timed.forEach(g => {
+      if (g.s >= groupEnd) { flush(); groupEnd = -1; }
+      let col = ends.findIndex(e => e <= g.s);
+      if (col < 0) { col = ends.length; ends.push(g.e); } else ends[col] = g.e;
+      g.col = col; group.push(g); groupEnd = Math.max(groupEnd, g.e);
+    });
+    flush();
+    const now = k === today ? `<span class="tg-now" style="top:${nowM * TG_HOUR / 60}px"></span>` : '';
+    return `<div class="tg-col${days[i].getDay() % 6 === 0 ? ' we' : ''}" data-drop="${k}" data-day="${k}">${out}${now}</div>`;
+  }).join('');
+  const hours = Array.from({ length: 24 }, (_, h) => `<span style="top:${h * TG_HOUR}px">${h ? String(h).padStart(2, '0') + ':00' : ''}</span>`).join('');
+
+  const body = box.querySelector('.tg-body');
+  const keepScroll = body && tgRangeKey === calView + keys[0] ? body.scrollTop : null;
+  box.style.setProperty('--cols', keys.length);
+  box.style.setProperty('--hour', TG_HOUR + 'px');
+  box.innerHTML = `<div class="tg-row tg-head"><div class="tg-gutter"></div>${head}</div>
+    <div class="tg-row tg-allday"><div class="tg-gutter">весь<br>день</div>${allday}</div>
+    <div class="tg-body"><div class="tg-row tg-hours-row"><div class="tg-gutter tg-hours">${hours}</div>${cols}</div></div>`;
+  tgRangeKey = calView + keys[0];
+  fitTimeGrid();
+  const nb = box.querySelector('.tg-body');
+  // Первый показ — с 8 утра, а если есть задачи раньше — с часа самой ранней
+  const earliest = Math.min(8, ...keys.flatMap(k => by[k].filter(t => t.dueTime).map(t => Math.floor(mins(t.dueTime) / 60))));
+  nb.scrollTop = keepScroll ?? earliest * TG_HOUR - 8;
+}
+// Сетка по часам прокручивается внутри: на компьютере — до низа окна, на телефоне — 65% экрана
+function fitTimeGrid() {
+  const body = document.querySelector('#cal-time:not([hidden]) .tg-body');
+  if (!body) return;
+  const top = body.getBoundingClientRect().top + scrollY;
+  body.style.height = matchMedia('(max-width: 860px)').matches
+    ? Math.round(innerHeight * .65) + 'px'
+    : Math.max(320, innerHeight - top - 26) + 'px';
+}
+addEventListener('resize', fitTimeGrid);
+setInterval(() => {   // красная линия «сейчас» сдвигается раз в минуту
+  const n = document.querySelector('#cal-time .tg-now');
+  if (n) n.style.top = (new Date().getHours() * 60 + new Date().getMinutes()) * TG_HOUR / 60 + 'px';
+}, 60000);
+document.getElementById('cal-time').addEventListener('click', e => {
+  const el = e.target.closest('[data-day]');
+  if (!el) return;
+  calSelected = el.dataset.day;
+  renderCalendar();
+});
 
 // В клетке до CAL_MAX задач строками: точка категории, текст, время справа; остальные — «ещё N»
 const CAL_MAX = 4;
@@ -681,7 +813,7 @@ function makeDayCell(dayNum, key, dayTasks, otherMonth) {
       const ev = document.createElement('span');
       ev.className = `cal-ev cat-${t.cat}` + (isPast ? ' overdue' : '');
       ev.dataset.id = t.id;   // событие в клетке можно перетащить на другой день (drag.js)
-      ev.title = (t.dueTime ? fmtTime(t.dueTime) + ' ' : '') + t.text;
+      ev.title = (t.dueTime ? fmtTimeRange(t) + ' ' : '') + t.text;
       const dot = document.createElement('span'); dot.className = 'ev-dot';
       const txt = document.createElement('span'); txt.className = 'ev-text'; txt.textContent = t.text;
       ev.append(dot, txt);

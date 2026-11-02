@@ -145,9 +145,7 @@ function updateDropOver() {
 
 // Как стрелки календаря, но выбранный день не сбрасывается
 function flipCalMonth(dir) {
-  calMonth += dir;
-  if (calMonth < 0)  { calMonth = 11; calYear--; }
-  if (calMonth > 11) { calMonth = 0;  calYear++; }
+  calShift(dir);
   renderCalendar();
   if (drag) updateDropOver();
 }
