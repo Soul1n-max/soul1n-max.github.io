@@ -903,3 +903,24 @@ body.auth-locked .app{display:none}
 .adm-bar{width:40%;max-width:10px;min-height:2px;border-radius:3px 3px 0 0}
 .adm-day{margin-top:4px;text-align:center;font-size:11px;color:var(--fg-muted)}
 .adm-note{margin:14px 0 0;font-size:12px;color:var(--fg-muted)}
+.adm-tabs{display:flex;gap:6px;margin:2px 0 6px}
+.adm-tabs .pop-chip{height:44px;padding:0 16px}
+.adm-users-bar{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.adm-search{width:100%;min-height:44px;padding:11px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--fg);font:inherit;font-size:14px;resize:none;overflow:hidden}
+.adm-search:focus{outline:2px solid var(--fg);outline-offset:-1px}
+.adm-sorts{display:flex;flex-wrap:wrap;gap:6px}
+.adm-count{margin:10px 0 6px;font-size:13px;color:var(--fg-muted)}
+.adm-users{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.adm-user{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:14px;background:var(--surface-2)}
+.adm-user.blocked{opacity:.65}
+.adm-ava{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--fg);color:var(--bg);font-family:'Unbounded',sans-serif;font-size:15px;font-weight:600}
+.adm-user-main{flex:1;min-width:0}
+.adm-user-name{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm-user-sub{font-size:13px;color:var(--fg-muted);overflow-wrap:anywhere}
+.adm-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.adm-tags:empty{display:none}
+.adm-tag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;background:var(--btn-2);color:var(--fg-muted);font-size:11px;font-weight:600}
+.adm-tag.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.adm-tag.bad{background:var(--accent-soft);color:var(--accent-ink)}
+.adm-user-meta{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:6px;font-size:12px;color:var(--fg-muted)}
+.adm-empty{padding:18px;text-align:center;color:var(--fg-muted);font-size:14px}
