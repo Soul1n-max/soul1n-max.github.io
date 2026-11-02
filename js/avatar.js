@@ -85,6 +85,7 @@ function renderAvatar() {
     `<span class="av-who"><span class="av-name">${escHtml(avatarName())}</span><span class="av-sub">${escHtml(avatarSub())}</span></span>`;
   btn.setAttribute('aria-label', `Аватар: ${avatarName()}. Сменить`);
   hideBrokenAvatars(btn);
+  if (typeof checkAdmin === 'function') checkAdmin();
   if (avatarMenu.box) paintAvatarMenu();
 }
 
@@ -228,6 +229,7 @@ function paintAvatarMenu() {
       <span class="av-sub">${escHtml(avatarSub())}</span></div></div>
     ${avatarTzHTML()}
     ${avatarMorningHTML()}
+    ${typeof adminMenuHTML === 'function' ? adminMenuHTML() : ''}
     <div class="av-grid" role="group" aria-label="Выберите аватар">${opts.join('')}</div>
     <button type="button" class="ui-opt backup-opt av-upload" data-av-upload ${avatarMenu.busy ? 'disabled' : ''}>
       <span class="backup-ico">${ICON.up}</span><span class="opt-text">${avatarMenu.busy ? 'Загружаем…' : 'Загрузить своё фото'}<small>JPG или PNG, обрежем в квадрат</small></span></button>
@@ -301,6 +303,7 @@ async function onAvatarMenuClick(e) {
     (again && !again.disabled ? again : avatarMenu.box?.querySelector('[data-morning-toggle]'))?.focus();
     return;
   }
+  if (e.target.closest('[data-admin-stats]')) { openAdminStats(); return; }
   if (e.target.closest('[data-av-logout]')) { closeAvatarMenu(false); document.getElementById('btn-logout').click(); return; }
   if (e.target.closest('[data-name-edit]')) {
     avatarMenu.editing = true; avatarMenu.msg = ''; paintAvatarMenu();

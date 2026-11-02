@@ -107,6 +107,13 @@ if (new URLSearchParams(location.search).has('demo')) {
     return { projects: p.length, tasks: t.length };
   };
 
+  // Статистика админа в демо — примерные числа
+  loadAdminStats = async () => ({ data: {
+    users_total: 128, users_day: 3, users_week: 17, tg_linked: 94, active_week: 61,
+    tasks_total: 2140, tasks_open: 486, created_day: 52, created_week: 340, done_day: 41, done_week: 297,
+    days: Array.from({ length: 14 }, (_, i) => ({ day: off(i - 13), created: 30 + (i * 7) % 25, done: 22 + (i * 5) % 23 })),
+  } });
+
   hideAuthOverlay();
   avatarDemo.on = true; renderAvatar();
   initTheme();
