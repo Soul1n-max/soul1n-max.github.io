@@ -950,3 +950,18 @@ body.auth-locked .app{display:none}
 .hl-bar .ok{background:var(--ok)}
 .hl-bar .warn{background:var(--c-remind)}
 .hl-bar .bad{background:var(--c-urgent)}
+/* Блокировка и удаление аккаунта (js/admin-actions.js) */
+.adm-user{flex-wrap:wrap}
+.adm-act-btn{flex:none;display:grid;place-items:center;width:44px;height:44px;margin:-6px -8px 0 0;border:0;border-radius:12px;background:transparent;color:var(--fg-muted);cursor:pointer}
+.adm-act-btn:hover,.adm-act-btn.on{background:var(--btn-2);color:var(--fg)}
+.adm-act-panel{flex-basis:100%;display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--border)}
+.adm-act-q{margin:0;font-size:13px;line-height:1.45}
+.adm-act-row{display:flex;flex-wrap:wrap;gap:6px}
+.adm-act-go{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--fg);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.adm-act-go:hover{background:var(--btn-2)}
+.adm-act-go.danger{border-color:transparent;background:var(--accent-soft);color:var(--accent-ink)}
+.adm-act-go.danger:hover{background:#ED131C;color:#fff}
+.adm-act-go:disabled{opacity:.55;cursor:default}
+.adm-act-reason{width:100%;min-height:44px;padding:11px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--fg);font:inherit;font-size:14px;resize:none;overflow:hidden}
+.adm-act-reason:focus{outline:2px solid var(--fg);outline-offset:-1px}
+.adm-flash{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok);font-size:13px;font-weight:600}
