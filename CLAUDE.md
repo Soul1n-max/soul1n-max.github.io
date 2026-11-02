@@ -62,6 +62,13 @@
 Текст собирает бот (`morning_text()`: сегодня, просрочено, серия как `calcStreak()`), кнопка «Не присылать по утрам» и
 команда `/summary`. На сайте выключатель и время — в окне аватара (`avatarMorningHTML()`, `saveMorning()` в `data.js`).
 
+Рассылка (`supabase/16_broadcast.sql`): столбец `news` (по умолчанию да) — кнопка «Не присылать новости» под новостью.
+Админ (таблица `admins` из `13_admin_stats.sql`) пишет текст в окне аватара → «Статистика» → вкладка «Рассылка» (`paintNews()` в `admin.js`):
+«Отправить себе» или «Отправить всем» с подтверждением. `admin_broadcast(текст, себе?)` пишет строку в таблицу `broadcasts`
+(сайт её напрямую не читает, история — через `admin_broadcasts()`), берёт получателей `broadcast_audience()` (все Telegram ID
+из `auth.users` и `tasks`, кроме выключивших новости) и шлёт id и список боту на `/broadcast` (секрет — hmac(токен бота, 'broadcast')).
+Бот (`send_broadcast()`) берёт текст из таблицы, шлёт как есть, без разметки, и записывает `sent` / `failed`. Всем — не чаще раза в 5 минут.
+
 ## Таблица `projects` (Supabase)
 
 `id` (uuid), `user_id` (Telegram ID), `name`, `color`, `created_at`. Схема и RLS-политика `own projects`
