@@ -123,7 +123,13 @@ if (new URLSearchParams(location.search).has('demo')) {
       { id: 'd3', name: null, email: 'student@example.ru', tg_username: null, tg: false, confirmed: false, created_at: ago(3), last_sign_in_at: null, tasks: 0, tasks_open: 0 },
       { id: 'd4', name: 'Мария Котова', email: 'kotova@example.ru', tg_username: null, tg: true, confirmed: true, created_at: ago(9), last_sign_in_at: ago(2, 8), tasks: 41, tasks_open: 7 },
       { id: 'd5', name: 'Олег', email: 'oleg@example.ru', tg_username: 'oleg_k', tg: true, confirmed: true, blocked: true, created_at: ago(20), last_sign_in_at: ago(15), tasks: 3, tasks_open: 3 },
-    ] };
+    ].filter(u => !demoAdm[u.id]?.gone).map(u => u.id in demoAdm ? { ...u, ...demoAdm[u.id] } : u) };
+  };
+  // Блокировка и удаление в демо — только в памяти вкладки
+  const demoAdm = {};
+  adminUserAction = async (kind, id) => {
+    demoAdm[id] = kind === 'remove' ? { gone: true } : { blocked: kind === 'block' };
+    return { data: kind === 'remove' ? { tasks: 0, projects: 0 } : null };
   };
 
   hideAuthOverlay();
