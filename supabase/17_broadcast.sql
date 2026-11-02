@@ -3,7 +3,7 @@
 -- Кто админ, решает база (таблица admins из 13_admin_stats.sql): чужой аккаунт получит ошибку.
 -- Под каждой новостью кнопка «Не присылать новости» — таких людей рассылка пропускает.
 --
--- Запустить один раз в Supabase → SQL Editor (можно повторно). Нужны 11_timezone.sql и 13_admin_stats.sql.
+-- Запустить один раз в Supabase → SQL Editor (можно повторно). Нужны 11_timezone.sql, 13_admin_stats.sql и 16_admin_block_delete.sql.
 
 -- 1. Выключатель новостей рядом с остальными настройками. Нет строки — новости приходят
 alter table public.user_settings add column if not exists news boolean not null default true;
@@ -25,6 +25,7 @@ revoke all on public.broadcasts from anon, authenticated;
 grant select, update on public.broadcasts to service_role;
 
 -- Кому слать: все Telegram ID — привязанные на сайте и те, кто пишет только боту. Кроме выключивших новости
+-- и заблокированных (blocked_users из 16_admin_block_delete.sql)
 create or replace function public.broadcast_audience()
 returns bigint[]
 language sql
@@ -41,7 +42,8 @@ as $$
     select t.user_id from public.tasks t where t.user_id is not null
   ) a
   left join public.user_settings s on s.user_id = a.id
-  where a.id > 0 and coalesce(s.news, true);
+  where a.id > 0 and coalesce(s.news, true)
+    and not exists (select 1 from public.blocked_users b where b.telegram_id = a.id);  -- заблокированным админом не шлём
 $$;
 revoke all on function public.broadcast_audience() from public, anon, authenticated;
 
