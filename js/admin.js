@@ -2,7 +2,7 @@
 // Кто админ, решает база (supabase/13_admin_stats.sql): is_admin() — показать пункт,
 // admin_stats() — числа, admin_users() (14_admin_users.sql) — список людей; чужому аккаунту обе отвечают ошибкой.
 // Содержимое задач сюда не приходит: у пользователя видно только число его задач.
-// Вкладка «Рассылка» (16_broadcast.sql) — новость всем пользователям через бота.
+// Вкладка «Рассылка» (17_broadcast.sql) — новость всем пользователям через бота.
 
 const admin = { uid: null, is: false, box: null, back: null, tab: 'stats', users: null, q: '', sort: 'new' };
 const CHART_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>';
@@ -235,7 +235,7 @@ function paintAdminUsers() {
     : `<li class="adm-empty">${all ? 'Никого не нашли' : 'Пользователей пока нет'}</li>`;
 }
 
-// ── Рассылка через бота (supabase/16_broadcast.sql): admin_broadcasts() — сколько получат и последние
+// ── Рассылка через бота (supabase/17_broadcast.sql): admin_broadcasts() — сколько получат и последние
 //    рассылки, admin_broadcast(текст, себе?) — отправить. Текст уходит как есть, без оформления.
 const NEWS_MAX = 3500;
 const news = { info: null, confirm: false, busy: false, msg: '', ok: false, draft: '' };
