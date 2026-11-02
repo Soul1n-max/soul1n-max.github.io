@@ -12,6 +12,7 @@ function renderAll() {
 // ═══ TAB SWITCH ═══
 function switchTab(tab) {
   activeTab = tab;
+  if (tab !== 'calendar') calSelected = null;   // окно дня календаря не переживает смену вкладки
   document.querySelectorAll('.tab-btn').forEach(b => {
     const on = b.dataset.tab===tab;
     b.classList.toggle('active', on);
@@ -179,8 +180,15 @@ document.getElementById('cal-next').addEventListener('click', () => {
   calSelected = null; renderCalendar();
 });
 document.getElementById('cal-today').addEventListener('click', () => {
-  const n = new Date(); calYear = n.getFullYear(); calMonth = n.getMonth(); calSelected = todayKey();
+  const n = new Date(); calYear = n.getFullYear(); calMonth = n.getMonth(); calSelected = null;
   renderCalendar();
+});
+// Окно дня календаря: крестик, фон и Esc (если не открыт выбор даты/времени поверх него)
+document.getElementById('cal-day-pop').addEventListener('click', e => {
+  if (e.target.closest('[data-cal-close]')) closeCalDay();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !e.defaultPrevented && calSelected && !document.querySelector('.ui-pop, .welcome-backdrop')) { e.preventDefault(); closeCalDay(); }
 });
 document.getElementById('week-to-cal').addEventListener('click', () => switchTab('calendar'));
 

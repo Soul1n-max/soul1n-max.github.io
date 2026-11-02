@@ -562,9 +562,19 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .cal-dots{display:none;gap:3px;justify-content:center}
 .cal-dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .cal-dot.overdue-dot{background:var(--c-urgent)}
-.cal-side{min-width:0}
-.cal-side .day-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;align-items:start}
-.cal-side .day-list>.section-head,.cal-side .day-list>.cal-no-tasks{grid-column:1/-1}
+/* Окно дня: поверх календаря, по центру; на телефоне — лист снизу */
+.cal-side{position:fixed;inset:0;z-index:45;display:grid;place-items:center;padding:24px}
+.cal-side[hidden]{display:none}
+.cal-pop-back{position:absolute;inset:0;background:rgba(0,0,0,.45);animation:welcomeFade .15s ease}
+.cal-pop{position:relative;width:min(560px,100%);max-height:calc(100dvh - 48px);display:flex;animation:calPopIn .18s ease}
+.cal-pop .day-panel{flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+@keyframes calPopIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.day-head{display:flex;align-items:flex-start;gap:12px}
+.day-head>div{flex:1;min-width:0}
+.day-close{flex:none;width:44px;height:44px;margin:-6px -6px 0 0;border:0;border-radius:12px;background:var(--side-2);color:var(--side-fg);display:grid;place-items:center}
+.day-close:hover{background:var(--side-3)}
+body.cal-pop-open{overflow:hidden}
+@media (prefers-reduced-motion:reduce){.cal-pop,.cal-pop-back{animation:none}}
 .day-panel{background:var(--side);color:var(--side-fg);border-radius:var(--radius-lg);padding:22px;display:flex;flex-direction:column;gap:16px}
 .day-panel .eyebrow{color:var(--side-muted);font-size:12px}
 .day-title{font-family:'Unbounded','Onest',sans-serif;font-size:26px;font-weight:600;letter-spacing:-.02em}
@@ -880,7 +890,9 @@ body.auth-locked .app{display:none}
   .cal-ev,.cal-more{display:none}
   .cal-dots{display:flex}
   .cal-dow{text-align:center;padding:8px 0}
-  .cal-side .day-list{grid-template-columns:minmax(0,1fr)}
+  .cal-side{place-items:end stretch;padding:0;z-index:45}
+  .cal-pop{width:100%;max-height:88dvh}
+  .cal-pop .day-panel{border-radius:22px 22px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
   .auth-hero{display:none}
   .auth-logo{display:flex}
   .auth-overlay{padding:16px}

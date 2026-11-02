@@ -216,9 +216,6 @@
             </div>
             <div class="cal-card"><div class="cal-grid" id="cal-grid"></div></div>
           </section>
-          <aside class="cal-side">
-            <div id="cal-day-tasks"></div>
-          </aside>
         </div>
       </div>
 
@@ -240,6 +237,12 @@
 </div>
 
 <!-- ═══ AUTH OVERLAY ═══ -->
+<!-- Окно дня календаря (renderCalDay в render.js) — вне .app, чтобы закрывать весь экран -->
+<div class="cal-side" id="cal-day-pop" hidden>
+  <div class="cal-pop-back" data-cal-close></div>
+  <div id="cal-day-tasks" class="cal-pop" role="dialog" aria-modal="true" aria-labelledby="cal-day-title"></div>
+</div>
+
 <div id="auth-overlay" class="auth-overlay">
   <section class="auth-hero">
     <div class="side-brand" style="padding:0">

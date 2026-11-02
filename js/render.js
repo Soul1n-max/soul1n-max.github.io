@@ -696,10 +696,25 @@ function makeDayCell(dayNum, key, dayTasks, otherMonth) {
   return el;
 }
 
+// Задачи выбранного дня — всплывающее окно поверх календаря (нажатие на день). Закрывают крестик, фон и Esc.
+function closeCalDay() {
+  const key = calSelected;
+  if (!key) return;
+  calSelected = null;
+  renderCalendar();
+  document.querySelector(`.cal-day[data-drop="${key}"]`)?.focus();
+}
 function renderCalDay() {
+  const pop = document.getElementById('cal-day-pop');
   const cont = document.getElementById('cal-day-tasks');
+  const key = calSelected;
+  const wasOpen = !pop.hidden;
+  pop.hidden = !key;
+  document.body.classList.toggle('cal-pop-open', !!key);
+  if (!key) { cont.innerHTML = ''; return; }
+  const scroll = cont.querySelector('.day-panel')?.scrollTop || 0;
+  const hadFocus = cont.contains(document.activeElement);
   cont.innerHTML = '';
-  const key = calSelected || todayKey();
 
   const d = parseDate(key);
   const dayTasks  = tasks.filter(t => !t.done && t.dueDate===key).sort(byDue);
@@ -708,9 +723,12 @@ function renderCalDay() {
   const panel = document.createElement('section');
   panel.className = 'day-panel';
   panel.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:4px">
-      <span class="eyebrow">${RU_WEEKDAYS[d.getDay()]}</span>
-      <h2 class="day-title">${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}</h2>
+    <div class="day-head">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span class="eyebrow">${RU_WEEKDAYS[d.getDay()]}</span>
+        <h2 class="day-title" id="cal-day-title">${d.getDate()} ${RU_MONTHS_G[d.getMonth()]}</h2>
+      </div>
+      <button type="button" class="day-close" data-cal-close aria-label="Закрыть">${ICON.close}</button>
     </div>`;
   const listEl = document.createElement('div');
   listEl.className = 'day-list';
@@ -729,6 +747,7 @@ function renderCalDay() {
   addBtn.className = 'btn-add-for-day';
   addBtn.innerHTML = `${ICON.plus} Задача на этот день`;
   addBtn.addEventListener('click', () => {
+    calSelected = null; renderCalDay();
     dayFilter = key; miniAnchor = key;
     document.getElementById('task-due').value = key;
     switchTab('tasks');
@@ -736,6 +755,9 @@ function renderCalDay() {
   });
   panel.appendChild(addBtn);
   cont.appendChild(panel);
+  panel.scrollTop = scroll;
+  // после перерисовки фокус остаётся в окне (иначе Tab уводит под фон)
+  if (!wasOpen || (hadFocus && !cont.contains(document.activeElement))) panel.querySelector('.day-close').focus();
 }
 
 // ═══ RENDER PROJECTS ═══
