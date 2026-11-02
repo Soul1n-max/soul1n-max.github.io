@@ -114,6 +114,18 @@ if (new URLSearchParams(location.search).has('demo')) {
     days: Array.from({ length: 14 }, (_, i) => ({ day: off(i - 13), created: 30 + (i * 7) % 25, done: 22 + (i * 5) % 23 })),
   } });
 
+  // Список пользователей в демо — выдуманные люди
+  loadAdminUsers = async () => {
+    const ago = (d, h = 10) => { const x = new Date(); x.setDate(x.getDate() - d); x.setHours(h, 15, 0, 0); return x.toISOString(); };
+    return { data: [
+      { id: 'd1', name: 'Анна Смирнова', email: 'anna@example.ru', tg_username: 'anna_sm', tg: true, confirmed: true, created_at: ago(0, 9), last_sign_in_at: ago(0, 14), tasks: 12, tasks_open: 4 },
+      { id: 'd2', name: 'Пётр Иванов', email: null, tg_username: 'petr_iv', tg: true, confirmed: true, created_at: ago(1), last_sign_in_at: ago(1, 18), tasks: 5, tasks_open: 2 },
+      { id: 'd3', name: null, email: 'student@example.ru', tg_username: null, tg: false, confirmed: false, created_at: ago(3), last_sign_in_at: null, tasks: 0, tasks_open: 0 },
+      { id: 'd4', name: 'Мария Котова', email: 'kotova@example.ru', tg_username: null, tg: true, confirmed: true, created_at: ago(9), last_sign_in_at: ago(2, 8), tasks: 41, tasks_open: 7 },
+      { id: 'd5', name: 'Олег', email: 'oleg@example.ru', tg_username: 'oleg_k', tg: true, confirmed: true, blocked: true, created_at: ago(20), last_sign_in_at: ago(15), tasks: 3, tasks_open: 3 },
+    ] };
+  };
+
   hideAuthOverlay();
   avatarDemo.on = true; renderAvatar();
   initTheme();
