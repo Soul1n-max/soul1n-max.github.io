@@ -105,6 +105,20 @@ function makeTaskEl(task) {
     const list = subs.map(x => x.id === b.dataset.sub ? { ...x, done: !x.done } : x);
     b.classList.toggle('done'); b.setAttribute('aria-checked', b.classList.contains('done'));
     await saveTask(task.id, { subtasks: list });
+    // Отмечен последний шаг — задача закрывается сама; «Отменить» вернёт и её, и этот шаг
+    if (!task.done && list.every(x => x.done)) {
+      await toggleDone(task.id);
+      const back = list.map(x => x.id === b.dataset.sub ? { ...x, done: false } : x);
+      showUndoToast('Все шаги готовы — задача выполнена',
+        `Все подзадачи отмечены, задача «${task.text}» выполнена. Вернуть её можно кнопкой «Отменить» внизу экрана.`,
+        async () => {
+          const t = tasks.find(x => x.id === task.id);
+          if (t && t.done) await toggleDone(task.id);
+          await saveTask(task.id, { subtasks: back });
+          renderAll();
+          announce(`Задача «${task.text}» снова в работе.`);
+        });
+    }
     renderAll();
   }));
   // Подзадачи в форме правки: черновик живёт, пока форма открыта, в базу уходит по «Сохранить»
