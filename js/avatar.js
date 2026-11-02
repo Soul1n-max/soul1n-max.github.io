@@ -230,6 +230,7 @@ function paintAvatarMenu() {
     ${avatarTzHTML()}
     ${avatarMorningHTML()}
     ${typeof adminMenuHTML === 'function' ? adminMenuHTML() : ''}
+    ${typeof feedbackMenuHTML === 'function' ? feedbackMenuHTML() : ''}
     <div class="av-grid" role="group" aria-label="Выберите аватар">${opts.join('')}</div>
     <button type="button" class="ui-opt backup-opt av-upload" data-av-upload ${avatarMenu.busy ? 'disabled' : ''}>
       <span class="backup-ico">${ICON.up}</span><span class="opt-text">${avatarMenu.busy ? 'Загружаем…' : 'Загрузить своё фото'}<small>JPG или PNG, обрежем в квадрат</small></span></button>
@@ -304,6 +305,8 @@ async function onAvatarMenuClick(e) {
     return;
   }
   if (e.target.closest('[data-admin-stats]')) { openAdminStats(); return; }
+  if (e.target.closest('[data-fb-open]')) { openFeedbackForm(); return; }
+  if (e.target.closest('[data-fb-inbox]')) { openFeedbackInbox(); return; }
   if (e.target.closest('[data-av-logout]')) { closeAvatarMenu(false); document.getElementById('btn-logout').click(); return; }
   if (e.target.closest('[data-name-edit]')) {
     avatarMenu.editing = true; avatarMenu.msg = ''; paintAvatarMenu();

@@ -123,8 +123,45 @@ if (new URLSearchParams(location.search).has('demo')) {
       { id: 'd3', name: null, email: 'student@example.ru', tg_username: null, tg: false, confirmed: false, created_at: ago(3), last_sign_in_at: null, tasks: 0, tasks_open: 0 },
       { id: 'd4', name: 'Мария Котова', email: 'kotova@example.ru', tg_username: null, tg: true, confirmed: true, created_at: ago(9), last_sign_in_at: ago(2, 8), tasks: 41, tasks_open: 7 },
       { id: 'd5', name: 'Олег', email: 'oleg@example.ru', tg_username: 'oleg_k', tg: true, confirmed: true, blocked: true, created_at: ago(20), last_sign_in_at: ago(15), tasks: 3, tasks_open: 3 },
-    ] };
+    ].filter(u => !demoAdm[u.id]?.gone).map(u => u.id in demoAdm ? { ...u, ...demoAdm[u.id] } : u) };
   };
+  // Блокировка и удаление в демо — только в памяти вкладки
+  const demoAdm = {};
+  adminUserAction = async (kind, id) => {
+    demoAdm[id] = kind === 'remove' ? { gone: true } : { blocked: kind === 'block' };
+    return { data: kind === 'remove' ? { tasks: 0, projects: 0 } : null };
+  };
+
+  // Здоровье системы в демо — всё в порядке, одно предупреждение
+  const minsAgo = m => new Date(Date.now() - m * 60000).toISOString();
+  loadAdminHealth = async () => ({ data: {
+    now: new Date().toISOString(),
+    jobs: [
+      { name: 'cleanup-cron-history', active: true, last_at: minsAgo(600), last_ok: true, runs_day: 1, fails_day: 0 },
+      { name: 'cleanup-link-codes', active: true, last_at: minsAgo(620), last_ok: true, runs_day: 1, fails_day: 0 },
+      { name: 'keep-bot-awake', active: true, last_at: minsAgo(4), last_ok: true, runs_day: 144, fails_day: 0 },
+      { name: 'morning-summary', active: true, last_at: minsAgo(0.5), last_ok: true, runs_day: 1440, fails_day: 0 },
+      { name: 'task-reminders', active: true, last_at: minsAgo(0.5), last_ok: true, runs_day: 1440, fails_day: 2 },
+      { name: 'weekly-backup', active: true, last_at: minsAgo(3 * 1440), last_ok: true, runs_day: 0, fails_day: 0 },
+    ],
+    reminders: { sent_day: 37, stuck: 0, token: true },
+    morning: { enabled: 88, sent_today: 41, sent_week: 236 },
+    requests: { total: 412, failed: 3, since: minsAgo(360), reasons: [{ reason: 'Forbidden: bot was blocked by the user', n: 3 }] },
+    storage: { db_bytes: 31 * 1024 * 1024, buckets: [{ bucket: 'avatars', files: 23, bytes: 1.4 * 1024 * 1024 }, { bucket: 'task-files', files: 64, bytes: 118 * 1024 * 1024 }] },
+  } });
+  pingBot = async () => ({ ok: true, ms: 420, code: 200 });
+  // Обратная связь в демо: отправка ничего не шлёт, у админа (?demo&admin) — примерные сообщения
+  const demoFeedback = [
+    { id: 'f1', kind: 'bug', status: 'new', text: 'На телефоне не открывается выбор времени, если задача в проекте.', created_at: new Date(Date.now() - 36e5).toISOString(),
+      device: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', name: 'Мария', email: 'maria@example.ru', tg_username: 'maria_k' },
+    { id: 'f2', kind: 'idea', status: 'new', text: 'Хочу видеть задачи на неделю вперёд в утренней сводке.', created_at: new Date(Date.now() - 864e5).toISOString(),
+      device: 'Mozilla/5.0 (Windows NT 10.0) Chrome/130.0 YaBrowser/24.10', name: 'Олег', email: 'oleg@example.ru' },
+    { id: 'f3', kind: 'idea', status: 'done', text: 'Добавьте тёмную тему.', created_at: new Date(Date.now() - 3 * 864e5).toISOString(),
+      device: 'Mozilla/5.0 (Linux; Android 14) Chrome/130.0', name: 'Анна', email: 'anna@example.ru' },
+  ];
+  sendFeedback = async () => null;
+  loadFeedback = async () => ({ data: demoFeedback });
+  setFeedbackStatus = async (id, status) => { const f = demoFeedback.find(x => x.id === id); if (f) f.status = status; return null; };
 
   // Рассылка в демо — ничего не отправляет, только показывает окно
   const demoNews = [{ id: 'n1', text: 'В планере появились файлы в задачах: прикрепляйте документы прямо к делу.', test: false,
