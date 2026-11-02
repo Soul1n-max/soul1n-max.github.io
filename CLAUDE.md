@@ -125,7 +125,7 @@
   число задач, `blocked`; поиск и сортировка на сайте). Строку рисует `adminUserRowHTML(u)`, справа — хук `adminUserActionsHTML(u)`
   для кнопок действий. Тексты задач людей в админку не попадают. В демо — `?demo&admin`.
 - Блокировка и удаление (`admin-actions.js`, после `admin.js`): кнопка «…» в строке пользователя → «Заблокировать» (с причиной),
-  «Разблокировать», «Удалить аккаунт» с подтверждением. Функции базы — `supabase/15_admin_block_delete.sql`: `admin_block_user()`
+  «Разблокировать», «Удалить аккаунт» с подтверждением. Функции базы — `supabase/16_admin_block_delete.sql`: `admin_block_user()`
   ставит `banned_until` на 100 лет, стирает сессии и пишет в таблицу `blocked_users` (Telegram ID, почта, причина);
   `admin_delete_user()` стирает задачи, проекты, `user_settings` и аккаунт, а файлы (task-files, avatars) — бот на `/purge-files`
   (секрет — hmac(токен бота, 'purge-files')). Себя и других админов функции не трогают. Бот по `blocked_users` не отвечает

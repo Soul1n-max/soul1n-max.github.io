@@ -1,5 +1,5 @@
 // Блокировка и удаление аккаунта из админки: кнопка «Действия» в строке пользователя (вкладка «Пользователи»).
-// Решает база (supabase/15_admin_block_delete.sql): admin_block_user / admin_unblock_user / admin_delete_user
+// Решает база (supabase/16_admin_block_delete.sql): admin_block_user / admin_unblock_user / admin_delete_user
 // проверяют, что вызывает админ, и не дают тронуть себя и других админов. Строку рисует adminUserRowHTML()
 // в admin.js и вызывает отсюда adminUserActionsHTML(u); после действия список перечитывается.
 
@@ -77,7 +77,7 @@ async function admRun(kind, id, reason) {
   if (res.error) {
     const msg = res.error.message || '';
     admAct.err = /admin_(block|unblock|delete)_user/.test(msg) && /function|функц|schema cache/i.test(msg)
-      ? 'Ещё не настроено в базе: нужно один раз запустить supabase/15_admin_block_delete.sql.'
+      ? 'Ещё не настроено в базе: нужно один раз запустить supabase/16_admin_block_delete.sql.'
       : 'Не получилось: ' + msg;
     admActRepaint('[data-act="back"]');
     return;
