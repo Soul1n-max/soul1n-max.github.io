@@ -3,6 +3,7 @@
 // admin_stats() — числа, admin_users() (14_admin_users.sql) — список людей, admin_health() (15_admin_health.sql) —
 // работа бота, расписания и место; чужому аккаунту все они отвечают ошибкой.
 // Содержимое задач сюда не приходит: у пользователя видно только число его задач.
+// Вкладка «Рассылка» (17_broadcast.sql) — новость всем пользователям через бота.
 
 const admin = { uid: null, is: false, box: null, back: null, tab: 'stats', users: null, q: '', sort: 'new' };
 const CHART_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>';
@@ -23,7 +24,7 @@ function checkAdmin() {
 }
 function adminMenuHTML() {
   return admin.is ? `<button type="button" class="ui-opt backup-opt" data-admin-stats>
-      <span class="backup-ico">${CHART_ICON}</span><span class="opt-text">Статистика<small>Видите только вы: числа, пользователи, здоровье системы</small></span></button>` : '';
+      <span class="backup-ico">${CHART_ICON}</span><span class="opt-text">Статистика<small>Видите только вы: числа, пользователи, здоровье, рассылка</small></span></button>` : '';
 }
 
 // Запрос чисел. В демо подменяется (js/demo.js)
@@ -103,7 +104,8 @@ async function openAdminStats() {
     <div class="adm-tabs" role="tablist" aria-label="Разделы">
       <button type="button" class="pop-chip" role="tab" data-adm-tab="stats">Статистика</button>
       <button type="button" class="pop-chip" role="tab" data-adm-tab="users">Пользователи</button>
-      <button type="button" class="pop-chip" role="tab" data-adm-tab="health">Здоровье</button></div>
+      <button type="button" class="pop-chip" role="tab" data-adm-tab="health">Здоровье</button>
+      <button type="button" class="pop-chip" role="tab" data-adm-tab="news">Рассылка</button></div>
     <div class="adm-body" role="tabpanel"></div>`;
   box.addEventListener('click', e => {
     const tab = e.target.closest('[data-adm-tab]');
@@ -112,6 +114,7 @@ async function openAdminStats() {
     else if (e.target.closest('[data-adm-refresh]')) refreshAdmin();
     else if (tab) { admin.tab = tab.dataset.admTab; refreshAdmin(true); }
     else if (sort) { admin.sort = sort.dataset.admSort; paintAdminUsers(); }
+    else handleNewsClick(e);
   });
   box.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closeAdminStats(); } });
   admin.box = box;
@@ -125,6 +128,7 @@ function refreshAdmin(cached) {
     const on = b.dataset.admTab === admin.tab;
     b.classList.toggle('on', on); b.setAttribute('aria-selected', on);
   });
+  if (admin.tab === 'news') return refreshNews(cached);
   if (admin.tab === 'users') return cached && admin.users && !admin.users.error ? paintAdminUsers() : refreshAdminUsers();
   if (admin.tab === 'health') return refreshAdminHealth();
   refreshAdminStats();
@@ -232,6 +236,115 @@ function paintAdminUsers() {
   body.querySelector('.adm-users').innerHTML = list.length
     ? list.map(adminUserRowHTML).join('')
     : `<li class="adm-empty">${all ? 'Никого не нашли' : 'Пользователей пока нет'}</li>`;
+}
+
+// ── Рассылка через бота (supabase/17_broadcast.sql): admin_broadcasts() — сколько получат и последние
+//    рассылки, admin_broadcast(текст, себе?) — отправить. Текст уходит как есть, без оформления.
+const NEWS_MAX = 3500;
+const news = { info: null, confirm: false, busy: false, msg: '', ok: false, draft: '' };
+
+// В демо подменяются (js/demo.js)
+async function loadBroadcasts() {
+  const { data, error } = await sb.rpc('admin_broadcasts');
+  return error ? { error } : { data };
+}
+async function sendBroadcast(text, test) {
+  const { data, error } = await sb.rpc('admin_broadcast', { p_text: text, p_test: test });
+  return error ? { error } : { data };
+}
+
+function newsWhen(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+function newsHistoryHTML(items) {
+  if (!Array.isArray(items) || !items.length) return '<p class="adm-note">Рассылок ещё не было.</p>';
+  return '<ul class="news-list">' + items.map(b => {
+    const status = b.sent == null ? 'отправляется…'
+      : `доставлено ${b.sent} из ${b.recipients}` + (b.failed ? ` · не дошло ${b.failed}` : '');
+    return `<li><span class="news-meta">${escHtml(newsWhen(b.created_at))}${b.test ? ' · себе' : ''} · ${escHtml(status)}</span>` +
+      `<span class="news-snip">${escHtml(String(b.text || '').slice(0, 140))}</span></li>`;
+  }).join('') + '</ul>';
+}
+function paintNews() {
+  const body = admin.box?.querySelector('.adm-body');
+  if (!body || admin.tab !== 'news') return;
+  const old = body.querySelector('.news-text');
+  const text = old ? old.value : news.draft;
+  const hadFocus = old && document.activeElement === old;
+  const info = news.info;
+  if (!info) { body.innerHTML = '<p class="adm-note">Загружаем…</p>'; return; }
+  if (info.error) { body.innerHTML = `<p class="av-msg" role="alert">Не получилось загрузить: ${escHtml(info.error.message)}</p>`; return; }
+  const d = info.data || {};
+  const n = d.audience || 0;
+  const len = text.trim().length;
+  const can = len > 0 && len <= NEWS_MAX && !news.busy;
+  body.innerHTML = `<label class="adm-group" for="news-text">Текст новости</label>
+    <textarea id="news-text" class="news-text" rows="6" maxlength="${NEWS_MAX}" placeholder="Например: в планере появились файлы в задачах — прикрепляйте документы прямо к делу."></textarea>
+    <div class="news-count${len > NEWS_MAX ? ' over' : ''}">${len} / ${NEWS_MAX}</div>
+    <p class="adm-note news-hint">Бот пришлёт текст как есть, под ним кнопки «Открыть планер» и «Не присылать новости».
+      Получат все, кто запускал бота, — сейчас ${n} ${plural(n, 'человек', 'человека', 'человек')}.</p>
+    ${news.confirm
+      ? `<div class="news-confirm" role="alert"><span>Отправить ${n} ${plural(n, 'человеку', 'людям', 'людям')}? Отменить рассылку потом нельзя.</span>
+          <span class="news-btns"><button type="button" class="btn-sm primary" data-news-go ${can ? '' : 'disabled'}>${news.busy ? 'Отправляем…' : 'Да, отправить'}</button>
+          <button type="button" class="btn-sm" data-news-cancel>Отмена</button></span></div>`
+      : `<div class="news-btns"><button type="button" class="btn-sm" data-news-test ${can && d.me_linked ? '' : 'disabled'}
+            title="${d.me_linked ? 'Придёт только вам — проверить, как выглядит' : 'Сначала привяжите Telegram'}">Отправить себе</button>
+          <button type="button" class="btn-sm primary" data-news-all ${can && n ? '' : 'disabled'}>Отправить всем · ${n}</button></div>`}
+    ${news.msg ? `<p class="${news.ok ? 'adm-note news-ok' : 'av-msg'}" role="status">${escHtml(news.msg)}</p>` : ''}
+    <div class="adm-group">Последние рассылки</div>
+    ${newsHistoryHTML(d.items)}`;
+  const ta = body.querySelector('.news-text');
+  ta.value = text;
+  ta.addEventListener('input', () => {
+    news.draft = ta.value;  // черновик не теряется при переключении вкладок и закрытии окна
+    const l = ta.value.trim().length, ok = l > 0 && l <= NEWS_MAX && !news.busy;
+    const cnt = body.querySelector('.news-count');
+    cnt.textContent = `${l} / ${NEWS_MAX}`; cnt.classList.toggle('over', l > NEWS_MAX);
+    body.querySelector('[data-news-test]')?.toggleAttribute('disabled', !(ok && d.me_linked));
+    body.querySelector('[data-news-all]')?.toggleAttribute('disabled', !(ok && n));
+    body.querySelector('[data-news-go]')?.toggleAttribute('disabled', !ok);
+  });
+  if (hadFocus) ta.focus();
+}
+function plural(n, one, few, many) {
+  const a = n % 10, b = n % 100;
+  if (a === 1 && b !== 11) return one;
+  if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
+  return many;
+}
+async function refreshNews(cached) {
+  if (cached && news.info && !news.info.error) return paintNews();
+  if (!news.info) paintNews();
+  const res = await loadBroadcasts();
+  if (!admin.box) return;
+  news.info = res;
+  paintNews();
+}
+// Нажатия во вкладке «Рассылка» (вызывает общий обработчик окна админки)
+function handleNewsClick(e) {
+  if (e.target.closest('[data-news-test]')) doBroadcast(true);
+  else if (e.target.closest('[data-news-all]')) { news.confirm = true; news.msg = ''; paintNews(); admin.box?.querySelector('[data-news-cancel]')?.focus(); }
+  else if (e.target.closest('[data-news-cancel]')) { news.confirm = false; paintNews(); }
+  else if (e.target.closest('[data-news-go]')) doBroadcast(false);
+}
+async function doBroadcast(test) {
+  const ta = admin.box?.querySelector('.news-text');
+  const text = (ta?.value || '').trim();
+  if (!text || news.busy) return;
+  news.busy = true; news.msg = ''; paintNews();
+  const res = await sendBroadcast(text, test);
+  news.busy = false; news.confirm = false;
+  if (res.error) {
+    news.ok = false; news.msg = 'Не отправилось: ' + res.error.message;
+  } else {
+    news.ok = true;
+    const k = res.data?.recipients ?? 0;
+    news.msg = test ? 'Проверка ушла вам в Telegram.' : `Рассылка запущена: ${k} ${plural(k, 'получатель', 'получателя', 'получателей')}. Итог появится ниже через минуту-другую.`;
+    if (!test) { news.draft = ''; if (ta) ta.value = ''; }
+  }
+  news.info = null;
+  await refreshNews();
 }
 
 // ——— Здоровье системы ———

@@ -903,7 +903,7 @@ body.auth-locked .app{display:none}
 .adm-bar{width:40%;max-width:10px;min-height:2px;border-radius:3px 3px 0 0}
 .adm-day{margin-top:4px;text-align:center;font-size:11px;color:var(--fg-muted)}
 .adm-note{margin:14px 0 0;font-size:12px;color:var(--fg-muted)}
-.adm-tabs{display:flex;gap:6px;margin:2px 0 6px}
+.adm-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px}
 .adm-tabs .pop-chip{height:44px;padding:0 16px}
 .adm-users-bar{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .adm-search{width:100%;min-height:44px;padding:11px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--fg);font:inherit;font-size:14px;resize:none;overflow:hidden}
@@ -924,6 +924,21 @@ body.auth-locked .app{display:none}
 .adm-tag.bad{background:var(--accent-soft);color:var(--accent-ink)}
 .adm-user-meta{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:6px;font-size:12px;color:var(--fg-muted)}
 .adm-empty{padding:18px;text-align:center;color:var(--fg-muted);font-size:14px}
+label.adm-group{display:block}
+.news-text{display:block;width:100%;min-height:132px;max-height:40vh;padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:var(--surface-2);resize:vertical;line-height:1.45}
+.news-text:focus{outline:2px solid var(--accent);outline-offset:1px}
+.news-count{margin-top:4px;text-align:right;font-size:12px;color:var(--fg-muted)}
+.news-count.over{color:var(--accent-ink)}
+.news-hint{margin-top:4px}
+.news-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.news-btns .btn-sm:disabled{opacity:.5;cursor:not-allowed}
+.news-confirm{margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--surface-2);font-size:14px;font-weight:600}
+.news-confirm .news-btns{margin-top:10px}
+.news-ok{color:var(--fg)}
+.news-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.news-list li{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:14px;background:var(--surface-2)}
+.news-meta{font-size:12px;color:var(--fg-muted)}
+.news-snip{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .hl-sum{margin:2px 0 10px;padding:12px 14px;border-radius:14px;font-weight:600}
 .hl-sum.ok{background:color-mix(in srgb,var(--ok) 14%,transparent)}
 .hl-sum.warn{background:var(--b-remind)}

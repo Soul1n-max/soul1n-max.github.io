@@ -163,6 +163,16 @@ if (new URLSearchParams(location.search).has('demo')) {
   loadFeedback = async () => ({ data: demoFeedback });
   setFeedbackStatus = async (id, status) => { const f = demoFeedback.find(x => x.id === id); if (f) f.status = status; return null; };
 
+  // Рассылка в демо — ничего не отправляет, только показывает окно
+  const demoNews = [{ id: 'n1', text: 'В планере появились файлы в задачах: прикрепляйте документы прямо к делу.', test: false,
+    created_at: new Date(Date.now() - 864e5).toISOString(), recipients: 94, sent: 91, failed: 3 }];
+  loadBroadcasts = async () => ({ data: { audience: 94, me_linked: true, items: demoNews.slice(0, 10) } });
+  sendBroadcast = async (text, test) => {
+    demoNews.unshift({ id: 'n' + Date.now(), text, test, created_at: new Date().toISOString(),
+      recipients: test ? 1 : 94, sent: test ? 1 : 92, failed: test ? 0 : 2 });
+    return { data: { recipients: test ? 1 : 94 } };
+  };
+
   hideAuthOverlay();
   avatarDemo.on = true; renderAvatar();
   initTheme();
