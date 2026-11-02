@@ -30,7 +30,8 @@
 ## Таблица `tasks` (Supabase)
 
 `id` (uuid), `text` (не пустой — `supabase/10_task_text_check.sql`), `cat` (project | contact | remind | urgent | personal), `note`, `done`,
-`created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `project_id`,
+`created_at`, `due_date` (YYYY-MM-DD), `due_time` (HH:MM:SS), `due_end` (время окончания, только при `due_time` и позже него —
+`supabase/19_task_end_time.sql`; на сайте поле «До», во фразе «с 10 до 12», «в 15 на 2 часа»), `project_id`,
 `recur` (daily | weekdays | weekly | monthly | yearly | days:N | weeks:N | months:N, N от 2 до 365),
 `subtasks` (jsonb, массив `{id, text, done}`, до 50), `done_at`, `user_id` (Telegram ID из `app_metadata.telegram_id`),
 `reminded_for` (момент, о котором бот уже напомнил). `files` (jsonb, массив `{id, name, path, size, type}`, до 10) — файлы задачи, `supabase/09_task_files.sql`. `subtasks` и проверки `recur` добавляет `supabase/07_subtasks_backup.sql`.

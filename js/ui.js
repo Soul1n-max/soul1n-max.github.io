@@ -70,6 +70,7 @@ function applyPhrase(p) {
   if (p.due) dueEl.value = p.due;
   if (p.time) {
     document.getElementById('task-time').value = p.time;
+    document.getElementById('task-end').value = p.end || '';
     // Только время, и оно сегодня уже прошло — значит, завтра (как в боте)
     const now = new Date();
     if (!p.due && dueEl.value === todayKey() && p.time <= `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`)
@@ -91,18 +92,20 @@ async function doAddTask() {
   if (!dueEl.value) dueEl.value = todayKey(); // дата обязательна; без неё задачи приходят только из бота
   const due     = dueEl.value;
   const dueTime = document.getElementById('task-time').value || null;
+  const dueEnd  = document.getElementById('task-end').value || null;
   const proj    = document.getElementById('task-project').value || null;
   const recur   = document.getElementById('task-recur').value || null;
   const btn     = document.getElementById('btn-add');
   btn.disabled = true;
   btn.textContent = '…';
-  const ok = await addTask(text, selectedCat, due, dueTime, proj, recur);
+  const ok = await addTask(text, selectedCat, due, dueTime, proj, recur, dueEnd);
   btn.disabled = false;
   btn.textContent = 'Добавить';
   if (!ok) return; // текст остаётся в поле, чтобы не набирать заново
   input.value = '';
   paintPhrasePreview();
   document.getElementById('task-time').value = '';
+  document.getElementById('task-end').value = '';
   // Повтор, проект и дата из фразы относились только к этой задаче
   if (phrase.recur) document.getElementById('task-recur').value = '';
   if (phrase.projectId) document.getElementById('task-project').value = '';
@@ -232,7 +235,7 @@ function exportJSON() {
     projects: projects.map(p => ({ id: p.id, name: p.name, color: p.color, created_at: new Date(p.created).toISOString() })),
     tasks: tasks.map(t => ({
       id: t.id, text: t.text, cat: t.cat, note: t.note || '', done: !!t.done,
-      created_at: new Date(t.created).toISOString(), due_date: t.dueDate, due_time: t.dueTime,
+      created_at: new Date(t.created).toISOString(), due_date: t.dueDate, due_time: t.dueTime, due_end: t.dueEnd,
       project_id: t.projectId, recur: t.recur, subtasks: t.subtasks || [], done_at: t.doneAt ? new Date(t.doneAt).toISOString() : null,
     })),
   };
@@ -248,9 +251,9 @@ function exportCSV() {
     if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // текст задачи не должен стать формулой в таблице
     return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
-  const head = ['Задача','Тип','Проект','Дата','Время','Повтор','Выполнена','Когда выполнена','Заметка','Подзадачи','Создана'];
+  const head = ['Задача','Тип','Проект','Дата','Время','До','Повтор','Выполнена','Когда выполнена','Заметка','Подзадачи','Создана'];
   const rows = [...tasks].sort((a, b) => (a.done - b.done) || byDue(a, b)).map(t => [
-    t.text, CATS[t.cat]?.label || '', getProject(t.projectId)?.name || '', fmtDate(t.dueDate), fmtTime(t.dueTime),
+    t.text, CATS[t.cat]?.label || '', getProject(t.projectId)?.name || '', fmtDate(t.dueDate), fmtTime(t.dueTime), fmtTime(t.dueEnd),
     recurLabel(t.recur), t.done ? 'да' : 'нет', fmtStamp(t.doneAt), t.note || '',
     (t.subtasks || []).map(x => (x.done ? '[x] ' : '[ ] ') + x.text).join('\n'), fmtStamp(t.created),
   ]);
@@ -284,6 +287,7 @@ function backupRows(data) {
       created_at: isoOrNull(t.created_at) || new Date().toISOString(),
       due_date:   /^\d{4}-\d{2}-\d{2}$/.test(t.due_date || '') ? t.due_date : null,
       due_time:   time,
+      due_end:    /^\d{2}:\d{2}(:\d{2})?$/.test(t.due_end || '') ? validEnd(time, t.due_end) : null,
       project_id: known.has(pid) ? pid : null,
       recur:      isRecur(t.recur) ? t.recur : null,
       subtasks:   cleanSubtasks(t.subtasks),

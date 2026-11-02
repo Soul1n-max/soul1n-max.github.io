@@ -1,5 +1,5 @@
 // Ввод фразой: «Позвонить Ивану завтра в 15:30 #срочно» → задача «Позвонить Ивану» на завтра, 15:30, тип «Срочно».
-// parsePhrase(text) возвращает { text, due, time, cat, recur, projectId, found }: найденное вырезается из текста,
+// parsePhrase(text) возвращает { text, due, time, end, cat, recur, projectId, found }: найденное вырезается из текста,
 // found — подписи для подсказки под полем. Не найденное остаётся null, и тогда работают поля под строкой ввода.
 // Те же правила — в боте (parse_phrase в bot_webhook.py): меняя здесь, поменяй и там.
 
@@ -48,7 +48,7 @@ function phDayMonth(today, d, m, y) {
 
 function parsePhrase(input, today = todayKey()) {
   let s = ' ' + String(input) + ' ';
-  const res = { text: String(input).trim(), due: null, time: null, cat: null, recur: null, projectId: null, found: [] };
+  const res = { text: String(input).trim(), due: null, time: null, end: null, cat: null, recur: null, projectId: null, found: [] };
   // Находит первое совпадение, вырезает его из строки и отдаёт группы
   const take = re => {
     const m = re.exec(s);
@@ -123,14 +123,37 @@ function parsePhrase(input, today = todayKey()) {
     if (d !== today || res.due) res.due = d;
   }
 
+  // ── Промежуток: «с 10 до 12», «с 9:30 до 11», «с 9 утра до 6 вечера», «10:00–12:30» ──
+  // «с 2 до 4» без уточнения — 14:00–16:00 (как «в 3»); конец раньше начала — значит, после полудня: «с 11 до 1» — 11:00–13:00
+  const phT = '(\\d{1,2})(?:[:.](\\d{2}))?(?:\\s*(?:ч|час|часа|часов)\\.?)?(?:\\s+(утра|дня|вечера|ночи))?';
+  const phMin = (h, mi, part) => {
+    h = +h; part = (part || '').toLowerCase();
+    if ((part === 'дня' || part === 'вечера') && h < 12) h += 12;
+    if (part === 'ночи' && h === 12) h = 0;
+    if (!part && h >= 1 && h <= 6) h += 12;
+    return h < 24 && +(mi || 0) < 60 ? h * 60 + +(mi || 0) : null;
+  };
+  const phHM = v => `${String(Math.floor(v / 60)).padStart(2, '0')}:${String(v % 60).padStart(2, '0')}`;
+  for (const re of [phRe('с\\s+' + phT + '\\s+до\\s+' + phT), phRe('(\\d{1,2}):(\\d{2})()\\s*[-–—]\\s*(\\d{1,2})(?::(\\d{2}))?()')]) {
+    const mm = re.exec(s);
+    if (!mm) continue;
+    const a = phMin(mm[1], mm[2], mm[3]);
+    let b = phMin(mm[4], mm[5], mm[6]);
+    if (a !== null && b !== null && b <= a && !mm[6] && b + 720 < 1440) b += 720;
+    if (a === null || b === null || b <= a) continue;
+    take(re); res.time = phHM(a); res.end = phHM(b);
+    break;
+  }
+
   // ── Время: 15:30 где угодно; 15.30 — только после «в», «к», «до» (без них это могла бы быть дата);
   //    в полдень; «в 15», «в 9 утра», «в 7 вечера» — только если дальше нет слова («встреча в 2 этапа» не время) ──
-  if ((m = take(phRe('(?:(?:в|к|до)\\s+)?(\\d{1,2}):(\\d{2})|(?:в|к|до)\\s+(\\d{1,2})\\.(\\d{2})')))) {
+  if (res.time) {}
+  else if ((m = take(phRe('(?:(?:в|к|до)\\s+)?(\\d{1,2}):(\\d{2})|(?:в|к|до)\\s+(\\d{1,2})\\.(\\d{2})')))) {
     const h = +(m[1] || m[3]), mi = m[2] || m[4];
     if (h < 24 && +mi < 60) res.time = `${String(h).padStart(2, '0')}:${mi}`;
   } else if (take(phRe('в\\s+полдень'))) res.time = '12:00';
   else {
-    const re = new RegExp(PH_L + '(?:в|к)\\s+(\\d{1,2})(?:\\s*(?:ч|час|часа|часов)\\.?)?(?:\\s+(утра|дня|вечера|ночи))?(?=\\s*(?:[,.;!?)](?!\\d)|$))', 'iu');
+    const re = new RegExp(PH_L + '(?:в|к)\\s+(\\d{1,2})(?:\\s*(?:ч|час|часа|часов)\\.?)?(?:\\s+(утра|дня|вечера|ночи))?(?=\\s*(?:[,.;!?)](?!\\d)|$)|\\s+на\\s+(?:полчаса|полтора|час|\\d|два|две|три|четыре|пять|шесть|семь))', 'iu');
     const mm = re.exec(s);
     if (mm) {
       let h = +mm[1];
@@ -142,6 +165,13 @@ function parsePhrase(input, today = todayKey()) {
     }
   }
 
+  // ── Длительность после времени: «в 15 на 2 часа», «в 10 на полчаса», «на 45 минут», «на полтора часа» ──
+  if (res.time && !res.end && (m = take(phRe('на\\s+(?:(полчаса)|(полтора)\\s+часа|(?:(' + PH_NUM_SRC + ')\\s+)?(час|часа|часов)|(\\d{1,3})\\s+(?:мин|минут|минуты|минуту))')))) {
+    const dur = m[1] ? 30 : m[2] ? 90 : m[5] ? +m[5] : phNum(m[3]) * 60;
+    const [h, mi] = res.time.split(':').map(Number);
+    if (dur > 0 && h * 60 + mi + dur < 1440) res.end = phHM(h * 60 + mi + dur);
+  }
+
   // ── Что осталось — текст задачи ──
   let text = s.replace(/\s+/g, ' ').replace(/\s+([,.;!?])/g, '$1').replace(/^[\s,.;:—–-]+|[\s,;:—–-]+$/g, '').trim();
   if (!text || (!res.due && !res.time && !res.cat && !res.recur && !res.projectId)) text = String(input).trim();
@@ -149,7 +179,7 @@ function parsePhrase(input, today = todayKey()) {
   res.text = text;
 
   if (res.due)       res.found.push(dateLabel(res.due));
-  if (res.time)      res.found.push(res.time);
+  if (res.time)      res.found.push(res.end ? `${res.time}–${res.end}` : res.time);
   if (res.cat)       res.found.push(CATS[res.cat].label);
   if (res.recur)     res.found.push(recurLabel(res.recur));
   if (res.projectId) res.found.push(getProject(res.projectId).name);

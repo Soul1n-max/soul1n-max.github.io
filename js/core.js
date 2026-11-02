@@ -196,6 +196,10 @@ function dateKey(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padSta
 function todayKey() { return dateKey(new Date()); }
 function parseDate(s) { return s ? new Date(s + 'T12:00:00') : null; }
 function fmtTime(t) { return t ? t.slice(0,5) : ''; }
+// «10:00–12:00» для задачи со временем окончания, иначе просто начало
+function fmtTimeRange(t) { return t.dueTime ? fmtTime(t.dueTime) + (t.dueEnd ? '–' + fmtTime(t.dueEnd) : '') : ''; }
+// Время окончания годится, только если есть начало и оно позже начала (как проверка tasks_due_end_check в 19_task_end_time.sql)
+function validEnd(start, end) { return start && end && fmtTime(end) > fmtTime(start) ? fmtTime(end) + ':00' : null; }
 // Сортировка: по дате, затем по времени; задачи без времени — в конце дня
 function byDue(a, b) {
   const da = a.dueDate || '9999', db = b.dueDate || '9999';
@@ -336,6 +340,7 @@ function fromDB(row) {
     created:   row.created_at ? new Date(row.created_at).getTime() : Date.now(),
     dueDate:   row.due_date || null,
     dueTime:   row.due_time || null,
+    dueEnd:    row.due_time && row.due_end ? row.due_end : null,
     projectId: row.project_id || null,
     recur:     isRecur(row.recur) ? row.recur : null,
     subtasks:  cleanSubtasks(row.subtasks),

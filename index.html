@@ -38,7 +38,7 @@
      Обновлять версию — вместе с новым хешем. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=39">
+<link rel="stylesheet" href="style.css?v=40">
 </head>
 <body class="auth-locked">
 
@@ -144,6 +144,7 @@
               <div class="extra-row">
                 <input type="date" class="ui-field" data-label="Дата" id="task-due" data-required>
                 <input type="time" class="ui-field" data-label="Время" id="task-time">
+                <input type="time" class="ui-field" data-label="До" id="task-end">
                 <select class="ui-field" data-label="Проект" id="task-project"><option value="">Без проекта</option></select>
                 <!-- Варианты повтора подставляет ui.js (RECUR_CHOICES в core.js) -->
                 <select class="ui-field" data-label="Повтор" id="task-recur">
@@ -387,20 +388,20 @@
 </div>
 
 <!-- Скрипты подключаются по порядку: каждый следующий пользуется функциями предыдущих -->
-<script src="js/core.js?v=39"></script>
-<script src="js/phrase.js?v=39"></script>
-<script src="js/data.js?v=39"></script>
-<script src="js/render.js?v=39"></script>
-<script src="js/drag.js?v=39"></script>
-<script src="js/fields.js?v=39"></script>
-<script src="js/ui.js?v=39"></script>
-<script src="js/auth.js?v=39"></script>
-<script src="js/avatar.js?v=39"></script>
-<script src="js/admin.js?v=39"></script>
-<script src="js/admin-actions.js?v=39"></script>
-<script src="js/feedback.js?v=39"></script>
-<script src="js/onboarding.js?v=39"></script>
-<script src="js/main.js?v=39"></script>
-<script src="js/demo.js?v=39"></script>
+<script src="js/core.js?v=40"></script>
+<script src="js/phrase.js?v=40"></script>
+<script src="js/data.js?v=40"></script>
+<script src="js/render.js?v=40"></script>
+<script src="js/drag.js?v=40"></script>
+<script src="js/fields.js?v=40"></script>
+<script src="js/ui.js?v=40"></script>
+<script src="js/auth.js?v=40"></script>
+<script src="js/avatar.js?v=40"></script>
+<script src="js/admin.js?v=40"></script>
+<script src="js/admin-actions.js?v=40"></script>
+<script src="js/feedback.js?v=40"></script>
+<script src="js/onboarding.js?v=40"></script>
+<script src="js/main.js?v=40"></script>
+<script src="js/demo.js?v=40"></script>
 </body>
 </html>

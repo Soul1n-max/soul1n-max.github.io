@@ -608,6 +608,9 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .tg-ev{background:var(--surface-2);border-left:3px solid var(--tag-color,var(--fg-muted))}
 .tg-ev .ev-dot{display:none}
 .tg-col .tg-ev{position:absolute;z-index:1;padding:2px 6px;overflow:hidden;box-shadow:0 1px 2px rgba(var(--shade),.08)}
+.tg-col .tg-ev.long{flex-direction:column;align-items:flex-start;gap:1px;padding:4px 7px}
+.tg-col .tg-ev.tall .ev-text{white-space:normal;flex:none;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.tg-col .tg-ev.long .ev-text{max-width:100%}
 .tg-ev:hover{background:color-mix(in srgb,var(--fg) 9%,var(--surface))}
 .tg-ev.overdue{background:var(--b-urgent)}
 .tg-now{position:absolute;left:0;right:0;z-index:2;height:2px;margin-top:-1px;background:var(--accent);pointer-events:none}

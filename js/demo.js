@@ -11,7 +11,7 @@ if (new URLSearchParams(location.search).has('demo')) {
     { id: 'demo-p3', name: 'Здоровье',           color: '#5fcea0', created: Date.now() },
   ];
   const T = (text, cat, due, time, projectId, extra) => ({
-    id: uid(), text, cat, note: '', done: false, created: Date.now(), dueDate: due, dueTime: time,
+    id: uid(), text, cat, note: '', done: false, created: Date.now(), dueDate: due, dueTime: time, dueEnd: null,
     projectId, recur: null, subtasks: [], files: [], doneAt: null, ...extra,
   });
   // Файлы демо живут только в памяти страницы: id файла → Blob
@@ -22,14 +22,15 @@ if (new URLSearchParams(location.search).has('demo')) {
     return { id, name, path: 'demo/' + id, size: blob.size, type: blob.type };
   };
   const demoTasks = () => [
+    T('Работа над дизайном',                'project',  off(2),  '09:00:00', 'demo-p2', { dueEnd: '13:00:00' }),
     T('Отправить коммерческое предложение', 'contact',  off(-1), null,       'demo-p1'),
     T('Утвердить макет главной страницы',   'project',  off(0),  '11:00:00', 'demo-p2', { note: 'Проверить мобильную версию и цвета кнопок',
       files: [demoFile('ТЗ на главную страницу.txt', 'Главная страница студии\n\n1. Шапка и меню\n2. Карточки услуг\n3. Форма заявки\n')],
       subtasks: [{ id: 's1', text: 'Шапка и меню', done: true }, { id: 's2', text: 'Карточки услуг', done: false }, { id: 's3', text: 'Форма заявки', done: false }] }),
-    T('Созвон с подрядчиком по сайту',      'contact',  off(0),  '14:30:00', 'demo-p2'),
+    T('Созвон с подрядчиком по сайту',      'contact',  off(0),  '14:30:00', 'demo-p2', { dueEnd: '15:30:00' }),
     T('Оплатить хостинг',                   'remind',   off(0),  null,       null,      { recur: 'monthly' }),
     T('Пробежка 5 км',                      'personal', off(1),  '07:30:00', 'demo-p3', { recur: 'days:2' }),
-    T('Планёрка с командой',                'project',  off(1),  '10:00:00', 'demo-p2', { recur: 'weekdays' }),
+    T('Планёрка с командой',                'project',  off(1),  '10:00:00', 'demo-p2', { recur: 'weekdays', dueEnd: '11:30:00' }),
     T('Подготовить отчёт за квартал',       'urgent',   off(3),  null,       null),
     T('Собрать референсы для логотипа',     'project',  off(5),  null,       'demo-p1'),
     T('Записаться к стоматологу',           'personal', off(12), null,       'demo-p3'),
@@ -56,8 +57,9 @@ if (new URLSearchParams(location.search).has('demo')) {
     setSyncStatus('ok');
     document.getElementById('sync-label').textContent = 'Демо-режим';
   };
-  addTask = async (text, cat, due, dueTime, projId, recur) => {
-    tasks.unshift(T(text, cat || null, due || null, dueTime ? dueTime + ':00' : null, projId || null, { recur: recur || null }));
+  addTask = async (text, cat, due, dueTime, projId, recur, dueEnd) => {
+    tasks.unshift(T(text, cat || null, due || null, dueTime ? dueTime + ':00' : null, projId || null,
+      { recur: recur || null, dueEnd: validEnd(dueTime, dueEnd) }));
     return true;
   };
   toggleDone = async id => {
@@ -67,7 +69,7 @@ if (new URLSearchParams(location.search).has('demo')) {
     if (!t.recur) return;
     const copy = nextCopyOf(t);
     if (t.done && !copy) tasks.unshift(T(t.text, t.cat, nextDue(t.dueDate, t.recur), t.dueTime, t.projectId,
-      { recur: t.recur, note: t.note, subtasks: t.subtasks.map(x => ({ ...x, done: false })), files: t.files }));
+      { recur: t.recur, dueEnd: t.dueEnd, note: t.note, subtasks: t.subtasks.map(x => ({ ...x, done: false })), files: t.files }));
     else if (!t.done && copy) tasks = tasks.filter(x => x.id !== copy.id);
   };
   // Удалённая задача возвращается «Отменить» как есть: в демо «строка базы» — сама задача
@@ -76,7 +78,7 @@ if (new URLSearchParams(location.search).has('demo')) {
   saveTask    = async (id, f) => {
     const t = tasks.find(t => t.id === id);
     if (!t) return;
-    const map = { text: 'text', cat: 'cat', note: 'note', due_date: 'dueDate', due_time: 'dueTime',
+    const map = { text: 'text', cat: 'cat', note: 'note', due_date: 'dueDate', due_time: 'dueTime', due_end: 'dueEnd',
                   project_id: 'projectId', recur: 'recur', subtasks: 'subtasks' };
     for (const k in f) if (map[k]) t[map[k]] = f[k];
   };

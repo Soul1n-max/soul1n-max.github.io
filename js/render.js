@@ -5,7 +5,7 @@ function makeTaskEl(task) {
   const cat  = task.cat ? CATS[task.cat] : null;
   const proj = task.projectId ? getProject(task.projectId) : null;
   const dueInfo = formatDue(task.dueDate);
-  const timeStr = fmtTime(task.dueTime);
+  const timeStr = fmtTimeRange(task);
   const due = dueInfo ? { label: dueInfo.label + (timeStr ? ' · ' + timeStr : ''), cls: dueInfo.cls }
             : timeStr ? { label: 'в ' + timeStr, cls: 'future' } : null;
   const isOvrd     = task.dueDate && task.dueDate < todayKey() && !task.done;
@@ -57,6 +57,7 @@ function makeTaskEl(task) {
           <select class="ui-field" data-label="Тип" id="ec-${task.id}"><option value="">Без типа</option>${catOptions}</select>
           <input type="date" class="ui-field" data-label="Дата" id="ed-${task.id}" value="${task.dueDate || ''}"${task.dueDate ? ' data-required' : ''}>
           <input type="time" class="ui-field" data-label="Время" id="eh-${task.id}" value="${fmtTime(task.dueTime)}">
+          <input type="time" class="ui-field" data-label="До" id="ee-${task.id}" value="${fmtTime(task.dueEnd)}">
           <select class="ui-field" data-label="Проект" id="ep-${task.id}"><option value="">Без проекта</option>${projOptions}</select>
           <select class="ui-field" data-label="Повтор" id="er-${task.id}"><option value="">Нет</option>${recurOptions}</select>
         </div>
@@ -225,6 +226,7 @@ function makeTaskEl(task) {
       cat:        v('ec') || null,
       due_date:   v('ed') || null,
       due_time:   time ? time + ':00' : null,
+      due_end:    validEnd(time, v('ee')),
       project_id: v('ep') || null,
       recur:      v('er') || null,
       note:       v('ni').trim(),
@@ -706,10 +708,10 @@ function renderTimeGrid() {
 
   const by = Object.fromEntries(keys.map(k => [k, []]));
   tasks.forEach(t => { if (!t.done && by[t.dueDate]) by[t.dueDate].push(t); });
-  const mins = t => { const [h, m] = t.dueTime.split(':'); return +h * 60 + +m; };
+  const mins = v => { const [h, m] = v.split(':'); return +h * 60 + +m; };
   const evHTML = (t, k, extra = '', style = '') => {
-    const time = t.dueTime ? `<span class="ev-time">${fmtTime(t.dueTime)}</span>` : '';
-    return `<span class="cal-ev tg-ev cat-${t.cat}${k < today ? ' overdue' : ''}${extra}" data-id="${escHtml(t.id)}" data-day="${k}"${style ? ` style="${style}"` : ''} title="${escHtml((t.dueTime ? fmtTime(t.dueTime) + ' ' : '') + t.text)}"><span class="ev-dot"></span><span class="ev-text">${escHtml(t.text)}</span>${time}</span>`;
+    const time = t.dueTime ? `<span class="ev-time">${fmtTimeRange(t)}</span>` : '';
+    return `<span class="cal-ev tg-ev cat-${t.cat}${k < today ? ' overdue' : ''}${extra}" data-id="${escHtml(t.id)}" data-day="${k}"${style ? ` style="${style}"` : ''} title="${escHtml((t.dueTime ? fmtTimeRange(t) + ' ' : '') + t.text)}"><span class="ev-dot"></span><span class="ev-text">${escHtml(t.text)}</span>${time}</span>`;
   };
 
   const head = keys.map((k, i) => {
@@ -721,12 +723,14 @@ function renderTimeGrid() {
   const nowM = new Date().getHours() * 60 + new Date().getMinutes();
   const cols = keys.map((k, i) => {
     // Задачи на одно время ставим рядом: в группе пересекающихся (по полчаса) каждой своя колонка
-    const timed = by[k].filter(t => t.dueTime).sort(byDue).map(t => ({ t, s: mins(t), e: mins(t) + 30 }));
+    // Без времени окончания блок — на полчаса
+    const timed = by[k].filter(t => t.dueTime).sort(byDue).map(t => ({ t, s: mins(t.dueTime), e: t.dueEnd ? mins(t.dueEnd) : mins(t.dueTime) + 30 }));
     let group = [], ends = [], groupEnd = -1, out = '';
     const flush = () => {
       group.forEach(g => {
         const w = 100 / ends.length;
-        out += evHTML(g.t, k, '', `top:${g.s * TG_HOUR / 60}px;height:${TG_HOUR / 2 - 2}px;left:calc(${g.col * w}% + 2px);width:calc(${w}% - 4px)`);
+        const h = Math.max(TG_HOUR / 2, (g.e - g.s) * TG_HOUR / 60) - 2;
+        out += evHTML(g.t, k, (h > TG_HOUR / 2 ? ' long' : '') + (h >= TG_HOUR * 1.4 ? ' tall' : ''), `top:${g.s * TG_HOUR / 60}px;height:${h}px;left:calc(${g.col * w}% + 2px);width:calc(${w}% - 4px)`);
       });
       group = []; ends = [];
     };
@@ -753,7 +757,7 @@ function renderTimeGrid() {
   fitTimeGrid();
   const nb = box.querySelector('.tg-body');
   // Первый показ — с 8 утра, а если есть задачи раньше — с часа самой ранней
-  const earliest = Math.min(8, ...keys.flatMap(k => by[k].filter(t => t.dueTime).map(t => Math.floor(mins(t) / 60))));
+  const earliest = Math.min(8, ...keys.flatMap(k => by[k].filter(t => t.dueTime).map(t => Math.floor(mins(t.dueTime) / 60))));
   nb.scrollTop = keepScroll ?? earliest * TG_HOUR - 8;
 }
 // Сетка по часам прокручивается внутри: на компьютере — до низа окна, на телефоне — 65% экрана
@@ -809,7 +813,7 @@ function makeDayCell(dayNum, key, dayTasks, otherMonth) {
       const ev = document.createElement('span');
       ev.className = `cal-ev cat-${t.cat}` + (isPast ? ' overdue' : '');
       ev.dataset.id = t.id;   // событие в клетке можно перетащить на другой день (drag.js)
-      ev.title = (t.dueTime ? fmtTime(t.dueTime) + ' ' : '') + t.text;
+      ev.title = (t.dueTime ? fmtTimeRange(t) + ' ' : '') + t.text;
       const dot = document.createElement('span'); dot.className = 'ev-dot';
       const txt = document.createElement('span'); txt.className = 'ev-text'; txt.textContent = t.text;
       ev.append(dot, txt);
