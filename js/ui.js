@@ -21,6 +21,7 @@ function switchTab(tab) {
   });
   document.querySelectorAll('.tab-panel').forEach(p => p.hidden = p.id!=='tab-'+tab);
   document.getElementById('page-title').textContent = TAB_TITLES[tab] || '';
+  document.body.dataset.tab = tab;   // style.css: календарь на компьютере растягивается на весь экран
   renderAll();
 }
 

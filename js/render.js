@@ -641,6 +641,7 @@ function renderCalendar() {
   }
   const totalCells = startDow + last.getDate();
   const trailing = (7 - (totalCells % 7)) % 7;
+  grid.style.setProperty('--weeks', (totalCells + trailing) / 7);
   for (let i = 1; i <= trailing; i++) {
     const d = new Date(calYear, calMonth+1, i);
     const k = dateKey(d);

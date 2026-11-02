@@ -562,6 +562,22 @@ body.dragging-task .month-card,body.dragging-task .week-card{box-shadow:0 0 0 2p
 .cal-dots{display:none;gap:3px;justify-content:center}
 .cal-dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .cal-dot.overdue-dot{background:var(--c-urgent)}
+/* Компьютер: календарь на весь экран, как в Google Календаре — панель «Сегодня ‹ › Месяц» слева, сетка до низа окна */
+@media (min-width:861px){
+  body[data-tab="calendar"] .main{padding-top:24px;padding-bottom:24px}
+  body[data-tab="calendar"] .main-inner{max-width:none;min-height:calc(100vh - 48px)}
+  body[data-tab="calendar"] #tab-calendar,body[data-tab="calendar"] .cal-layout,body[data-tab="calendar"] .cal-main{flex:1;display:flex;flex-direction:column;min-height:0}
+  body[data-tab="calendar"] .cal-card{flex:1;display:flex;flex-direction:column}
+  body[data-tab="calendar"] .cal-grid{flex:1;grid-template-rows:auto repeat(var(--weeks,6),minmax(112px,1fr))}
+  body[data-tab="calendar"] .cal-day{min-height:0}
+  .cal-nav{gap:6px}
+  .cal-nav .cal-today-btn{order:1;margin-right:10px;background:transparent;border:1px solid color-mix(in srgb,var(--fg) 22%,transparent);border-radius:999px;padding:0 22px;font-size:14px}
+  .cal-nav #cal-prev{order:2}
+  .cal-nav #cal-next{order:3}
+  .cal-nav h2{order:4;margin-left:12px}
+  .cal-nav .cal-nav-btn{background:transparent;border-radius:50%}
+  .cal-nav .cal-nav-btn:hover,.cal-nav .cal-today-btn:hover{background:var(--btn-2)}
+}
 /* Окно дня: поверх календаря, по центру; на телефоне — лист снизу */
 .cal-side{position:fixed;inset:0;z-index:45;display:grid;place-items:center;padding:24px}
 .cal-side[hidden]{display:none}
